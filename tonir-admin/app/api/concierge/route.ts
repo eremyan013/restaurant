@@ -70,15 +70,19 @@ export async function POST(request: NextRequest) {
   }
 
   const data = await response.json()
-  const raw = data.content?.[0]?.text ?? ''
+  const raw: string = data.content?.[0]?.text ?? ''
 
-  try {
-    const parsed = JSON.parse(raw)
-    if (typeof parsed.text === 'string' && Array.isArray(parsed.suggestions)) {
-      return NextResponse.json(parsed, { headers: CORS })
-    }
-    throw new Error('bad shape')
-  } catch {
-    return NextResponse.json({ text: raw, suggestions: [] }, { headers: CORS })
+  // Extract JSON object even if Claude wraps it in markdown code fences or prose
+  const match = raw.match(/\{[\s\S]*\}/)
+  if (match) {
+    try {
+      const parsed = JSON.parse(match[0])
+      if (typeof parsed.text === 'string' && Array.isArray(parsed.suggestions)) {
+        return NextResponse.json(parsed, { headers: CORS })
+      }
+    } catch {}
   }
+
+  // Fallback: return raw text with no suggestions
+  return NextResponse.json({ text: raw.replace(/```[a-z]*\n?/g, '').replace(/```/g, '').trim(), suggestions: [] }, { headers: CORS })
 }
