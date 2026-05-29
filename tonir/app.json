@@ -8,7 +8,9 @@
     "ios": {
       "bundleIdentifier": "com.tonir.app",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "android": {
@@ -27,8 +29,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": ""
+        "projectId": "c56d5076-3d92-45f0-ae79-fe3c3f4f34cc"
       }
-    }
+    },
+    "owner": "yeremyan"
   }
 }
