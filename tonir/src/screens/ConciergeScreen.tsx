@@ -103,9 +103,10 @@ async function askConcierge(
   history: Message[],
   tr: (key: string) => string,
 ): Promise<{ text: string; suggestions: string[] }> {
-  if (!CONCIERGE_API) return buildReply(userText, tr);
+  if (!CONCIERGE_API) return { text: `[DEBUG] EXPO_PUBLIC_CONCIERGE_URL is not set`, suggestions: [] };
   try {
-    const res = await fetch(`${CONCIERGE_API}/api/concierge`, {
+    const url = `${CONCIERGE_API}/api/concierge`;
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -115,12 +116,13 @@ async function askConcierge(
         })),
       }),
     });
-    if (!res.ok) throw new Error('api_error');
-    const data = await res.json();
+    const body = await res.text();
+    if (!res.ok) return { text: `[DEBUG] HTTP ${res.status}: ${body.slice(0, 200)}`, suggestions: [] };
+    const data = JSON.parse(body);
     if (typeof data.text === 'string' && Array.isArray(data.suggestions)) return data;
-    throw new Error('bad_response');
-  } catch {
-    return buildReply(userText, tr);
+    return { text: `[DEBUG] Unexpected response: ${body.slice(0, 200)}`, suggestions: [] };
+  } catch (e: any) {
+    return { text: `[DEBUG] Fetch error: ${e?.message}`, suggestions: [] };
   }
 }
 
