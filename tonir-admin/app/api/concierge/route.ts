@@ -66,7 +66,8 @@ export async function POST(request: NextRequest) {
   })
 
   if (!response.ok) {
-    return NextResponse.json({ error: 'Upstream error' }, { status: 502, headers: CORS })
+    const errBody = await response.text()
+    return NextResponse.json({ error: `Anthropic ${response.status}: ${errBody}` }, { status: 502, headers: CORS })
   }
 
   const data = await response.json()
