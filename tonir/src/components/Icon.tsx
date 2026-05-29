@@ -6,7 +6,7 @@ export type IconName =
   | 'user' | 'chevR' | 'chevL' | 'chevD' | 'arrow' | 'arrowUR' | 'star'
   | 'pin' | 'clock' | 'users' | 'sparkle' | 'gift' | 'map' | 'plus' | 'minus'
   | 'check' | 'x' | 'flame' | 'spark' | 'chat' | 'dot3' | 'share'
-  | 'split' | 'tonir' | 'lock' | 'mail';
+  | 'split' | 'tonir' | 'lock' | 'mail' | 'trash';
 
 interface IconProps {
   name: IconName;
@@ -93,6 +93,8 @@ export function Icon({ name, size = 20, color = 'currentColor', strokeWidth = 1.
       return <Svg {...props}><Rect x="5" y="11" width="14" height="10" rx="2" /><Path d="M8 11V7a4 4 0 0 1 8 0v4" /></Svg>;
     case 'mail':
       return <Svg {...props}><Rect x="3" y="5" width="18" height="14" rx="2" /><Path d="m3 7 9 6 9-6" /></Svg>;
+    case 'trash':
+      return <Svg {...props}><Path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12" /><Path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></Svg>;
     default:
       return null;
   }

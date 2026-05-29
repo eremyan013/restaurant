@@ -15,9 +15,10 @@ interface HeroCardProps {
   onOpen: () => void;
   onFav: () => void;
   isFav: boolean;
+  onBook?: () => void;
 }
 
-export function HeroCard({ venue, t, onOpen, onFav, isFav }: HeroCardProps) {
+export function HeroCard({ venue, t, onOpen, onFav, isFav, onBook }: HeroCardProps) {
   const { tr } = useTranslation();
   return (
     <Pressable
@@ -60,6 +61,17 @@ export function HeroCard({ venue, t, onOpen, onFav, isFav }: HeroCardProps) {
           ))}
         </View>
         <Text style={[styles.perk, { color: t.accent }]}>+{venue.perk}</Text>
+        {onBook && (
+          <Pressable
+            onPress={() => {
+              if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onBook();
+            }}
+            style={[styles.bookBtn, { backgroundColor: t.primary }]}
+          >
+            <Text style={[styles.bookBtnText, { color: '#FBF5E8' }]}>{tr('conc_book_now')}</Text>
+          </Pressable>
+        )}
       </View>
     </Pressable>
   );
@@ -136,5 +148,16 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold, fontWeight: '700',
     letterSpacing: 0.4,
     marginTop: 4,
+  },
+  bookBtn: {
+    marginTop: 8,
+    paddingVertical: 9,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  bookBtnText: {
+    fontSize: 13,
+    fontFamily: FONTS.bold,
+    fontWeight: '700',
   },
 });

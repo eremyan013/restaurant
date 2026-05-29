@@ -168,6 +168,10 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     conc_reply_brunch:    'Բրանչ կամ հանդարտ սրճարա՞ն։ Ահա կատարյալ վայրերը:',
     conc_reply_outdoor:   'Բաց տարածք, բակ կամ պատշգամբ — ամառային երեկոյի համար:',
     conc_reply_fallback:  'Հիանալի ընտրություն։ Ահա մի քանի վայր, որոնք կարող են հետաքրքրել ձեզ:',
+    conc_book_now:        'Ամրագրել',
+    conc_clear:           'Մաքրել',
+    conc_reply_georgian:  'Վրացական խոհանոց? Խինկալի, խաչապուրի, ջերմ մթնոլորտ — ահա լավագույն ընտրությունը:',
+    conc_reply_italian:   'Իտալական ճաշ, փայտով թխված պիցցա կամ բաց պատշգամբ — ահա ձեր տարբերակը:',
     // OnboardingScreen
     onb_skip:         'Բաց թողնել',
     onb_step0_title:  'Սեղան՝ պատրաստ,\nցանկացած ժամի։',
@@ -388,6 +392,10 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     conc_reply_brunch:    'Бранч или тихое кафе? Вот идеальные места.',
     conc_reply_outdoor:   'Открытое пространство, дворик или терраса — для летнего вечера.',
     conc_reply_fallback:  'Отличный выбор. Вот несколько мест, которые могут вас заинтересовать.',
+    conc_book_now:        'Забронировать',
+    conc_clear:           'Очистить',
+    conc_reply_georgian:  'Грузинская кухня? Хинкали, хачапури, тёплая атмосфера — вот лучший выбор.',
+    conc_reply_italian:   'Итальянская еда, пицца из дровяной печи или открытая терраса — вот ваш вариант.',
     // OnboardingScreen
     onb_skip:         'Пропустить',
     onb_step0_title:  'Стол готов,\nв любое время.',
@@ -608,6 +616,10 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     conc_reply_brunch:    'Brunch or a quiet café? Here are the perfect spots.',
     conc_reply_outdoor:   'Open space, courtyard or terrace — for a summer evening.',
     conc_reply_fallback:  'Great choice. Here are a few places that might interest you.',
+    conc_book_now:        'Book now',
+    conc_clear:           'Clear',
+    conc_reply_georgian:  'Georgian cuisine? Khinkali, khachapuri, warm atmosphere — here\'s the best choice.',
+    conc_reply_italian:   'Italian food, wood-fired pizza or an open terrace — here\'s your option.',
     // OnboardingScreen
     onb_skip:         'Skip',
     onb_step0_title:  'Table ready,\nany time.',
