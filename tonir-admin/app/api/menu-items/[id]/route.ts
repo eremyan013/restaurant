@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { Database } from '@/lib/database.types'
+
+type MenuItemUpdate = Database['public']['Tables']['menu_items']['Update']
 
 export async function PATCH(
   request: NextRequest,
@@ -10,7 +13,7 @@ export async function PATCH(
   const body = await request.json()
   const supabase = createSupabaseAdminClient()
 
-  const update: Record<string, unknown> = {}
+  const update: MenuItemUpdate = {}
   if ('name' in body)         update.name = body.name
   if ('description' in body)  update.description = body.description
   if ('price' in body)        update.price = body.price
