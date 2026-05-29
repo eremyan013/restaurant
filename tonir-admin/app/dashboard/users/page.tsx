@@ -1,0 +1,75 @@
+import { revalidatePath } from 'next/cache'
+import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+
+async function toggleAdmin(id: string, current: boolean) {
+  'use server'
+  const supabase = createSupabaseAdminClient()
+  await supabase.from('profiles').update({ is_admin: !current }).eq('id', id)
+  revalidatePath('/dashboard/users')
+}
+
+export default async function UsersPage() {
+  const supabase = createSupabaseAdminClient()
+  const { data: users, error } = await supabase
+    .from('profiles')
+    .select('id, name, email, tier, yel_points, total_visits, is_admin, created_at')
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold text-zinc-900 mb-6">Users</h1>
+
+      <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
+              <th className="px-4 py-3 font-medium text-zinc-500">Name</th>
+              <th className="px-4 py-3 font-medium text-zinc-500">Email</th>
+              <th className="px-4 py-3 font-medium text-zinc-500">Tier</th>
+              <th className="px-4 py-3 font-medium text-zinc-500">YEL</th>
+              <th className="px-4 py-3 font-medium text-zinc-500">Visits</th>
+              <th className="px-4 py-3 font-medium text-zinc-500">Admin</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users?.map(user => (
+              <tr
+                key={user.id}
+                className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50/50 transition-colors"
+              >
+                <td className="px-4 py-3 font-medium text-zinc-900">{user.name}</td>
+                <td className="px-4 py-3 text-zinc-600">{user.email}</td>
+                <td className="px-4 py-3">
+                  <span className="px-2 py-0.5 rounded-full text-xs bg-zinc-100 text-zinc-600">
+                    {user.tier}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-zinc-600 tabular-nums">{user.yel_points}</td>
+                <td className="px-4 py-3 text-zinc-600 tabular-nums">{user.total_visits}</td>
+                <td className="px-4 py-3">
+                  <form action={toggleAdmin.bind(null, user.id, user.is_admin)}>
+                    <button
+                      type="submit"
+                      title={user.is_admin ? 'Revoke admin' : 'Grant admin'}
+                      className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${
+                        user.is_admin ? 'bg-green-500' : 'bg-zinc-300'
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                          user.is_admin ? 'translate-x-4' : 'translate-x-0.5'
+                        }`}
+                      />
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}

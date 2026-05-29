@@ -1,0 +1,165 @@
+'use client'
+
+import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+
+export function AddItemForm({
+  venueId,
+  categoryId,
+}: {
+  venueId: string
+  categoryId: string
+}) {
+  const router = useRouter()
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoFile(file)
+    setPreview(URL.createObjectURL(file))
+  }
+
+  function clearPhoto() {
+    setPhotoFile(null)
+    setPreview(null)
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    const fd = new FormData(e.currentTarget)
+
+    try {
+      // 1. Upload photo if selected
+      let photo_url: string | null = null
+      if (photoFile) {
+        const uploadFd = new FormData()
+        uploadFd.append('file', photoFile)
+        uploadFd.append('venueId', venueId)
+        const res = await fetch('/api/upload-menu-image', { method: 'POST', body: uploadFd })
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error ?? 'Upload failed')
+        photo_url = json.url
+      }
+
+      // 2. Insert item via Supabase directly (service role handled server-side)
+      const res = await fetch('/api/menu-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          venue_id: venueId,
+          category_id: categoryId,
+          name: fd.get('name') as string,
+          description: (fd.get('description') as string) || null,
+          price: parseInt(fd.get('price') as string) || 0,
+          photo_url,
+          is_popular: fd.get('is_popular') === 'true',
+          allergens: (fd.get('allergens') as string)
+            .split(',').map(s => s.trim()).filter(Boolean),
+          sort_order: parseInt(fd.get('sort_order') as string) || 0,
+        }),
+      })
+
+      if (!res.ok) {
+        const json = await res.json()
+        throw new Error(json.error ?? 'Failed to add item')
+      }
+
+      // Reset form
+      ;(e.target as HTMLFormElement).reset()
+      clearPhoto()
+      router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium text-zinc-500">Add item</p>
+      <form onSubmit={handleSubmit} className="flex flex-wrap gap-2 items-end">
+        <input
+          type="text" name="name" placeholder="Name*" required
+          className="h-8 px-2 rounded border border-zinc-300 text-xs w-36"
+        />
+        <input
+          type="text" name="description" placeholder="Description"
+          className="h-8 px-2 rounded border border-zinc-300 text-xs w-44"
+        />
+        <input
+          type="number" name="price" placeholder="Price (AMD)*" required min="0"
+          className="h-8 px-2 rounded border border-zinc-300 text-xs w-28"
+        />
+        <input
+          type="text" name="allergens" placeholder="Allergens"
+          className="h-8 px-2 rounded border border-zinc-300 text-xs w-32"
+        />
+        <input
+          type="number" name="sort_order" placeholder="Order" defaultValue="0"
+          className="h-8 px-2 rounded border border-zinc-300 text-xs w-16"
+        />
+        <select name="is_popular" className="h-8 px-2 rounded border border-zinc-300 text-xs bg-white">
+          <option value="false">Not popular</option>
+          <option value="true">Popular</option>
+        </select>
+
+        {/* Photo picker */}
+        <div className="flex items-center gap-1.5">
+          {preview && (
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={preview}
+                alt="preview"
+                className="w-8 h-8 rounded object-cover border border-zinc-200"
+              />
+              <button
+                type="button"
+                onClick={clearPhoto}
+                className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-zinc-700 text-white text-[8px] flex items-center justify-center leading-none"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="h-8 px-2 rounded border border-zinc-300 text-xs bg-white hover:bg-zinc-50 transition-colors whitespace-nowrap"
+          >
+            {preview ? 'Change photo' : '+ Photo'}
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="h-8 px-3 rounded bg-zinc-900 text-white text-xs hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+        >
+          {loading ? 'Adding…' : 'Add'}
+        </button>
+      </form>
+
+      {error && (
+        <p className="text-xs text-red-600">{error}</p>
+      )}
+    </div>
+  )
+}

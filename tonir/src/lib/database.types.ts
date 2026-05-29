@@ -1,0 +1,302 @@
+export type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
+
+export interface Database {
+  public: {
+    Tables: {
+
+      venues: {
+        Row: {
+          id: string;
+          name: string;
+          cuisine: string;
+          area: string;
+          price: string;
+          rating: number;
+          reviews_count: number;
+          photo_url: string;
+          dish_url: string;
+          distance_km: string;
+          booked_today: number;
+          heat: 'high' | 'med' | 'low';
+          kind: 'restaurant' | 'bar' | 'lounge' | 'club';
+          coord_x: number;
+          coord_y: number;
+          description: string;
+          times: string[];
+          perk: string;
+          tags: string[];
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          name: string;
+          cuisine: string;
+          area: string;
+          price: string;
+          rating: number;
+          reviews_count: number;
+          photo_url: string;
+          dish_url: string;
+          distance_km: string;
+          booked_today: number;
+          heat: 'high' | 'med' | 'low';
+          kind: 'restaurant' | 'bar' | 'lounge' | 'club';
+          coord_x: number;
+          coord_y: number;
+          description: string;
+          times: string[];
+          perk: string;
+          tags: string[];
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['venues']['Insert']>;
+      };
+
+      reservations: {
+        Row: {
+          id: string;
+          user_id: string;
+          venue_id: string;
+          people: number;
+          date: string;
+          time: string;
+          occasion: string | null;
+          note: string | null;
+          status: 'pending' | 'confirmed' | 'cancelled' | 'visited';
+          yel_earned: string;
+          admin_note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          venue_id: string;
+          people: number;
+          date: string;
+          time: string;
+          occasion?: string | null;
+          note?: string | null;
+          status: 'pending' | 'confirmed' | 'cancelled' | 'visited';
+          yel_earned: string;
+          admin_note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          venue_id?: string;
+          people?: number;
+          date?: string;
+          time?: string;
+          occasion?: string | null;
+          note?: string | null;
+          status?: 'pending' | 'confirmed' | 'cancelled' | 'visited';
+          yel_earned?: string;
+          admin_note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+
+      favorites: {
+        Row: {
+          id: string;
+          user_id: string;
+          venue_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          venue_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          venue_id?: string;
+          created_at?: string;
+        };
+      };
+
+      profiles: {
+        Row: {
+          id: string;
+          name: string;
+          email: string;
+          avatar_url: string | null;
+          tier: string;
+          tier_level: number;
+          yel_points: number;
+          total_visits: number;
+          is_admin: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          name: string;
+          email: string;
+          avatar_url?: string | null;
+          tier?: string;
+          tier_level?: number;
+          yel_points?: number;
+          total_visits?: number;
+          is_admin?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          email?: string;
+          avatar_url?: string | null;
+          tier?: string;
+          tier_level?: number;
+          yel_points?: number;
+          total_visits?: number;
+          is_admin?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+
+      menu_categories: {
+        Row: {
+          id: string;
+          venue_id: string;
+          name: string;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          venue_id: string;
+          name: string;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          venue_id?: string;
+          name?: string;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+
+      menu_items: {
+        Row: {
+          id: string;
+          venue_id: string;
+          category_id: string;
+          name: string;
+          description: string | null;
+          price: number;             // integer — AMD
+          photo_url: string | null;
+          is_available: boolean;
+          is_popular: boolean;
+          allergens: string[];
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          venue_id: string;
+          category_id: string;
+          name: string;
+          description?: string | null;
+          price: number;
+          photo_url?: string | null;
+          is_available?: boolean;
+          is_popular?: boolean;
+          allergens?: string[];
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          venue_id?: string;
+          category_id?: string;
+          name?: string;
+          description?: string | null;
+          price?: number;
+          photo_url?: string | null;
+          is_available?: boolean;
+          is_popular?: boolean;
+          allergens?: string[];
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+
+      guides: {
+        Row: {
+          id: string;
+          title: string;
+          subtitle: string;
+          count: number;
+          cover_url: string;
+          tag: string;
+          sort_order: number;
+          is_active: boolean;
+          venue_ids: string[];
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          title: string;
+          subtitle: string;
+          count?: number;
+          cover_url: string;
+          tag: string;
+          sort_order?: number;
+          is_active?: boolean;
+          venue_ids?: string[];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          subtitle?: string;
+          count?: number;
+          cover_url?: string;
+          tag?: string;
+          sort_order?: number;
+          is_active?: boolean;
+          venue_ids?: string[];
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+
+    };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
+  };
+}
+
+// ── Convenience row types ─────────────────────────────────────────────────────
+export type VenueRow          = Database['public']['Tables']['venues']['Row'];
+export type ReservationRow    = Database['public']['Tables']['reservations']['Row'];
+export type FavoriteRow       = Database['public']['Tables']['favorites']['Row'];
+export type ProfileRow        = Database['public']['Tables']['profiles']['Row'];
+export type MenuCategoryRow   = Database['public']['Tables']['menu_categories']['Row'];
+export type MenuItemRow       = Database['public']['Tables']['menu_items']['Row'];
+export type GuideRow          = Database['public']['Tables']['guides']['Row'];
