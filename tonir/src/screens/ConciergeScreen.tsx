@@ -86,7 +86,7 @@ const REPLY_RULES: ReplyRule[] = [
   },
 ];
 
-const CONCIERGE_API = process.env.EXPO_PUBLIC_CONCIERGE_URL;
+const CONCIERGE_API = process.env.EXPO_PUBLIC_CONCIERGE_URL?.replace(/\/$/, '');
 
 function buildReply(input: string, tr: (key: string) => string): { text: string; suggestions: string[] } {
   const q = input.toLowerCase();
