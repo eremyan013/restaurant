@@ -139,6 +139,7 @@ export interface Database {
           yel_points: number;
           total_visits: number;
           is_admin: boolean;
+          push_token: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -152,6 +153,7 @@ export interface Database {
           yel_points?: number;
           total_visits?: number;
           is_admin?: boolean;
+          push_token?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -165,6 +167,7 @@ export interface Database {
           yel_points?: number;
           total_visits?: number;
           is_admin?: boolean;
+          push_token?: string | null;
           created_at?: string;
           updated_at?: string;
         };

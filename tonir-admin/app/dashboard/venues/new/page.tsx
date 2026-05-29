@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 
@@ -39,6 +40,7 @@ async function createVenue(formData: FormData) {
   })
 
   if (error) throw new Error(error.message)
+  revalidatePath('/dashboard/venues')
   redirect('/dashboard/venues')
 }
 

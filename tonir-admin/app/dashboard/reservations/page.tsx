@@ -17,7 +17,31 @@ type ReservationWithJoins = ReservationRow & {
 async function setStatus(id: string, status: ReservationRow['status']) {
   'use server'
   const supabase = createSupabaseAdminClient()
+
+  // Fetch reservation details needed for the notification before updating
+  const { data: res } = await (supabase as any)
+    .from('reservations')
+    .select('user_id, date, time, venues(name), profiles(push_token)')
+    .eq('id', id)
+    .single()
+
   await (supabase as any).from('reservations').update({ status }).eq('id', id)
+
+  // Send push notification for user-visible status changes
+  if (res?.profiles?.push_token && (status === 'confirmed' || status === 'cancelled')) {
+    const venueName: string = res.venues?.name ?? 'your reservation'
+    const title  = status === 'confirmed' ? '✅ Booking Confirmed'  : '❌ Booking Cancelled'
+    const body   = status === 'confirmed'
+      ? `Your table at ${venueName} on ${res.date} at ${res.time} is confirmed!`
+      : `Your reservation at ${venueName} on ${res.date} has been cancelled.`
+
+    await fetch('https://exp.host/--/api/v2/push/send', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ to: res.profiles.push_token, title, body, sound: 'default' }),
+    }).catch(() => {}) // don't block if push delivery fails
+  }
+
   revalidatePath('/dashboard/reservations')
 }
 

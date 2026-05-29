@@ -6,11 +6,53 @@ import { View, Text, Pressable, StyleSheet, ActivityIndicator, Platform } from '
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 
 import { useStore } from '../store';
 import { Icon, IconName } from '../components/Icon';
 import { SHADOWS, FONTS} from '../theme';
 import { supabase } from '../lib/supabase';
+
+// Show notifications while app is in foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+async function registerPushToken(userId: string) {
+  if (Platform.OS === 'web' || !Device.isDevice) return;
+  try {
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+      });
+    }
+    const { status: existing } = await Notifications.getPermissionsAsync();
+    let finalStatus = existing;
+    if (existing !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== 'granted') return;
+
+    const projectId =
+      (Constants.easConfig as any)?.projectId ??
+      (Constants.expoConfig?.extra as any)?.eas?.projectId;
+    const { data: token } = await Notifications.getExpoPushTokenAsync(
+      projectId ? { projectId } : undefined
+    );
+    await (supabase as any).from('profiles').update({ push_token: token }).eq('id', userId);
+  } catch {
+    // Running in simulator or EAS project not yet configured — skip silently
+  }
+}
 
 export const ONBOARDING_KEY = 'tonir_onboarding_done';
 
@@ -136,8 +178,10 @@ export function AppNavigator() {
   useEffect(() => {
     // Check existing session on mount
     (supabase as any).auth.getSession().then(({ data }: any) => {
+      const uid = data.session?.user?.id ?? null;
       setSession(!!data.session);
-      useStore.getState().setUserId(data.session?.user?.id ?? null);
+      useStore.getState().setUserId(uid);
+      if (uid) registerPushToken(uid);
     });
 
     // Check whether onboarding has already been completed
@@ -148,8 +192,10 @@ export function AppNavigator() {
     // Listen for sign-in / sign-out
     const { data: { subscription } } = (supabase as any).auth.onAuthStateChange(
       (_event: string, sess: any) => {
+        const uid = sess?.user?.id ?? null;
         setSession(!!sess);
-        useStore.getState().setUserId(sess?.user?.id ?? null);
+        useStore.getState().setUserId(uid);
+        if (uid) registerPushToken(uid);
       }
     );
     return () => subscription.unsubscribe();
