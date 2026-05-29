@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS })
+}
+
 const SYSTEM_PROMPT = `You are Tonir Concierge, an AI restaurant assistant for Yerevan, Armenia.
 
 Available venues (use exact IDs in suggestions array):
@@ -32,12 +42,12 @@ interface ClaudeMessage {
 export async function POST(request: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    return NextResponse.json({ error: 'Not configured' }, { status: 503 })
+    return NextResponse.json({ error: 'Not configured' }, { status: 503, headers: CORS })
   }
 
   const { messages } = await request.json() as { messages: ClaudeMessage[] }
   if (!Array.isArray(messages) || messages.length === 0) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400, headers: CORS })
   }
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -56,7 +66,7 @@ export async function POST(request: NextRequest) {
   })
 
   if (!response.ok) {
-    return NextResponse.json({ error: 'Upstream error' }, { status: 502 })
+    return NextResponse.json({ error: 'Upstream error' }, { status: 502, headers: CORS })
   }
 
   const data = await response.json()
@@ -65,11 +75,10 @@ export async function POST(request: NextRequest) {
   try {
     const parsed = JSON.parse(raw)
     if (typeof parsed.text === 'string' && Array.isArray(parsed.suggestions)) {
-      return NextResponse.json(parsed)
+      return NextResponse.json(parsed, { headers: CORS })
     }
     throw new Error('bad shape')
   } catch {
-    // Claude returned non-JSON — wrap it
-    return NextResponse.json({ text: raw, suggestions: [] })
+    return NextResponse.json({ text: raw, suggestions: [] }, { headers: CORS })
   }
 }
