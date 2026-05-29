@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { fetchReservations, createReservation, cancelReservation } from '../lib/api';
 import { ReservationRow } from '../lib/database.types';
 import { useStore } from '../store';
+import { supabase } from '../lib/supabase';
 
 export function useReservations() {
   const { userId, setUpcomingCount } = useStore();
@@ -10,6 +11,7 @@ export function useReservations() {
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
 
+  // Initial fetch
   useEffect(() => {
     if (!userId) {
       setLoading(false);
@@ -22,6 +24,39 @@ export function useReservations() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [userId, attempt]);
+
+  // Realtime: keep reservations in sync when admin changes status
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`reservations:${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reservations',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'UPDATE') {
+            setReservations((prev) =>
+              prev.map((r) => (r.id === (payload.new as ReservationRow).id ? (payload.new as ReservationRow) : r))
+            );
+          } else if (payload.eventType === 'INSERT') {
+            setReservations((prev) => [payload.new as ReservationRow, ...prev]);
+          } else if (payload.eventType === 'DELETE') {
+            setReservations((prev) => prev.filter((r) => r.id !== (payload.old as ReservationRow).id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
