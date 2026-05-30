@@ -33,9 +33,20 @@ export async function proxy(request: NextRequest) {
 
   const path = request.nextUrl.pathname
 
-  // Redirect unauthenticated users away from /dashboard
-  if (!user && path.startsWith('/dashboard')) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  // Concierge API is public — called by the mobile app
+  if (path.startsWith('/api/concierge')) {
+    return supabaseResponse
+  }
+
+  if (!user) {
+    // Block unauthenticated API calls with 401
+    if (path.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    // Redirect unauthenticated users away from /dashboard
+    if (path.startsWith('/dashboard')) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
   }
 
   // Redirect authenticated users away from /login
