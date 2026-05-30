@@ -8,24 +8,14 @@
     "ios": {
       "bundleIdentifier": "com.tonir.app",
       "infoPlist": {
-        "UIBackgroundModes": [
-          "remote-notification"
-        ]
+        "UIBackgroundModes": ["remote-notification"]
       }
     },
     "android": {
-      "package": "com.tonir.app",
-      "googleServicesFile": "./google-services.json"
+      "package": "com.tonir.app"
     },
     "plugins": [
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#1A1208",
-          "sounds": []
-        }
-      ]
+      ["expo-notifications", { "color": "#1A1208" }]
     ],
     "extra": {
       "eas": {
