@@ -37,6 +37,17 @@ async function getStats() {
 export default async function DashboardPage() {
   const stats = await getStats()
 
+  if (!stats.ok) {
+    return (
+      <div>
+        <h1 className="text-2xl font-semibold text-zinc-900 mb-6">Dashboard</h1>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-sm text-red-600">
+          Could not load stats — database may be temporarily unavailable. Try refreshing the page.
+        </div>
+      </div>
+    )
+  }
+
   const cards = [
     {
       label: 'Active Venues',
@@ -60,17 +71,6 @@ export default async function DashboardPage() {
       sub: 'total accounts',
     },
   ]
-
-  if (!stats.ok) {
-    return (
-      <div>
-        <h1 className="text-2xl font-semibold text-zinc-900 mb-6">Dashboard</h1>
-        <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-sm text-red-600">
-          Could not load stats — database may be temporarily unavailable. Try refreshing the page.
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div>
