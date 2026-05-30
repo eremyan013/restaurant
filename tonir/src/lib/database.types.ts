@@ -284,6 +284,31 @@ export interface Database {
         };
       };
 
+      reviews: {
+        Row: {
+          id: string;
+          user_id: string;
+          venue_id: string;
+          reservation_id: string;
+          rating: number;
+          comment: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          venue_id: string;
+          reservation_id: string;
+          rating: number;
+          comment?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          rating?: number;
+          comment?: string | null;
+        };
+      };
+
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -300,3 +325,4 @@ export type ProfileRow        = Database['public']['Tables']['profiles']['Row'];
 export type MenuCategoryRow   = Database['public']['Tables']['menu_categories']['Row'];
 export type MenuItemRow       = Database['public']['Tables']['menu_items']['Row'];
 export type GuideRow          = Database['public']['Tables']['guides']['Row'];
+export type ReviewRow         = Database['public']['Tables']['reviews']['Row'];

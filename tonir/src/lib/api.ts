@@ -116,6 +116,35 @@ export async function uploadAvatar(userId: string, localUri: string): Promise<st
 }
 
 // ─────────────────────────────────────────────
+// REVIEWS
+// ─────────────────────────────────────────────
+
+export async function submitReview(
+  userId: string,
+  venueId: string,
+  reservationId: string,
+  rating: number,
+  comment: string,
+): Promise<void> {
+  const { error } = await sb.from('reviews').insert({
+    user_id: userId,
+    venue_id: venueId,
+    reservation_id: reservationId,
+    rating,
+    comment: comment.trim() || null,
+  });
+  if (error) throw error;
+}
+
+export async function fetchMyReviews(userId: string): Promise<string[]> {
+  const { data } = await sb
+    .from('reviews')
+    .select('reservation_id')
+    .eq('user_id', userId);
+  return ((data ?? []) as Array<{ reservation_id: string }>).map((r) => r.reservation_id);
+}
+
+// ─────────────────────────────────────────────
 // GUIDES
 // ─────────────────────────────────────────────
 

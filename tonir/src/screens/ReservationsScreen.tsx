@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  View, Text, ScrollView, Pressable, Image, StyleSheet, StatusBar, ActivityIndicator, RefreshControl, Alert, Platform,
+  View, Text, ScrollView, Pressable, Image, StyleSheet, StatusBar, ActivityIndicator,
+  RefreshControl, Alert, Platform, Modal, TextInput, KeyboardAvoidingView,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +15,8 @@ import { useVenues } from '../hooks/useVenues';
 import { useReservations } from '../hooks/useReservations';
 import { useProfile } from '../hooks/useProfile';
 import { useTranslation } from '../hooks/useTranslation';
+import { submitReview, fetchMyReviews } from '../lib/api';
+import { ReservationRow } from '../lib/database.types';
 import { Icon } from '../components/Icon';
 import { ErrorState } from '../components/ErrorState';
 import { FONTS } from '../theme';
@@ -24,7 +27,7 @@ type Nav = CompositeNavigationProp<
 >;
 
 export function ReservationsScreen({ navigation }: { navigation: Nav }) {
-  const { theme: t } = useStore();
+  const { theme: t, userId } = useStore();
   const insets = useSafeAreaInsets();
   const { tr, trf, language } = useTranslation();
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
@@ -33,6 +36,40 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
   const { upcoming, past, loading, error, retry, cancel } = useReservations();
   const { profile } = useProfile();
   const [refreshing, setRefreshing] = useState(false);
+
+  // Rating modal state
+  const [ratingRes, setRatingRes] = useState<ReservationRow | null>(null);
+  const [stars, setStars] = useState(0);
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [ratedIds, setRatedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (userId) fetchMyReviews(userId).then((ids) => setRatedIds(new Set(ids)));
+  }, [userId]);
+
+  async function handleSubmitReview() {
+    if (!ratingRes || stars === 0 || !userId) return;
+    setSubmitting(true);
+    try {
+      await submitReview(userId, ratingRes.venue_id, ratingRes.id, stars, comment);
+      setRatedIds((prev) => new Set([...prev, ratingRes.id]));
+      setRatingRes(null);
+      setStars(0);
+      setComment('');
+    } catch {
+      Alert.alert('Error', 'Could not submit review. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function openRating(res: ReservationRow) {
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setStars(0);
+    setComment('');
+    setRatingRes(res);
+  }
 
   const statusLabels = useMemo(() => ({
     confirmed:  { label: tr('res_status_confirmed'),  color: '#1F4D3E' },
@@ -152,17 +189,36 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                   <View style={styles.cardBottom}>
                     <Text style={[styles.perkText, { color: t.accent }]}>{res.yel_earned} Yel</Text>
                     <View style={styles.actions}>
-                      <Pressable
-                        onPress={() => {
-                          if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          navigation.navigate('Detail', { venueId: venue.id });
-                        }}
-                        style={[styles.actionBtn, { borderColor: t.border }]}
-                      >
-                        <Text style={[styles.actionText, { color: t.text }]}>
-                          {tab === 'past' ? tr('res_action_rate') : tr('res_action_modify')}
-                        </Text>
-                      </Pressable>
+                      {tab === 'past' ? (
+                        ratedIds.has(res.id) ? (
+                          <View style={[styles.actionBtn, { borderColor: t.border, opacity: 0.5 }]}>
+                            <Text style={[styles.actionText, { color: t.textMute }]}>
+                              ⭐ {tr('rate_done')}
+                            </Text>
+                          </View>
+                        ) : (
+                          <Pressable
+                            onPress={() => openRating(res)}
+                            style={[styles.actionBtn, { borderColor: t.border }]}
+                          >
+                            <Text style={[styles.actionText, { color: t.text }]}>
+                              {tr('res_action_rate')}
+                            </Text>
+                          </Pressable>
+                        )
+                      ) : (
+                        <Pressable
+                          onPress={() => {
+                            if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            navigation.navigate('Detail', { venueId: venue.id });
+                          }}
+                          style={[styles.actionBtn, { borderColor: t.border }]}
+                        >
+                          <Text style={[styles.actionText, { color: t.text }]}>
+                            {tr('res_action_modify')}
+                          </Text>
+                        </Pressable>
+                      )}
                       {tab === 'upcoming' && (
                         <Pressable
                           onPress={() =>
@@ -197,6 +253,80 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
           </View>
         )}
       </ScrollView>
+
+      {/* Rating modal */}
+      <Modal
+        visible={!!ratingRes}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setRatingRes(null)}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalBackdrop}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setRatingRes(null)} />
+          <View style={[styles.modalSheet, { backgroundColor: t.surface }]}>
+            {(() => {
+              const venue = venues.find((v) => v.id === ratingRes?.venue_id);
+              return (
+                <>
+                  <Text style={[styles.modalTitle, { color: t.text }]}>{tr('rate_title')}</Text>
+                  <Text style={[styles.modalSub, { color: t.textMute }]}>
+                    {trf('rate_sub', { venue: venue?.name ?? '' })}
+                  </Text>
+
+                  {/* Stars */}
+                  <View style={styles.starsRow}>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Pressable
+                        key={n}
+                        onPress={() => {
+                          if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setStars(n);
+                        }}
+                        hitSlop={8}
+                      >
+                        <Text style={[styles.star, { opacity: n <= stars ? 1 : 0.25 }]}>⭐</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+
+                  {/* Comment */}
+                  <TextInput
+                    value={comment}
+                    onChangeText={setComment}
+                    placeholder={tr('rate_comment')}
+                    placeholderTextColor={t.textMute}
+                    multiline
+                    numberOfLines={3}
+                    style={[styles.commentInput, { color: t.text, borderColor: t.border, backgroundColor: t.bg }]}
+                  />
+
+                  {/* Buttons */}
+                  <View style={styles.modalBtns}>
+                    <Pressable
+                      onPress={() => setRatingRes(null)}
+                      style={[styles.modalBtn, { borderColor: t.border }]}
+                    >
+                      <Text style={[styles.modalBtnText, { color: t.textMute }]}>{tr('rate_cancel')}</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={handleSubmitReview}
+                      disabled={stars === 0 || submitting}
+                      style={[styles.modalBtn, styles.modalBtnPrimary, { backgroundColor: stars === 0 ? t.border : t.primary }]}
+                    >
+                      <Text style={[styles.modalBtnText, { color: '#FBF5E8' }]}>
+                        {submitting ? '…' : tr('rate_submit')}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </>
+              );
+            })()}
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -270,4 +400,37 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   actionText: { fontSize: 13, fontFamily: FONTS.semiBold, fontWeight: '600' },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    gap: 16,
+  },
+  modalTitle: { fontSize: 18, fontFamily: FONTS.bold, fontWeight: '700' },
+  modalSub: { fontSize: 14, marginTop: -8 },
+  starsRow: { flexDirection: 'row', gap: 8 },
+  star: { fontSize: 32 },
+  commentInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 14,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  modalBtns: { flexDirection: 'row', gap: 10 },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  modalBtnPrimary: { borderWidth: 0 },
+  modalBtnText: { fontSize: 14, fontFamily: FONTS.semiBold, fontWeight: '600' },
 });
