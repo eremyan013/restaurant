@@ -88,6 +88,38 @@ const REPLY_RULES: ReplyRule[] = [
 
 const CONCIERGE_API = process.env.EXPO_PUBLIC_CONCIERGE_URL?.replace(/\/$/, '');
 
+// Extract party size and time from the conversation history so the
+// booking screen can be pre-filled when the user taps "Book now".
+function extractBookingHints(history: Message[]): { people?: number; time?: string } {
+  const text = history.map((m) => m.text).join(' ').toLowerCase();
+
+  // Party size: "for 2", "table for 4", "2 people", "2 of us", etc.
+  const peopleMatch =
+    text.match(/(?:for|table\s+for|party\s+of|group\s+of)\s+(\d+)/) ||
+    text.match(/(\d+)\s*(?:people|persons|guests|of\s+us|pax)/);
+  const people = peopleMatch ? parseInt(peopleMatch[1], 10) : undefined;
+
+  // Time: "8pm", "8:30pm", "20:00", "at 8"
+  const timeMatch =
+    text.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i) ||
+    text.match(/\bat\s+(\d{1,2})(?::(\d{2}))?\b/) ||
+    text.match(/(\d{2}):(\d{2})/);
+  let time: string | undefined;
+  if (timeMatch) {
+    const ampm = timeMatch[3]?.toLowerCase();
+    let h = parseInt(timeMatch[1], 10);
+    const m = timeMatch[2] ?? '00';
+    if (ampm === 'pm' && h !== 12) h += 12;
+    if (ampm === 'am' && h === 12) h = 0;
+    if (h >= 0 && h <= 23) time = `${String(h).padStart(2, '0')}:${m}`;
+  }
+
+  return {
+    people: people && people >= 1 && people <= 20 ? people : undefined,
+    time,
+  };
+}
+
 function buildReply(input: string, tr: (key: string) => string): { text: string; suggestions: string[] } {
   const q = input.toLowerCase();
   for (const rule of REPLY_RULES) {
@@ -285,7 +317,14 @@ export function ConciergeScreen({ navigation }: Props) {
                       onOpen={() => navigation.navigate('Detail', { venueId: venue.id })}
                       onFav={() => toggleFav(venue.id)}
                       isFav={favs.has(venue.id)}
-                      onBook={() => navigation.navigate('Booking', { venueId: venue.id })}
+                      onBook={() => {
+                        const { people, time } = extractBookingHints(messages);
+                        navigation.navigate('Booking', {
+                          venueId: venue.id,
+                          ...(people ? { people } : {}),
+                          ...(time   ? { time }   : {}),
+                        });
+                      }}
                     />
                   );
                 })}
