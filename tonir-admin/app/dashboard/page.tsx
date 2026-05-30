@@ -1,31 +1,36 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 
 async function getStats() {
-  const supabase = createSupabaseAdminClient()
-  const today = new Date().toISOString().split('T')[0]
+  try {
+    const supabase = createSupabaseAdminClient()
+    const today = new Date().toISOString().split('T')[0]
 
-  const [venues, todayRes, pendingRes, users] = await Promise.all([
-    supabase.from('venues').select('id, is_active'),
-    supabase
-      .from('reservations')
-      .select('*', { count: 'exact', head: true })
-      .eq('date', today),
-    supabase
-      .from('reservations')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'pending'),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }),
-  ])
+    const [venues, todayRes, pendingRes, users] = await Promise.all([
+      supabase.from('venues').select('id, is_active'),
+      supabase
+        .from('reservations')
+        .select('*', { count: 'exact', head: true })
+        .eq('date', today),
+      supabase
+        .from('reservations')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending'),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }),
+    ])
 
-  const activeVenues = venues.data?.filter(v => v.is_active).length ?? 0
-  const totalVenues = venues.data?.length ?? 0
+    const activeVenues = venues.data?.filter(v => v.is_active).length ?? 0
+    const totalVenues = venues.data?.length ?? 0
 
-  return {
-    activeVenues,
-    totalVenues,
-    todayReservations: todayRes.count ?? 0,
-    pendingReservations: pendingRes.count ?? 0,
-    totalUsers: users.count ?? 0,
+    return {
+      ok: true as const,
+      activeVenues,
+      totalVenues,
+      todayReservations: todayRes.count ?? 0,
+      pendingReservations: pendingRes.count ?? 0,
+      totalUsers: users.count ?? 0,
+    }
+  } catch {
+    return { ok: false as const }
   }
 }
 
@@ -55,6 +60,17 @@ export default async function DashboardPage() {
       sub: 'total accounts',
     },
   ]
+
+  if (!stats.ok) {
+    return (
+      <div>
+        <h1 className="text-2xl font-semibold text-zinc-900 mb-6">Dashboard</h1>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-sm text-red-600">
+          Could not load stats — database may be temporarily unavailable. Try refreshing the page.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>
