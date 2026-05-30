@@ -140,8 +140,8 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     book_days:            ['Կիր', 'Երկ', 'Երեք', 'Չոր', 'Հնգ', 'Ուրբ', 'Շբթ'],
     book_months:          ['Հնվ', 'Փտվ', 'Մրտ', 'Ապր', 'Մայ', 'Հնս', 'Հուլ', 'Օգ', 'Սեպ', 'Հկտ', 'Նոյ', 'Դեկ'],
     // ConfirmationScreen
-    conf_title:           'Ամրագրումը\nհաստատված է',
-    conf_sub:             'Հաստատումը կուղարկվի ձեր email-ին',
+    conf_title:           'Հայտն\nընդունված է',
+    conf_sub:             'Կկանչենք, երբ ամրագրումը հաստատվի',
     conf_date:            'Ամսաթիվ',
     conf_time:            'Ժամ',
     conf_people:          'Հոգի',
@@ -370,8 +370,8 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     book_days:            ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
     book_months:          ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
     // ConfirmationScreen
-    conf_title:           'Бронирование\nподтверждено',
-    conf_sub:             'Подтверждение будет отправлено на ваш email',
+    conf_title:           'Заявка\nотправлена',
+    conf_sub:             'Уведомим вас, как только бронирование подтвердят',
     conf_date:            'Дата',
     conf_time:            'Время',
     conf_people:          'Гости',
@@ -600,8 +600,8 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     book_days:            ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     book_months:          ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
     // ConfirmationScreen
-    conf_title:           'Reservation\nconfirmed',
-    conf_sub:             'Confirmation will be sent to your email',
+    conf_title:           'Request\nSent',
+    conf_sub:             "We'll notify you once your reservation is confirmed",
     conf_date:            'Date',
     conf_time:            'Time',
     conf_people:          'People',

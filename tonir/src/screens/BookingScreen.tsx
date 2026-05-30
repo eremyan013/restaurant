@@ -15,6 +15,7 @@ import { useReservations } from '../hooks/useReservations';
 import { useTranslation } from '../hooks/useTranslation';
 import { Icon } from '../components/Icon';
 import { FONTS } from '../theme';
+import { notifyAdminsNewReservation } from '../lib/api';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Booking'>;
@@ -80,9 +81,10 @@ export function BookingScreen({ navigation, route }: Props) {
         time,
         occasion,
         note,
-        status: 'confirmed',
+        status: 'pending',
         yel_earned: venue!.perk,
       });
+      notifyAdminsNewReservation(venue!.name, dateStr, time, people).catch(() => {});
       setBooking({
         venueId,
         people,

@@ -1,4 +1,6 @@
 import { supabase as _supabase } from './supabase';
+
+const ADMIN_URL = process.env.EXPO_PUBLIC_CONCIERGE_URL?.replace(/\/$/, '');
 import { VenueRow, ReservationRow, ProfileRow, MenuCategoryRow, MenuItemRow, GuideRow } from './database.types';
 
 // Cast to any to escape Supabase TS generic inference issue with this package version.
@@ -142,6 +144,24 @@ export async function fetchMyReviews(userId: string): Promise<string[]> {
     .select('reservation_id')
     .eq('user_id', userId);
   return ((data ?? []) as Array<{ reservation_id: string }>).map((r) => r.reservation_id);
+}
+
+// ─────────────────────────────────────────────
+// ADMIN NOTIFICATIONS
+// ─────────────────────────────────────────────
+
+export async function notifyAdminsNewReservation(
+  venueName: string,
+  date: string,
+  time: string,
+  people: number,
+): Promise<void> {
+  if (!ADMIN_URL) return;
+  await fetch(`${ADMIN_URL}/api/reservations/notify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ venue_name: venueName, date, time, people }),
+  });
 }
 
 // ─────────────────────────────────────────────

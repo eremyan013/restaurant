@@ -33,8 +33,8 @@ export async function proxy(request: NextRequest) {
 
   const path = request.nextUrl.pathname
 
-  // Concierge API is public — called by the mobile app
-  if (path.startsWith('/api/concierge')) {
+  // Public API routes — called by the mobile app
+  if (path.startsWith('/api/concierge') || path.startsWith('/api/reservations/notify')) {
     return supabaseResponse
   }
 
