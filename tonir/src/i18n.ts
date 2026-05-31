@@ -211,6 +211,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     auth_err_exists:        'Այս email-ն արդեն գրանցված է',
     auth_err_not_confirmed: 'Հաստատեք ձեր email հասցեն',
     auth_err_generic:       'Սխալ է տեղի ունեցել',
+    auth_err_admin:         'Այս հաշիվը նախատեսված է միայն ադմինիստրատորի վահանակի համար',
     // DetailScreen
     det_map:              'Քարտեզ',
     det_open_until:       'Բաց մինչև 23:30',
@@ -441,6 +442,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     auth_err_exists:        'Этот email уже зарегистрирован',
     auth_err_not_confirmed: 'Подтвердите ваш email адрес',
     auth_err_generic:       'Произошла ошибка',
+    auth_err_admin:         'Этот аккаунт предназначен только для панели администратора',
     // DetailScreen
     det_map:              'Карта',
     det_open_until:       'Открыто до 23:30',
@@ -671,6 +673,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     auth_err_exists:        'This email is already registered',
     auth_err_not_confirmed: 'Confirm your email address',
     auth_err_generic:       'An error occurred',
+    auth_err_admin:         'This account is for the admin panel only',
     // DetailScreen
     det_map:              'Map',
     det_open_until:       'Open until 11:30 PM',

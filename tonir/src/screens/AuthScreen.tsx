@@ -70,11 +70,25 @@ export function AuthScreen({ navigation }: Props) {
         }, { onConflict: 'id' });
         // onAuthStateChange handles navigation
       } else {
-        const { error: err } = await (supabase as any).auth.signInWithPassword({
+        const { data, error: err } = await (supabase as any).auth.signInWithPassword({
           email: email.trim(),
           password,
         });
         if (err) throw err;
+        // Block admin accounts from logging into the mobile app
+        if (data?.user) {
+          const { data: profile } = await (supabase as any)
+            .from('profiles')
+            .select('role')
+            .eq('id', data.user.id)
+            .single();
+          if (profile?.role === 'admin' || profile?.role === 'super_admin') {
+            await (supabase as any).auth.signOut();
+            setError(tr('auth_err_admin'));
+            setLoading(false);
+            return;
+          }
+        }
         // onAuthStateChange in AppNavigator handles navigation
       }
     } catch (err: any) {
