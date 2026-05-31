@@ -1,5 +1,7 @@
+import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { getCurrentAdmin } from '@/lib/current-admin'
 
 async function toggleAdmin(id: string, current: boolean) {
   'use server'
@@ -9,6 +11,9 @@ async function toggleAdmin(id: string, current: boolean) {
 }
 
 export default async function UsersPage() {
+  const admin = await getCurrentAdmin()
+  if (admin?.role !== 'super_admin') redirect('/dashboard')
+
   const supabase = createSupabaseAdminClient()
   const { data: users, error } = await supabase
     .from('profiles')

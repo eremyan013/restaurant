@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { getCurrentAdmin } from '@/lib/current-admin'
 
 async function createVenue(formData: FormData) {
   'use server'
@@ -44,7 +45,9 @@ async function createVenue(formData: FormData) {
   redirect('/dashboard/venues')
 }
 
-export default function NewVenuePage() {
+export default async function NewVenuePage() {
+  const admin = await getCurrentAdmin()
+  if (admin?.role !== 'super_admin') redirect('/dashboard')
   return (
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-6">

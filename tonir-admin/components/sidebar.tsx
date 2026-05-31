@@ -3,18 +3,42 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
+import type { AdminRole } from '@/lib/current-admin'
 
-const NAV = [
+const SUPER_ADMIN_NAV = [
   { href: '/dashboard', label: 'Dashboard', exact: true },
   { href: '/dashboard/venues', label: 'Venues', exact: false },
   { href: '/dashboard/reservations', label: 'Reservations', exact: false },
   { href: '/dashboard/users', label: 'Users', exact: false },
   { href: '/dashboard/guides', label: 'Guides', exact: false },
+  { href: '/dashboard/admins', label: 'Admins', exact: false },
 ]
 
-export function Sidebar({ adminName }: { adminName: string }) {
+export function Sidebar({
+  adminName,
+  role,
+  managedVenueId,
+}: {
+  adminName: string
+  role: AdminRole
+  managedVenueId: string | null
+}) {
   const pathname = usePathname()
   const router = useRouter()
+
+  const nav =
+    role === 'super_admin'
+      ? SUPER_ADMIN_NAV
+      : [
+          { href: '/dashboard', label: 'Dashboard', exact: true },
+          { href: '/dashboard/reservations', label: 'Reservations', exact: false },
+          ...(managedVenueId
+            ? [
+                { href: `/dashboard/menus/${managedVenueId}`, label: 'Menu', exact: false },
+                { href: `/dashboard/venues/${managedVenueId}`, label: 'My Venue', exact: false },
+              ]
+            : []),
+        ]
 
   async function signOut() {
     const supabase = createSupabaseBrowserClient()
@@ -29,12 +53,17 @@ export function Sidebar({ adminName }: { adminName: string }) {
       <div className="px-5 pt-6 pb-5 border-b border-zinc-800">
         <p className="text-base font-semibold tracking-tight">Tonir Admin</p>
         <p className="text-xs text-zinc-400 mt-0.5 truncate">{adminName}</p>
+        {role === 'super_admin' && (
+          <span className="mt-1.5 inline-block text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-medium tracking-wide">
+            SUPER ADMIN
+          </span>
+        )}
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4">
         <ul className="flex flex-col gap-0.5">
-          {NAV.map(({ href, label, exact }) => {
+          {nav.map(({ href, label, exact }) => {
             const active = exact ? pathname === href : pathname.startsWith(href)
             return (
               <li key={href}>

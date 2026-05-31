@@ -1,7 +1,8 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { getCurrentAdmin } from '@/lib/current-admin'
 import type { MenuCategoryRow, MenuItemRow } from '@/lib/database.types'
 import { AddItemForm } from '@/components/add-item-form'
 import { EditItemRow } from '@/components/edit-item-row'
@@ -34,6 +35,13 @@ export default async function MenuPage({
   params: Promise<{ venueId: string }>
 }) {
   const { venueId } = await params
+
+  // Restaurant admins can only access their own venue's menu
+  const admin = await getCurrentAdmin()
+  if (admin?.role === 'admin' && admin.managed_venue_id !== venueId) {
+    redirect(admin.managed_venue_id ? `/dashboard/menus/${admin.managed_venue_id}` : '/dashboard')
+  }
+
   const supabase = createSupabaseAdminClient()
 
   const [{ data: venue }, { data: categories }, { data: items }] = await Promise.all([

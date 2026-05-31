@@ -1,5 +1,7 @@
+import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { getCurrentAdmin } from '@/lib/current-admin'
 import type { ReservationRow } from '@/lib/database.types'
 
 const STATUS_CLASSES: Record<string, string> = {
@@ -16,30 +18,35 @@ type ReservationWithJoins = ReservationRow & {
 
 async function setStatus(id: string, status: ReservationRow['status']) {
   'use server'
+  const admin = await getCurrentAdmin()
+  if (!admin) return
+
   const supabase = createSupabaseAdminClient()
 
-  // Fetch reservation details needed for the notification before updating
+  // Fetch reservation to verify venue ownership for restricted admins
   const { data: res } = await (supabase as any)
     .from('reservations')
-    .select('user_id, date, time, venues(name), profiles(push_token)')
+    .select('user_id, venue_id, date, time, venues(name), profiles(push_token)')
     .eq('id', id)
     .single()
 
+  if (!res) return
+  if (admin.role === 'admin' && res.venue_id !== admin.managed_venue_id) return
+
   await (supabase as any).from('reservations').update({ status }).eq('id', id)
 
-  // Send push notification for user-visible status changes
   if (res?.profiles?.push_token && (status === 'confirmed' || status === 'cancelled')) {
     const venueName: string = res.venues?.name ?? 'your reservation'
-    const title  = status === 'confirmed' ? '✅ Booking Confirmed'  : '❌ Booking Cancelled'
-    const body   = status === 'confirmed'
+    const title = status === 'confirmed' ? '✅ Booking Confirmed' : '❌ Booking Cancelled'
+    const body  = status === 'confirmed'
       ? `Your table at ${venueName} on ${res.date} at ${res.time} is confirmed!`
       : `Your reservation at ${venueName} on ${res.date} has been cancelled.`
 
     await fetch('https://exp.host/--/api/v2/push/send', {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ to: res.profiles.push_token, title, body, sound: 'default' }),
-    }).catch(() => {}) // don't block if push delivery fails
+    }).catch(() => {})
   }
 
   revalidatePath('/dashboard/reservations')
@@ -47,7 +54,16 @@ async function setStatus(id: string, status: ReservationRow['status']) {
 
 async function saveNote(id: string, formData: FormData) {
   'use server'
+  const admin = await getCurrentAdmin()
+  if (!admin) return
+
   const supabase = createSupabaseAdminClient()
+
+  if (admin.role === 'admin') {
+    const { data: res } = await (supabase as any).from('reservations').select('venue_id').eq('id', id).single()
+    if (res?.venue_id !== admin.managed_venue_id) return
+  }
+
   await (supabase as any)
     .from('reservations')
     .update({
@@ -66,6 +82,9 @@ export default async function ReservationsPage({
 }: {
   searchParams: Promise<{ status?: string }>
 }) {
+  const admin = await getCurrentAdmin()
+  if (!admin) redirect('/login')
+
   const { status: statusFilter } = await searchParams
   const activeTab: Tab = (TABS.includes(statusFilter as Tab) ? statusFilter : 'all') as Tab
 
@@ -77,17 +96,24 @@ export default async function ReservationsPage({
     .order('created_at', { ascending: false })
     .limit(200)
 
+  // Restaurant admins only see their venue's reservations
+  if (admin.role === 'admin' && admin.managed_venue_id) {
+    query = query.eq('venue_id', admin.managed_venue_id)
+  }
+
   if (activeTab !== 'all') query = query.eq('status', activeTab)
+
   const { data, error } = await query
   if (error) throw error
 
   const reservations: ReservationWithJoins[] = data ?? []
 
-  // Count per status for tab badges
-  const { data: counts } = await (supabase as any)
-    .from('reservations')
-    .select('status')
-    .limit(1000)
+  // Count per status (scoped to venue for admins)
+  let countsQuery = (supabase as any).from('reservations').select('status').limit(1000)
+  if (admin.role === 'admin' && admin.managed_venue_id) {
+    countsQuery = countsQuery.eq('venue_id', admin.managed_venue_id)
+  }
+  const { data: counts } = await countsQuery
 
   const countMap: Record<string, number> = { pending: 0, confirmed: 0, cancelled: 0, visited: 0 }
   for (const r of (counts ?? [])) countMap[r.status] = (countMap[r.status] ?? 0) + 1
@@ -110,9 +136,7 @@ export default async function ReservationsPage({
               key={tab}
               href={tab === 'all' ? '/dashboard/reservations' : `/dashboard/reservations?status=${tab}`}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                isActive
-                  ? 'bg-white text-zinc-900 shadow-sm'
-                  : 'text-zinc-500 hover:text-zinc-700'
+                isActive ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
               }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -134,7 +158,7 @@ export default async function ReservationsPage({
             <thead>
               <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                 <th className="px-4 py-3 font-medium text-zinc-500">Date / Time</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Venue</th>
+                {admin.role === 'super_admin' && <th className="px-4 py-3 font-medium text-zinc-500">Venue</th>}
                 <th className="px-4 py-3 font-medium text-zinc-500">Guest</th>
                 <th className="px-4 py-3 font-medium text-zinc-500">Ppl</th>
                 <th className="px-4 py-3 font-medium text-zinc-500">Status</th>
@@ -151,7 +175,9 @@ export default async function ReservationsPage({
                       <p className="font-medium text-zinc-900">{r.date}</p>
                       <p className="text-xs text-zinc-400">{r.time}</p>
                     </td>
-                    <td className="px-4 py-3 text-zinc-700">{r.venues?.name ?? '—'}</td>
+                    {admin.role === 'super_admin' && (
+                      <td className="px-4 py-3 text-zinc-700">{r.venues?.name ?? '—'}</td>
+                    )}
                     <td className="px-4 py-3">
                       <p className="text-zinc-900">{r.profiles?.name ?? '—'}</p>
                       <p className="text-xs text-zinc-400">{r.profiles?.email}</p>
@@ -165,52 +191,37 @@ export default async function ReservationsPage({
                     <td className="px-4 py-3 text-xs text-zinc-500 max-w-[160px]">
                       {r.occasion && <p className="mb-0.5 text-zinc-400">🎉 {r.occasion}</p>}
                       <p>{r.note ?? '—'}</p>
-                      {r.admin_note && (
-                        <p className="mt-1 text-indigo-500">📝 {r.admin_note}</p>
-                      )}
+                      {r.admin_note && <p className="mt-1 text-indigo-500">📝 {r.admin_note}</p>}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1.5">
-                        {/* Quick action buttons */}
                         <div className="flex gap-1.5 flex-wrap">
                           {r.status === 'pending' && (
                             <>
                               <form action={setStatus.bind(null, r.id, 'confirmed')}>
-                                <button className="text-xs px-2.5 py-1 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors">
-                                  Confirm
-                                </button>
+                                <button className="text-xs px-2.5 py-1 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors">Confirm</button>
                               </form>
                               <form action={setStatus.bind(null, r.id, 'cancelled')}>
-                                <button className="text-xs px-2.5 py-1 rounded-md bg-red-500 text-white hover:bg-red-600 transition-colors">
-                                  Cancel
-                                </button>
+                                <button className="text-xs px-2.5 py-1 rounded-md bg-red-500 text-white hover:bg-red-600 transition-colors">Cancel</button>
                               </form>
                             </>
                           )}
                           {r.status === 'confirmed' && (
                             <>
                               <form action={setStatus.bind(null, r.id, 'visited')}>
-                                <button className="text-xs px-2.5 py-1 rounded-md bg-blue-500 text-white hover:bg-blue-600 transition-colors">
-                                  Visited
-                                </button>
+                                <button className="text-xs px-2.5 py-1 rounded-md bg-blue-500 text-white hover:bg-blue-600 transition-colors">Visited</button>
                               </form>
                               <form action={setStatus.bind(null, r.id, 'cancelled')}>
-                                <button className="text-xs px-2.5 py-1 rounded-md border border-red-300 text-red-500 hover:bg-red-50 transition-colors">
-                                  Cancel
-                                </button>
+                                <button className="text-xs px-2.5 py-1 rounded-md border border-red-300 text-red-500 hover:bg-red-50 transition-colors">Cancel</button>
                               </form>
                             </>
                           )}
                           {(r.status === 'cancelled' || r.status === 'visited') && (
                             <form action={setStatus.bind(null, r.id, 'pending')}>
-                              <button className="text-xs px-2.5 py-1 rounded-md border border-zinc-300 text-zinc-500 hover:bg-zinc-50 transition-colors">
-                                Reopen
-                              </button>
+                              <button className="text-xs px-2.5 py-1 rounded-md border border-zinc-300 text-zinc-500 hover:bg-zinc-50 transition-colors">Reopen</button>
                             </form>
                           )}
                         </div>
-
-                        {/* Admin note */}
                         <form action={saveNote.bind(null, r.id)} className="flex gap-1.5">
                           <input type="hidden" name="status" value={r.status} />
                           <input
@@ -220,12 +231,7 @@ export default async function ReservationsPage({
                             placeholder="Admin note…"
                             className="text-xs px-2 py-1 rounded-md border border-zinc-200 bg-white text-zinc-700 w-32"
                           />
-                          <button
-                            type="submit"
-                            className="text-xs px-2 py-1 rounded-md bg-zinc-800 text-white hover:bg-zinc-600 transition-colors"
-                          >
-                            Save
-                          </button>
+                          <button type="submit" className="text-xs px-2 py-1 rounded-md bg-zinc-800 text-white hover:bg-zinc-600 transition-colors">Save</button>
                         </form>
                       </div>
                     </td>

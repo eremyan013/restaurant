@@ -1,6 +1,8 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { getCurrentAdmin } from '@/lib/current-admin'
 
 async function toggleActive(id: string, current: boolean) {
   'use server'
@@ -10,6 +12,11 @@ async function toggleActive(id: string, current: boolean) {
 }
 
 export default async function VenuesPage() {
+  const admin = await getCurrentAdmin()
+  if (!admin) redirect('/login')
+  // Restaurant admins go directly to their venue's edit page
+  if (admin.role === 'admin') redirect(admin.managed_venue_id ? `/dashboard/venues/${admin.managed_venue_id}` : '/dashboard')
+
   const supabase = createSupabaseAdminClient()
   const { data: venues, error } = await supabase
     .from('venues')

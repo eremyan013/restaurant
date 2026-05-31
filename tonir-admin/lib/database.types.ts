@@ -139,6 +139,8 @@ export interface Database {
           yel_points: number;
           total_visits: number;
           is_admin: boolean;
+          role: 'user' | 'admin' | 'super_admin';
+          managed_venue_id: string | null;
           push_token: string | null;
           web_push_sub: Record<string, unknown> | null;
           created_at: string;
@@ -154,6 +156,8 @@ export interface Database {
           yel_points?: number;
           total_visits?: number;
           is_admin?: boolean;
+          role?: 'user' | 'admin' | 'super_admin';
+          managed_venue_id?: string | null;
           push_token?: string | null;
           web_push_sub?: Record<string, unknown> | null;
           created_at?: string;
@@ -169,6 +173,8 @@ export interface Database {
           yel_points?: number;
           total_visits?: number;
           is_admin?: boolean;
+          role?: 'user' | 'admin' | 'super_admin';
+          managed_venue_id?: string | null;
           push_token?: string | null;
           web_push_sub?: Record<string, unknown> | null;
           created_at?: string;

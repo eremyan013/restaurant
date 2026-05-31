@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createSupabaseSessionClient } from '@/lib/supabase-session'
-import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { getCurrentAdmin } from '@/lib/current-admin'
 import { Sidebar } from '@/components/sidebar'
 import { PushSubscriber } from '@/components/PushSubscriber'
 
@@ -9,32 +8,16 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  // Get current session
-  const supabase = await createSupabaseSessionClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const admin = await getCurrentAdmin()
 
-  if (!user) {
-    redirect('/login')
-  }
-
-  // Check is_admin — use service_role to bypass RLS
-  const admin = createSupabaseAdminClient()
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('is_admin, name')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.is_admin) {
+  if (!admin) {
     redirect('/login')
   }
 
   return (
     <div className="flex h-screen overflow-hidden bg-zinc-50">
       <PushSubscriber />
-      <Sidebar adminName={profile.name} />
+      <Sidebar adminName={admin.name} role={admin.role} managedVenueId={admin.managed_venue_id} />
       <main className="flex-1 overflow-y-auto p-8">{children}</main>
     </div>
   )

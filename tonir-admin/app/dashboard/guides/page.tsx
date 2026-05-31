@@ -1,7 +1,9 @@
+import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import type { GuideRow } from '@/lib/database.types'
 import { GuidesManager } from './guides-manager'
+import { getCurrentAdmin } from '@/lib/current-admin'
 
 async function toggleActive(id: string, current: boolean) {
   'use server'
@@ -11,6 +13,9 @@ async function toggleActive(id: string, current: boolean) {
 }
 
 export default async function GuidesPage() {
+  const admin = await getCurrentAdmin()
+  if (admin?.role !== 'super_admin') redirect('/dashboard')
+
   const supabase = createSupabaseAdminClient()
   const [{ data: guides, error }, { data: venues }] = await Promise.all([
     (supabase as any).from('guides').select('*').order('sort_order'),
