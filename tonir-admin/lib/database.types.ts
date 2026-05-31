@@ -140,6 +140,7 @@ export interface Database {
           total_visits: number;
           is_admin: boolean;
           push_token: string | null;
+          web_push_sub: Record<string, unknown> | null;
           created_at: string;
           updated_at: string;
         };
@@ -154,6 +155,7 @@ export interface Database {
           total_visits?: number;
           is_admin?: boolean;
           push_token?: string | null;
+          web_push_sub?: Record<string, unknown> | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -168,6 +170,7 @@ export interface Database {
           total_visits?: number;
           is_admin?: boolean;
           push_token?: string | null;
+          web_push_sub?: Record<string, unknown> | null;
           created_at?: string;
           updated_at?: string;
         };

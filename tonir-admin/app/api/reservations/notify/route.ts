@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import webpush from 'web-push'
+
+webpush.setVapidDetails(
+  'mailto:admin@tonir.am',
+  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+  process.env.VAPID_PRIVATE_KEY!,
+)
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -26,28 +33,37 @@ export async function POST(request: NextRequest) {
   const supabase = createSupabaseAdminClient()
   const { data: admins } = await (supabase as any)
     .from('profiles')
-    .select('push_token')
+    .select('push_token, web_push_sub')
     .eq('is_admin', true)
-    .not('push_token', 'is', null)
 
-  const tokens: string[] = ((admins ?? []) as Array<{ push_token: string }>)
-    .map((a) => a.push_token)
-    .filter(Boolean)
+  const title = '🍽️ New Reservation Request'
+  const body = `${venue_name} · ${date} · ${time} · ${people} ppl`
 
-  if (tokens.length > 0) {
-    await fetch('https://exp.host/--/api/v2/push/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(
-        tokens.map((to) => ({
-          to,
-          title: '🍽️ New Reservation Request',
-          body: `${venue_name} · ${date} · ${time} · ${people} ppl`,
-          sound: 'default',
-        }))
-      ),
-    }).catch(() => {})
+  const notifications: Promise<unknown>[] = []
+
+  for (const admin of (admins ?? [])) {
+    // Web push (browser)
+    if (admin.web_push_sub?.endpoint) {
+      notifications.push(
+        webpush.sendNotification(
+          admin.web_push_sub,
+          JSON.stringify({ title, body, url: '/dashboard/reservations' }),
+        ).catch(() => {})
+      )
+    }
+    // Mobile push (Expo)
+    if (admin.push_token) {
+      notifications.push(
+        fetch('https://exp.host/--/api/v2/push/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ to: admin.push_token, title, body, sound: 'default' }),
+        }).catch(() => {})
+      )
+    }
   }
+
+  await Promise.all(notifications)
 
   return NextResponse.json({ ok: true }, { headers: CORS })
 }
