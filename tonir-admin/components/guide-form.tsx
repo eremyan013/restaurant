@@ -3,8 +3,10 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import type { GuideRow } from '@/lib/database.types'
+import { LangTabs, LANGS, type Lang } from '@/components/lang-tabs'
 
 type Venue = { id: string; name: string }
+type LangGuideFields = { title: string; subtitle: string; tag: string }
 
 interface GuideFormProps {
   mode: 'create' | 'edit'
@@ -17,9 +19,13 @@ export function GuideForm({ mode, guide, venues, onCancel }: GuideFormProps) {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const [title, setTitle]         = useState(guide?.title ?? '')
-  const [subtitle, setSubtitle]   = useState(guide?.subtitle ?? '')
-  const [tag, setTag]             = useState(guide?.tag ?? '')
+  const [lang, setLang] = useState<Lang>('hy')
+  const [lf, setLf] = useState<Record<Lang, LangGuideFields>>({
+    hy: { title: (guide as any)?.title_hy ?? guide?.title ?? '', subtitle: (guide as any)?.subtitle_hy ?? guide?.subtitle ?? '', tag: (guide as any)?.tag_hy ?? guide?.tag ?? '' },
+    ru: { title: (guide as any)?.title_ru ?? '', subtitle: (guide as any)?.subtitle_ru ?? '', tag: (guide as any)?.tag_ru ?? '' },
+    en: { title: (guide as any)?.title_en ?? '', subtitle: (guide as any)?.subtitle_en ?? '', tag: (guide as any)?.tag_en ?? '' },
+  })
+
   const [sortOrder, setSortOrder] = useState(String(guide?.sort_order ?? 0))
   const [isActive, setIsActive]   = useState(guide?.is_active ?? true)
   const [selectedVenues, setSelectedVenues] = useState<Set<string>>(
@@ -31,6 +37,10 @@ export function GuideForm({ mode, guide, venues, onCancel }: GuideFormProps) {
   const [loading, setLoading]           = useState(false)
   const [error, setError]               = useState<string | null>(null)
 
+  function updLf(field: keyof LangGuideFields, value: string) {
+    setLf(prev => ({ ...prev, [lang]: { ...prev[lang], [field]: value } }))
+  }
+
   function toggleVenue(id: string) {
     setSelectedVenues(prev => {
       const next = new Set(prev)
@@ -39,16 +49,9 @@ export function GuideForm({ mode, guide, venues, onCancel }: GuideFormProps) {
     })
   }
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setCoverFile(file)
-    setCoverPreview(URL.createObjectURL(file))
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!title.trim()) { setError('Title is required'); return }
+    if (!lf.hy.title.trim()) { setError('Armenian title is required'); setLang('hy'); return }
     setLoading(true)
     setError(null)
 
@@ -64,13 +67,22 @@ export function GuideForm({ mode, guide, venues, onCancel }: GuideFormProps) {
       }
 
       const payload = {
-        title:      title.trim(),
-        subtitle:   subtitle.trim(),
-        tag:        tag.trim(),
+        title:       lf.hy.title || lf.ru.title || lf.en.title,
+        title_hy:    lf.hy.title    || null,
+        title_ru:    lf.ru.title    || null,
+        title_en:    lf.en.title    || null,
+        subtitle:    lf.hy.subtitle || lf.ru.subtitle || lf.en.subtitle,
+        subtitle_hy: lf.hy.subtitle || null,
+        subtitle_ru: lf.ru.subtitle || null,
+        subtitle_en: lf.en.subtitle || null,
+        tag:         lf.hy.tag || lf.ru.tag || lf.en.tag,
+        tag_hy:      lf.hy.tag      || null,
+        tag_ru:      lf.ru.tag      || null,
+        tag_en:      lf.en.tag      || null,
         cover_url,
-        sort_order: parseInt(sortOrder) || 0,
-        venue_ids:  Array.from(selectedVenues),
-        is_active:  isActive,
+        sort_order:  parseInt(sortOrder) || 0,
+        venue_ids:   Array.from(selectedVenues),
+        is_active:   isActive,
       }
 
       const url    = mode === 'create' ? '/api/guides' : `/api/guides/${guide!.id}`
@@ -96,14 +108,22 @@ export function GuideForm({ mode, guide, venues, onCancel }: GuideFormProps) {
     }
   }
 
+  const f = lf[lang]
+
   return (
     <form
       onSubmit={handleSubmit}
       className="bg-white rounded-xl border border-zinc-200 p-5 space-y-4"
     >
       <p className="text-sm font-semibold text-zinc-900">
-        {mode === 'create' ? 'New guide' : `Edit — ${guide?.title}`}
+        {mode === 'create' ? 'New guide' : `Edit — ${(guide as any)?.title_hy ?? guide?.title}`}
       </p>
+
+      {/* Language selector */}
+      <div className="flex items-center gap-3">
+        <span className="text-xs font-medium text-zinc-500">Language:</span>
+        <LangTabs lang={lang} onChange={setLang} />
+      </div>
 
       {/* Cover image */}
       <div className="flex items-start gap-4">
@@ -121,69 +141,47 @@ export function GuideForm({ mode, guide, venues, onCancel }: GuideFormProps) {
           )}
         </div>
         <div className="flex flex-col gap-1.5">
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="text-xs px-2.5 py-1.5 rounded-md border border-zinc-300 hover:bg-zinc-50 transition-colors"
-          >
+          <button type="button" onClick={() => fileRef.current?.click()}
+            className="text-xs px-2.5 py-1.5 rounded-md border border-zinc-300 hover:bg-zinc-50 transition-colors">
             {coverPreview ? 'Change cover' : 'Upload cover'}
           </button>
           {coverPreview && (
-            <button
-              type="button"
+            <button type="button"
               onClick={() => { setCoverFile(null); setCoverPreview(null); if (fileRef.current) fileRef.current.value = '' }}
-              className="text-xs text-red-400 hover:text-red-600 transition-colors text-left"
-            >
+              className="text-xs text-red-400 hover:text-red-600 transition-colors text-left">
               Remove
             </button>
           )}
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleFileChange}
-            className="hidden"
-          />
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp"
+            onChange={e => { const file = e.target.files?.[0]; if (!file) return; setCoverFile(file); setCoverPreview(URL.createObjectURL(file)) }}
+            className="hidden" />
         </div>
       </div>
 
-      {/* Text fields */}
+      {/* Text fields – translatable */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-zinc-500">Title *</label>
-          <input
-            value={title}
-            onChange={e => setTitle(e.target.value)}
+          <input value={f.title} onChange={e => updLf('title', e.target.value)}
             placeholder="e.g. Best Wine Bars"
-            className="text-sm px-2.5 py-1.5 rounded-md border border-zinc-200"
-          />
+            className="text-sm px-2.5 py-1.5 rounded-md border border-zinc-200" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-zinc-500">Subtitle</label>
-          <input
-            value={subtitle}
-            onChange={e => setSubtitle(e.target.value)}
+          <input value={f.subtitle} onChange={e => updLf('subtitle', e.target.value)}
             placeholder="Short description"
-            className="text-sm px-2.5 py-1.5 rounded-md border border-zinc-200"
-          />
+            className="text-sm px-2.5 py-1.5 rounded-md border border-zinc-200" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-zinc-500">Tag</label>
-          <input
-            value={tag}
-            onChange={e => setTag(e.target.value)}
+          <input value={f.tag} onChange={e => updLf('tag', e.target.value)}
             placeholder="e.g. Wine"
-            className="text-sm px-2.5 py-1.5 rounded-md border border-zinc-200"
-          />
+            className="text-sm px-2.5 py-1.5 rounded-md border border-zinc-200" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-zinc-500">Sort order</label>
-          <input
-            type="number"
-            value={sortOrder}
-            onChange={e => setSortOrder(e.target.value)}
-            className="text-sm px-2.5 py-1.5 rounded-md border border-zinc-200"
-          />
+          <input type="number" value={sortOrder} onChange={e => setSortOrder(e.target.value)}
+            className="text-sm px-2.5 py-1.5 rounded-md border border-zinc-200" />
         </div>
       </div>
 
@@ -205,12 +203,8 @@ export function GuideForm({ mode, guide, venues, onCancel }: GuideFormProps) {
         <div className="grid grid-cols-2 gap-1 max-h-40 overflow-y-auto pr-1">
           {venues.map(v => (
             <label key={v.id} className="flex items-center gap-2 text-xs text-zinc-700 cursor-pointer hover:text-zinc-900">
-              <input
-                type="checkbox"
-                checked={selectedVenues.has(v.id)}
-                onChange={() => toggleVenue(v.id)}
-                className="rounded border-zinc-300"
-              />
+              <input type="checkbox" checked={selectedVenues.has(v.id)} onChange={() => toggleVenue(v.id)}
+                className="rounded border-zinc-300" />
               {v.name}
             </label>
           ))}
@@ -220,18 +214,12 @@ export function GuideForm({ mode, guide, venues, onCancel }: GuideFormProps) {
       {error && <p className="text-xs text-red-600">{error}</p>}
 
       <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-4 py-1.5 rounded-md bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-700 disabled:opacity-50 transition-colors"
-        >
+        <button type="submit" disabled={loading}
+          className="px-4 py-1.5 rounded-md bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-700 disabled:opacity-50 transition-colors">
           {loading ? 'Saving…' : mode === 'create' ? 'Create guide' : 'Save changes'}
         </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-1.5 rounded-md border border-zinc-200 text-sm text-zinc-600 hover:bg-zinc-50 transition-colors"
-        >
+        <button type="button" onClick={onCancel}
+          className="px-4 py-1.5 rounded-md border border-zinc-200 text-sm text-zinc-600 hover:bg-zinc-50 transition-colors">
           Cancel
         </button>
       </div>

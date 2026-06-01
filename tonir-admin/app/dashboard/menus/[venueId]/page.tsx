@@ -6,16 +6,22 @@ import { getCurrentAdmin } from '@/lib/current-admin'
 import type { MenuCategoryRow, MenuItemRow } from '@/lib/database.types'
 import { AddItemForm } from '@/components/add-item-form'
 import { EditItemRow } from '@/components/edit-item-row'
+import { AddCategoryForm } from '@/components/add-category-form'
 
 // ── Server Actions ────────────────────────────────────────────────────────────
 
 async function addCategory(venueId: string, formData: FormData) {
   'use server'
   const supabase = createSupabaseAdminClient()
-  await supabase.from('menu_categories').insert({
-    venue_id: venueId,
-    name: formData.get('name') as string,
-    sort_order: parseInt(formData.get('sort_order') as string) || 0,
+  const g = (k: string) => (formData.get(k) as string) || ''
+  const name_hy = g('name_hy')
+  await (supabase as any).from('menu_categories').insert({
+    venue_id:  venueId,
+    name:      name_hy || g('name_ru') || g('name_en'),
+    name_hy:   name_hy   || null,
+    name_ru:   g('name_ru') || null,
+    name_en:   g('name_en') || null,
+    sort_order: parseInt(g('sort_order')) || 0,
   })
   revalidatePath(`/dashboard/menus/${venueId}`)
 }
@@ -36,7 +42,6 @@ export default async function MenuPage({
 }) {
   const { venueId } = await params
 
-  // Restaurant admins can only access their own venue's menu
   const admin = await getCurrentAdmin()
   if (admin?.role === 'admin' && !admin.managed_venue_ids.includes(venueId)) {
     redirect(admin.managed_venue_ids.length ? '/dashboard/venues' : '/dashboard')
@@ -46,16 +51,8 @@ export default async function MenuPage({
 
   const [{ data: venue }, { data: categories }, { data: items }] = await Promise.all([
     supabase.from('venues').select('id, name').eq('id', venueId).single(),
-    supabase
-      .from('menu_categories')
-      .select('*')
-      .eq('venue_id', venueId)
-      .order('sort_order'),
-    supabase
-      .from('menu_items')
-      .select('*')
-      .eq('venue_id', venueId)
-      .order('sort_order'),
+    supabase.from('menu_categories').select('*').eq('venue_id', venueId).order('sort_order'),
+    supabase.from('menu_items').select('*').eq('venue_id', venueId).order('sort_order'),
   ])
 
   if (!venue) notFound()
@@ -73,10 +70,7 @@ export default async function MenuPage({
     <div className="max-w-3xl space-y-8">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link
-          href="/dashboard/venues"
-          className="text-sm text-zinc-400 hover:text-zinc-700 transition-colors"
-        >
+        <Link href="/dashboard/venues" className="text-sm text-zinc-400 hover:text-zinc-700 transition-colors">
           ← Venues
         </Link>
         <h1 className="text-2xl font-semibold text-zinc-900">Menu: {venue.name}</h1>
@@ -92,14 +86,13 @@ export default async function MenuPage({
                 {/* Category header */}
                 <div className="flex items-center justify-between px-4 py-3 bg-zinc-50 border-b border-zinc-100">
                   <div>
-                    <span className="font-medium text-zinc-900">{cat.name}</span>
+                    <span className="font-medium text-zinc-900">{(cat as any).name_hy ?? cat.name}</span>
+                    {(cat as any).name_ru && <span className="ml-2 text-xs text-zinc-400">· {(cat as any).name_ru}</span>}
+                    {(cat as any).name_en && <span className="ml-1 text-xs text-zinc-400">· {(cat as any).name_en}</span>}
                     <span className="ml-2 text-xs text-zinc-400">order {cat.sort_order}</span>
                   </div>
                   <form action={deleteCategory.bind(null, venueId, cat.id)}>
-                    <button
-                      type="submit"
-                      className="text-xs text-red-400 hover:text-red-600 transition-colors"
-                    >
+                    <button type="submit" className="text-xs text-red-400 hover:text-red-600 transition-colors">
                       Delete category
                     </button>
                   </form>
@@ -140,34 +133,7 @@ export default async function MenuPage({
 
       {/* Add category form */}
       <div className="bg-white rounded-xl border border-zinc-200 p-4">
-        <p className="text-sm font-medium text-zinc-900 mb-3">Add category</p>
-        <form action={addCategory.bind(null, venueId)} className="flex gap-3 items-end">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-600">Category name</label>
-            <input
-              type="text"
-              name="name"
-              placeholder="e.g. Appetizers"
-              required
-              className="h-9 px-3 rounded-lg border border-zinc-300 text-sm w-48"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-600">Sort order</label>
-            <input
-              type="number"
-              name="sort_order"
-              defaultValue="0"
-              className="h-9 px-3 rounded-lg border border-zinc-300 text-sm w-20"
-            />
-          </div>
-          <button
-            type="submit"
-            className="h-9 px-4 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors"
-          >
-            Add category
-          </button>
-        </form>
+        <AddCategoryForm action={addCategory.bind(null, venueId)} />
       </div>
     </div>
   )
