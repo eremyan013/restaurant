@@ -63,6 +63,7 @@ export interface Database {
           venue_id: string;
           people: number;
           date: string;
+          date_iso: string | null;
           time: string;
           occasion: string | null;
           note: string | null;
@@ -78,6 +79,7 @@ export interface Database {
           venue_id: string;
           people: number;
           date: string;
+          date_iso?: string | null;
           time: string;
           occasion?: string | null;
           note?: string | null;
@@ -93,6 +95,7 @@ export interface Database {
           venue_id?: string;
           people?: number;
           date?: string;
+          date_iso?: string | null;
           time?: string;
           occasion?: string | null;
           note?: string | null;

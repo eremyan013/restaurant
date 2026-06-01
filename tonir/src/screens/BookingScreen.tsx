@@ -74,10 +74,14 @@ export function BookingScreen({ navigation, route }: Props) {
     try {
       const d = DATES[dateIndex];
       const dateStr = `${d.day}, ${d.date} ${d.month}`;
+      const isoDateObj = new Date();
+      isoDateObj.setDate(isoDateObj.getDate() + dateIndex);
+      const dateIso = isoDateObj.toISOString().split('T')[0];
       await book({
         venue_id: venueId,
         people,
         date: dateStr,
+        date_iso: dateIso,
         time,
         occasion,
         note,

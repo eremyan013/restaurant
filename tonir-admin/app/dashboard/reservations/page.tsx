@@ -133,8 +133,8 @@ export default async function ReservationsPage({
       q = q.eq('venue_id', sp.venue)
     }
 
-    if (sp.from)        q = q.gte('date', sp.from)
-    if (sp.to)          q = q.lte('date', sp.to)
+    if (sp.from)        q = q.gte('date_iso', sp.from)
+    if (sp.to)          q = q.lte('date_iso', sp.to)
     if (sp.people_min)  q = q.gte('people', parseInt(sp.people_min))
     if (sp.people_max)  q = q.lte('people', parseInt(sp.people_max))
     if (sp.note?.trim()) q = q.or(`note.ilike.%${sp.note.trim()}%,admin_note.ilike.%${sp.note.trim()}%,occasion.ilike.%${sp.note.trim()}%`)
