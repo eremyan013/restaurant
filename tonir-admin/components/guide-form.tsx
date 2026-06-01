@@ -192,9 +192,9 @@ export function GuideForm({ mode, guide, venues, onCancel }: GuideFormProps) {
         <button
           type="button"
           onClick={() => setIsActive(v => !v)}
-          className={`relative w-9 h-5 rounded-full transition-colors ${isActive ? 'bg-green-500' : 'bg-zinc-300'}`}
+          className={`relative w-9 h-5 rounded-full transition-colors ${isActive ? 'bg-green-500' : 'bg-red-500'}`}
         >
-          <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${isActive ? 'translate-x-4' : 'translate-x-0.5'}`} />
+          <span className={`absolute top-0.5 left-0 w-4 h-4 rounded-full bg-white shadow transition-transform ${isActive ? 'translate-x-[18px]' : 'translate-x-[2px]'}`} />
         </button>
         <span className="text-xs text-zinc-500">{isActive ? 'Active' : 'Hidden'}</span>
       </div>
