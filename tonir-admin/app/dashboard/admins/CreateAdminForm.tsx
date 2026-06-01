@@ -57,17 +57,25 @@ export function CreateAdminForm({
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-zinc-500 mb-1 block">Venue</label>
-          <select
-            name="venue_id"
-            required
-            className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-300"
-          >
-            <option value="">Select a venue…</option>
+          <label className="text-xs font-medium text-zinc-500 mb-1 block">
+            Venues <span className="text-zinc-400 font-normal">(select one or more)</span>
+          </label>
+          <div className="rounded-lg border border-zinc-200 divide-y divide-zinc-100 max-h-48 overflow-y-auto">
             {venues.map((v) => (
-              <option key={v.id} value={v.id}>{v.name}</option>
+              <label
+                key={v.id}
+                className="flex items-center gap-2.5 px-3 py-2 hover:bg-zinc-50 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  name="venue_id"
+                  value={v.id}
+                  className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-300"
+                />
+                <span className="text-sm text-zinc-800">{v.name}</span>
+              </label>
             ))}
-          </select>
+          </div>
         </div>
         <button
           type="submit"

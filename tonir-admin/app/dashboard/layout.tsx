@@ -17,7 +17,7 @@ export default async function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-zinc-50">
       <PushSubscriber />
-      <Sidebar adminName={admin.name} role={admin.role} managedVenueId={admin.managed_venue_id} />
+      <Sidebar adminName={admin.name} role={admin.role} managedVenueIds={admin.managed_venue_ids} />
       <main className="flex-1 overflow-y-auto p-8">{children}</main>
     </div>
   )

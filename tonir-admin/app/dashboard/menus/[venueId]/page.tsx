@@ -38,8 +38,8 @@ export default async function MenuPage({
 
   // Restaurant admins can only access their own venue's menu
   const admin = await getCurrentAdmin()
-  if (admin?.role === 'admin' && admin.managed_venue_id !== venueId) {
-    redirect(admin.managed_venue_id ? `/dashboard/menus/${admin.managed_venue_id}` : '/dashboard')
+  if (admin?.role === 'admin' && !admin.managed_venue_ids.includes(venueId)) {
+    redirect(admin.managed_venue_ids.length ? '/dashboard/venues' : '/dashboard')
   }
 
   const supabase = createSupabaseAdminClient()

@@ -13,12 +13,12 @@ export async function createAdmin(
   const actor = await getCurrentAdmin()
   if (actor?.role !== 'super_admin') return { ok: false, error: 'Unauthorized' }
 
-  const name     = (formData.get('name')     as string)?.trim()
-  const email    = (formData.get('email')    as string)?.trim()
-  const password = (formData.get('password') as string)?.trim()
-  const venueId  = (formData.get('venue_id') as string)?.trim()
+  const name      = (formData.get('name')     as string)?.trim()
+  const email     = (formData.get('email')    as string)?.trim()
+  const password  = (formData.get('password') as string)?.trim()
+  const venueIds  = formData.getAll('venue_id').map(v => (v as string).trim()).filter(Boolean)
 
-  if (!name || !email || !password || !venueId) {
+  if (!name || !email || !password || !venueIds.length) {
     return { ok: false, error: 'All fields are required.' }
   }
 
@@ -39,9 +39,10 @@ export async function createAdmin(
     id:               created.user.id,
     name,
     email,
-    role:             'admin',
-    managed_venue_id: venueId,
-    tier:             'Tonir',
+    role:              'admin',
+    managed_venue_ids: venueIds,
+    managed_venue_id:  venueIds[0] ?? null,
+    tier:              'Tonir',
     tier_level:       1,
     yel_points:       0,
     total_visits:     0,
@@ -67,14 +68,14 @@ export async function updateAdmin(
   const actor = await getCurrentAdmin()
   if (actor?.role !== 'super_admin') return { ok: false, error: 'Unauthorized' }
 
-  const id      = (formData.get('id')       as string)?.trim()
-  const name    = (formData.get('name')     as string)?.trim()
-  const email   = (formData.get('email')    as string)?.trim()
+  const id       = (formData.get('id')       as string)?.trim()
+  const name     = (formData.get('name')     as string)?.trim()
+  const email    = (formData.get('email')    as string)?.trim()
   const password = (formData.get('password') as string)?.trim()
-  const venueId = (formData.get('venue_id') as string)?.trim()
+  const venueIds = formData.getAll('venue_id').map(v => (v as string).trim()).filter(Boolean)
 
-  if (!id || !name || !email || !venueId) {
-    return { ok: false, error: 'Name, email and venue are required.' }
+  if (!id || !name || !email || !venueIds.length) {
+    return { ok: false, error: 'Name, email and at least one venue are required.' }
   }
 
   const supabase = createSupabaseAdminClient()
@@ -89,7 +90,7 @@ export async function updateAdmin(
   // Update profile
   const { error: profileError } = await (supabase as any)
     .from('profiles')
-    .update({ name, email, managed_venue_id: venueId })
+    .update({ name, email, managed_venue_ids: venueIds, managed_venue_id: venueIds[0] ?? null })
     .eq('id', id)
 
   if (profileError) return { ok: false, error: profileError.message }
@@ -108,7 +109,7 @@ export async function deleteAdmin(_prev: unknown, formData: FormData): Promise<v
   const supabase = createSupabaseAdminClient()
   await (supabase as any)
     .from('profiles')
-    .update({ role: 'user', managed_venue_id: null, is_admin: false })
+    .update({ role: 'user', managed_venue_ids: [], managed_venue_id: null, is_admin: false })
     .eq('id', id)
 
   revalidatePath('/dashboard/admins')

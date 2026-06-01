@@ -14,27 +14,36 @@ async function toggleActive(id: string, current: boolean) {
 export default async function VenuesPage() {
   const admin = await getCurrentAdmin()
   if (!admin) redirect('/login')
-  // Restaurant admins go directly to their venue's edit page
-  if (admin.role === 'admin') redirect(admin.managed_venue_id ? `/dashboard/venues/${admin.managed_venue_id}` : '/dashboard')
 
   const supabase = createSupabaseAdminClient()
-  const { data: venues, error } = await supabase
+  let venuesQuery = supabase
     .from('venues')
     .select('id, name, cuisine, area, kind, rating, is_active')
     .order('name')
+
+  if (admin.role === 'admin') {
+    if (!admin.managed_venue_ids.length) redirect('/dashboard')
+    venuesQuery = venuesQuery.in('id', admin.managed_venue_ids) as typeof venuesQuery
+  }
+
+  const { data: venues, error } = await venuesQuery
 
   if (error) throw error
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-zinc-900">Venues</h1>
-        <Link
-          href="/dashboard/venues/new"
-          className="px-4 py-2 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors"
-        >
-          + New venue
-        </Link>
+        <h1 className="text-2xl font-semibold text-zinc-900">
+          {admin.role === 'admin' ? 'My Venues' : 'Venues'}
+        </h1>
+        {admin.role === 'super_admin' && (
+          <Link
+            href="/dashboard/venues/new"
+            className="px-4 py-2 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors"
+          >
+            + New venue
+          </Link>
+        )}
       </div>
 
       <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">

@@ -7,7 +7,7 @@ export interface CurrentAdmin {
   id: string
   name: string
   role: AdminRole
-  managed_venue_id: string | null
+  managed_venue_ids: string[]
 }
 
 export async function getCurrentAdmin(): Promise<CurrentAdmin | null> {
@@ -19,7 +19,7 @@ export async function getCurrentAdmin(): Promise<CurrentAdmin | null> {
     const db = createSupabaseAdminClient()
     const { data } = await (db as any)
       .from('profiles')
-      .select('id, name, role, managed_venue_id')
+      .select('id, name, role, managed_venue_ids')
       .eq('id', user.id)
       .single()
 

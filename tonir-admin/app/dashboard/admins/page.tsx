@@ -16,7 +16,7 @@ async function removeAdmin(formData: FormData) {
   const supabase = createSupabaseAdminClient()
   await (supabase as any)
     .from('profiles')
-    .update({ role: 'user', managed_venue_id: null, is_admin: false })
+    .update({ role: 'user', managed_venue_ids: [], managed_venue_id: null, is_admin: false })
     .eq('id', id)
 
   revalidatePath('/dashboard/admins')
@@ -31,7 +31,7 @@ export default async function AdminsPage() {
   const [{ data: admins }, { data: venues }] = await Promise.all([
     (supabase as any)
       .from('profiles')
-      .select('id, name, email, managed_venue_id, created_at')
+      .select('id, name, email, managed_venue_ids, created_at')
       .eq('role', 'admin')
       .order('created_at', { ascending: false }),
     (supabase as any)
@@ -66,14 +66,22 @@ export default async function AdminsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(admins as { id: string; name: string; email: string; managed_venue_id: string | null }[]).map((a) => (
+                  {(admins as { id: string; name: string; email: string; managed_venue_ids: string[] }[]).map((a) => (
                     <tr key={a.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50/50">
                       <td className="px-4 py-3 font-medium text-zinc-900">{a.name}</td>
                       <td className="px-4 py-3 text-zinc-500">{a.email}</td>
                       <td className="px-4 py-3">
-                        <span className="px-2 py-0.5 rounded-full text-xs bg-zinc-100 text-zinc-600">
-                          {a.managed_venue_id ? (venueMap[a.managed_venue_id] ?? a.managed_venue_id) : '—'}
-                        </span>
+                        {(a.managed_venue_ids ?? []).length === 0 ? (
+                          <span className="px-2 py-0.5 rounded-full text-xs bg-zinc-100 text-zinc-400">—</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {(a.managed_venue_ids ?? []).map(vid => (
+                              <span key={vid} className="px-2 py-0.5 rounded-full text-xs bg-zinc-100 text-zinc-600">
+                                {venueMap[vid] ?? vid}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">

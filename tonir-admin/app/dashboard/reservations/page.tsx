@@ -31,7 +31,7 @@ async function setStatus(id: string, status: ReservationRow['status']) {
     .single()
 
   if (!res) return
-  if (admin.role === 'admin' && res.venue_id !== admin.managed_venue_id) return
+  if (admin.role === 'admin' && !admin.managed_venue_ids.includes(res.venue_id)) return
 
   await (supabase as any).from('reservations').update({ status }).eq('id', id)
 
@@ -61,7 +61,7 @@ async function saveNote(id: string, formData: FormData) {
 
   if (admin.role === 'admin') {
     const { data: res } = await (supabase as any).from('reservations').select('venue_id').eq('id', id).single()
-    if (res?.venue_id !== admin.managed_venue_id) return
+    if (!admin.managed_venue_ids.includes(res?.venue_id)) return
   }
 
   await (supabase as any)
@@ -96,9 +96,9 @@ export default async function ReservationsPage({
     .order('created_at', { ascending: false })
     .limit(200)
 
-  // Restaurant admins only see their venue's reservations
-  if (admin.role === 'admin' && admin.managed_venue_id) {
-    query = query.eq('venue_id', admin.managed_venue_id)
+  // Restaurant admins only see their venues' reservations
+  if (admin.role === 'admin' && admin.managed_venue_ids.length) {
+    query = query.in('venue_id', admin.managed_venue_ids)
   }
 
   if (activeTab !== 'all') query = query.eq('status', activeTab)
@@ -110,8 +110,8 @@ export default async function ReservationsPage({
 
   // Count per status (scoped to venue for admins)
   let countsQuery = (supabase as any).from('reservations').select('status').limit(1000)
-  if (admin.role === 'admin' && admin.managed_venue_id) {
-    countsQuery = countsQuery.eq('venue_id', admin.managed_venue_id)
+  if (admin.role === 'admin' && admin.managed_venue_ids.length) {
+    countsQuery = countsQuery.in('venue_id', admin.managed_venue_ids)
   }
   const { data: counts } = await countsQuery
 

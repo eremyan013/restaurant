@@ -9,7 +9,7 @@ export function EditAdminForm({
   admin,
   venues,
 }: {
-  admin: { id: string; name: string; email: string; managed_venue_id: string | null }
+  admin: { id: string; name: string; email: string; managed_venue_ids: string[] }
   venues: { id: string; name: string }[]
 }) {
   const router = useRouter()
@@ -66,18 +66,26 @@ export function EditAdminForm({
         </div>
 
         <div>
-          <label className="text-sm font-medium text-zinc-700 mb-1 block">Venue</label>
-          <select
-            name="venue_id"
-            required
-            defaultValue={admin.managed_venue_id ?? ''}
-            className="w-full h-10 px-3 rounded-lg border border-zinc-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-zinc-300"
-          >
-            <option value="">Select a venue…</option>
+          <label className="text-sm font-medium text-zinc-700 mb-1 block">
+            Venues <span className="text-zinc-400 font-normal text-xs">(select one or more)</span>
+          </label>
+          <div className="rounded-lg border border-zinc-300 divide-y divide-zinc-100 max-h-56 overflow-y-auto">
             {venues.map((v) => (
-              <option key={v.id} value={v.id}>{v.name}</option>
+              <label
+                key={v.id}
+                className="flex items-center gap-2.5 px-3 py-2 hover:bg-zinc-50 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  name="venue_id"
+                  value={v.id}
+                  defaultChecked={(admin.managed_venue_ids ?? []).includes(v.id)}
+                  className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-300"
+                />
+                <span className="text-sm text-zinc-800">{v.name}</span>
+              </label>
             ))}
-          </select>
+          </div>
         </div>
 
         <div className="flex gap-3 pt-2 border-t border-zinc-100">

@@ -27,21 +27,24 @@ async function getSuperAdminStats() {
   }
 }
 
-async function getAdminStats(venueId: string) {
+async function getAdminStats(venueIds: string[]) {
   try {
     const supabase = createSupabaseAdminClient()
     const today = new Date().toISOString().split('T')[0]
 
-    const [venue, todayRes, pendingRes, totalRes] = await Promise.all([
-      (supabase as any).from('venues').select('name').eq('id', venueId).single(),
-      (supabase as any).from('reservations').select('*', { count: 'exact', head: true }).eq('venue_id', venueId).eq('date', today),
-      (supabase as any).from('reservations').select('*', { count: 'exact', head: true }).eq('venue_id', venueId).eq('status', 'pending'),
-      (supabase as any).from('reservations').select('*', { count: 'exact', head: true }).eq('venue_id', venueId),
+    const [venues, todayRes, pendingRes, totalRes] = await Promise.all([
+      (supabase as any).from('venues').select('name').in('id', venueIds),
+      (supabase as any).from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).eq('date', today),
+      (supabase as any).from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).eq('status', 'pending'),
+      (supabase as any).from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds),
     ])
+
+    const venueNames: string[] = (venues.data ?? []).map((v: { name: string }) => v.name)
+    const venueLabel = venueNames.length === 1 ? venueNames[0] : `${venueNames.length} venues`
 
     return {
       ok: true as const,
-      venueName: venue.data?.name ?? '—',
+      venueLabel,
       todayReservations: todayRes.count ?? 0,
       pendingReservations: pendingRes.count ?? 0,
       totalReservations: totalRes.count ?? 0,
@@ -57,7 +60,7 @@ export default async function DashboardPage() {
 
   // ── Restaurant Admin ──────────────────────────────────────────────────────────
   if (admin.role === 'admin') {
-    if (!admin.managed_venue_id) {
+    if (!admin.managed_venue_ids.length) {
       return (
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900 mb-6">Dashboard</h1>
@@ -66,7 +69,7 @@ export default async function DashboardPage() {
       )
     }
 
-    const stats = await getAdminStats(admin.managed_venue_id)
+    const stats = await getAdminStats(admin.managed_venue_ids)
 
     if (!stats.ok) {
       return (
@@ -80,7 +83,7 @@ export default async function DashboardPage() {
     }
 
     const cards = [
-      { label: 'Venue', value: stats.venueName, sub: 'your restaurant' },
+      { label: stats.venueLabel.includes('venues') ? 'Venues' : 'Venue', value: stats.venueLabel, sub: 'your restaurant' },
       { label: "Today's Reservations", value: stats.todayReservations, sub: 'bookings today' },
       { label: 'Pending Review', value: stats.pendingReservations, sub: 'need confirmation', highlight: stats.pendingReservations > 0 },
       { label: 'Total Reservations', value: stats.totalReservations, sub: 'all time' },

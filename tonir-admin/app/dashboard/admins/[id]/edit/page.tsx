@@ -19,7 +19,7 @@ export default async function EditAdminPage({
   const [{ data: profile }, { data: venues }] = await Promise.all([
     (supabase as any)
       .from('profiles')
-      .select('id, name, email, managed_venue_id')
+      .select('id, name, email, managed_venue_ids')
       .eq('id', id)
       .eq('role', 'admin')
       .single(),

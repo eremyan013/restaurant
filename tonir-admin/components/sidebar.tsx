@@ -17,11 +17,11 @@ const SUPER_ADMIN_NAV = [
 export function Sidebar({
   adminName,
   role,
-  managedVenueId,
+  managedVenueIds,
 }: {
   adminName: string
   role: AdminRole
-  managedVenueId: string | null
+  managedVenueIds: string[]
 }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -32,11 +32,13 @@ export function Sidebar({
       : [
           { href: '/dashboard', label: 'Dashboard', exact: true },
           { href: '/dashboard/reservations', label: 'Reservations', exact: false },
-          ...(managedVenueId
+          ...(managedVenueIds.length === 1
             ? [
-                { href: `/dashboard/menus/${managedVenueId}`, label: 'Menu', exact: false },
-                { href: `/dashboard/venues/${managedVenueId}`, label: 'My Venue', exact: false },
+                { href: `/dashboard/menus/${managedVenueIds[0]}`, label: 'Menu', exact: false },
+                { href: `/dashboard/venues/${managedVenueIds[0]}`, label: 'My Venue', exact: false },
               ]
+            : managedVenueIds.length > 1
+            ? [{ href: '/dashboard/venues', label: 'My Venues', exact: false }]
             : []),
         ]
 

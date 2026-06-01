@@ -141,6 +141,7 @@ export interface Database {
           is_admin: boolean;
           role: 'user' | 'admin' | 'super_admin';
           managed_venue_id: string | null;
+          managed_venue_ids: string[];
           push_token: string | null;
           web_push_sub: Record<string, unknown> | null;
           created_at: string;
@@ -158,6 +159,7 @@ export interface Database {
           is_admin?: boolean;
           role?: 'user' | 'admin' | 'super_admin';
           managed_venue_id?: string | null;
+          managed_venue_ids?: string[];
           push_token?: string | null;
           web_push_sub?: Record<string, unknown> | null;
           created_at?: string;
@@ -175,6 +177,7 @@ export interface Database {
           is_admin?: boolean;
           role?: 'user' | 'admin' | 'super_admin';
           managed_venue_id?: string | null;
+          managed_venue_ids?: string[];
           push_token?: string | null;
           web_push_sub?: Record<string, unknown> | null;
           created_at?: string;
