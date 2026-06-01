@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import Link from 'next/link'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { CreateAdminForm } from './CreateAdminForm'
@@ -75,15 +76,23 @@ export default async function AdminsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <form action={removeAdmin}>
-                          <input type="hidden" name="id" value={a.id} />
-                          <button
-                            type="submit"
-                            className="text-xs px-2.5 py-1 rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/dashboard/admins/${a.id}/edit`}
+                            className="text-xs px-2.5 py-1 rounded-md border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors"
                           >
-                            Remove
-                          </button>
-                        </form>
+                            Edit
+                          </Link>
+                          <form action={removeAdmin}>
+                            <input type="hidden" name="id" value={a.id} />
+                            <button
+                              type="submit"
+                              className="text-xs px-2.5 py-1 rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
+                            >
+                              Remove
+                            </button>
+                          </form>
+                        </div>
                       </td>
                     </tr>
                   ))}

@@ -58,6 +58,46 @@ export async function createAdmin(
   return { ok: true }
 }
 
+export type UpdateAdminState = { ok: false; error?: string } | { ok: true }
+
+export async function updateAdmin(
+  _prev: UpdateAdminState,
+  formData: FormData,
+): Promise<UpdateAdminState> {
+  const actor = await getCurrentAdmin()
+  if (actor?.role !== 'super_admin') return { ok: false, error: 'Unauthorized' }
+
+  const id      = (formData.get('id')       as string)?.trim()
+  const name    = (formData.get('name')     as string)?.trim()
+  const email   = (formData.get('email')    as string)?.trim()
+  const password = (formData.get('password') as string)?.trim()
+  const venueId = (formData.get('venue_id') as string)?.trim()
+
+  if (!id || !name || !email || !venueId) {
+    return { ok: false, error: 'Name, email and venue are required.' }
+  }
+
+  const supabase = createSupabaseAdminClient()
+
+  // Update auth email/password if changed
+  const authUpdate: Record<string, string> = { email }
+  if (password) authUpdate.password = password
+
+  const { error: authError } = await (supabase as any).auth.admin.updateUserById(id, authUpdate)
+  if (authError) return { ok: false, error: authError.message }
+
+  // Update profile
+  const { error: profileError } = await (supabase as any)
+    .from('profiles')
+    .update({ name, email, managed_venue_id: venueId })
+    .eq('id', id)
+
+  if (profileError) return { ok: false, error: profileError.message }
+
+  revalidatePath('/dashboard/admins')
+  return { ok: true }
+}
+
 export async function deleteAdmin(_prev: unknown, formData: FormData): Promise<void> {
   const actor = await getCurrentAdmin()
   if (actor?.role !== 'super_admin') return
