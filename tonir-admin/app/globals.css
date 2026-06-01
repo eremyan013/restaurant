@@ -18,6 +18,15 @@ body {
   font-family: var(--font-geist-sans, Arial, Helvetica, sans-serif);
 }
 
+/* Pointer cursor on all interactive elements */
+button,
+a,
+[role="button"],
+label:has(input[type="checkbox"]),
+label:has(input[type="radio"]) {
+  cursor: pointer;
+}
+
 /* Form input base styles */
 input[type="text"],
 input[type="email"],
