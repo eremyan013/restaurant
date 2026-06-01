@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import type { ReservationRow } from '@/lib/database.types'
+import { ReservationFilters } from '@/components/reservation-filters'
 
 const STATUS_CLASSES: Record<string, string> = {
   pending:   'bg-amber-100 text-amber-800',
@@ -23,7 +24,6 @@ async function setStatus(id: string, status: ReservationRow['status']) {
 
   const supabase = createSupabaseAdminClient()
 
-  // Fetch reservation to verify venue ownership for restricted admins
   const { data: res } = await (supabase as any)
     .from('reservations')
     .select('user_id, venue_id, date, time, venues(name), profiles(push_token)')
@@ -77,47 +77,118 @@ async function saveNote(id: string, formData: FormData) {
 const TABS = ['all', 'pending', 'confirmed', 'cancelled', 'visited'] as const
 type Tab = typeof TABS[number]
 
+type FilterParams = {
+  status?:     string
+  from?:       string
+  to?:         string
+  venue?:      string
+  guest?:      string
+  people_min?: string
+  people_max?: string
+  note?:       string
+}
+
 export default async function ReservationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>
+  searchParams: Promise<FilterParams>
 }) {
   const admin = await getCurrentAdmin()
   if (!admin) redirect('/login')
 
-  const { status: statusFilter } = await searchParams
-  const activeTab: Tab = (TABS.includes(statusFilter as Tab) ? statusFilter : 'all') as Tab
+  const sp = await searchParams
+  const activeTab: Tab = (TABS.includes(sp.status as Tab) ? sp.status : 'all') as Tab
 
   const supabase = createSupabaseAdminClient()
+
+  // ── Venues list for filter dropdown ──────────────────────────────────────────
+  let venuesList: { id: string; name: string }[] = []
+  if (admin.role === 'super_admin') {
+    const { data } = await supabase.from('venues').select('id, name').order('name')
+    venuesList = data ?? []
+  } else if (admin.managed_venue_ids.length > 1) {
+    const { data } = await (supabase as any)
+      .from('venues').select('id, name').in('id', admin.managed_venue_ids).order('name')
+    venuesList = data ?? []
+  }
+
+  // ── Guest pre-filter (resolve matching user IDs) ──────────────────────────────
+  let guestUserIds: string[] | null = null
+  if (sp.guest?.trim()) {
+    const { data: matched } = await (supabase as any)
+      .from('profiles')
+      .select('id')
+      .or(`name.ilike.%${sp.guest.trim()}%,email.ilike.%${sp.guest.trim()}%`)
+    guestUserIds = (matched ?? []).map((p: { id: string }) => p.id)
+  }
+
+  // ── Helper: apply all non-status filters to a query ──────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function applyFilters(q: any) {
+    // Admin scope
+    if (admin!.role === 'admin' && admin!.managed_venue_ids.length) {
+      const scopeVenue = sp.venue && admin!.managed_venue_ids.includes(sp.venue) ? sp.venue : null
+      q = scopeVenue ? q.eq('venue_id', scopeVenue) : q.in('venue_id', admin!.managed_venue_ids)
+    } else if (admin!.role === 'super_admin' && sp.venue) {
+      q = q.eq('venue_id', sp.venue)
+    }
+
+    if (sp.from)        q = q.gte('date', sp.from)
+    if (sp.to)          q = q.lte('date', sp.to)
+    if (sp.people_min)  q = q.gte('people', parseInt(sp.people_min))
+    if (sp.people_max)  q = q.lte('people', parseInt(sp.people_max))
+    if (sp.note?.trim()) q = q.or(`note.ilike.%${sp.note.trim()}%,admin_note.ilike.%${sp.note.trim()}%,occasion.ilike.%${sp.note.trim()}%`)
+
+    if (guestUserIds !== null) {
+      q = guestUserIds.length === 0
+        ? q.eq('user_id', '00000000-0000-0000-0000-000000000000')
+        : q.in('user_id', guestUserIds)
+    }
+
+    return q
+  }
+
+  // ── Main query ────────────────────────────────────────────────────────────────
   let query = (supabase as any)
     .from('reservations')
     .select('id, date, time, people, status, occasion, note, admin_note, created_at, venue_id, user_id, venues(name), profiles(name, email)')
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
-    .limit(200)
+    .limit(300)
 
-  // Restaurant admins only see their venues' reservations
-  if (admin.role === 'admin' && admin.managed_venue_ids.length) {
-    query = query.in('venue_id', admin.managed_venue_ids)
-  }
-
+  query = applyFilters(query)
   if (activeTab !== 'all') query = query.eq('status', activeTab)
 
   const { data, error } = await query
   if (error) throw error
-
   const reservations: ReservationWithJoins[] = data ?? []
 
-  // Count per status (scoped to venue for admins)
-  let countsQuery = (supabase as any).from('reservations').select('status').limit(1000)
-  if (admin.role === 'admin' && admin.managed_venue_ids.length) {
-    countsQuery = countsQuery.in('venue_id', admin.managed_venue_ids)
-  }
+  // ── Status counts (filtered, without status restriction) ─────────────────────
+  let countsQuery = applyFilters(
+    (supabase as any).from('reservations').select('status').limit(2000)
+  )
   const { data: counts } = await countsQuery
 
   const countMap: Record<string, number> = { pending: 0, confirmed: 0, cancelled: 0, visited: 0 }
   for (const r of (counts ?? [])) countMap[r.status] = (countMap[r.status] ?? 0) + 1
   const total = Object.values(countMap).reduce((a, b) => a + b, 0)
+
+  // ── Tab URL builder: preserves all active filters, changes only status ────────
+  function tabHref(tab: Tab) {
+    const p = new URLSearchParams()
+    if (sp.from)       p.set('from',       sp.from)
+    if (sp.to)         p.set('to',         sp.to)
+    if (sp.venue)      p.set('venue',      sp.venue)
+    if (sp.guest)      p.set('guest',      sp.guest)
+    if (sp.people_min) p.set('people_min', sp.people_min)
+    if (sp.people_max) p.set('people_max', sp.people_max)
+    if (sp.note)       p.set('note',       sp.note)
+    if (tab !== 'all') p.set('status',     tab)
+    const qs = p.toString()
+    return `/dashboard/reservations${qs ? '?' + qs : ''}`
+  }
+
+  const showVenueCol = admin.role === 'super_admin' || admin.managed_venue_ids.length > 1
 
   return (
     <div>
@@ -126,16 +197,19 @@ export default async function ReservationsPage({
         <span className="text-sm text-zinc-400">{total} total</span>
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-1 mb-4 bg-zinc-100 p-1 rounded-lg w-fit">
+      {/* Filters */}
+      <ReservationFilters venues={venuesList} />
+
+      {/* Status tabs */}
+      <div className="flex gap-1 mb-4 bg-zinc-100 p-1 rounded-lg w-fit overflow-x-auto">
         {TABS.map((tab) => {
           const count = tab === 'all' ? total : (countMap[tab] ?? 0)
           const isActive = activeTab === tab
           return (
             <a
               key={tab}
-              href={tab === 'all' ? '/dashboard/reservations' : `/dashboard/reservations?status=${tab}`}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
+              href={tabHref(tab)}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
                 isActive ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
               }`}
             >
@@ -150,7 +224,7 @@ export default async function ReservationsPage({
 
       {reservations.length === 0 ? (
         <div className="bg-white rounded-xl border border-zinc-200 py-16 text-center text-zinc-400 text-sm">
-          No reservations{activeTab !== 'all' ? ` with status "${activeTab}"` : ''}.
+          No reservations match the current filters.
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-zinc-200 overflow-x-auto">
@@ -158,7 +232,7 @@ export default async function ReservationsPage({
             <thead>
               <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                 <th className="px-4 py-3 font-medium text-zinc-500">Date / Time</th>
-                {admin.role === 'super_admin' && <th className="px-4 py-3 font-medium text-zinc-500">Venue</th>}
+                {showVenueCol && <th className="px-4 py-3 font-medium text-zinc-500">Venue</th>}
                 <th className="px-4 py-3 font-medium text-zinc-500">Guest</th>
                 <th className="px-4 py-3 font-medium text-zinc-500">Ppl</th>
                 <th className="px-4 py-3 font-medium text-zinc-500">Status</th>
@@ -175,7 +249,7 @@ export default async function ReservationsPage({
                       <p className="font-medium text-zinc-900">{r.date}</p>
                       <p className="text-xs text-zinc-400">{r.time}</p>
                     </td>
-                    {admin.role === 'super_admin' && (
+                    {showVenueCol && (
                       <td className="px-4 py-3 text-zinc-700">{r.venues?.name ?? '—'}</td>
                     )}
                     <td className="px-4 py-3">
