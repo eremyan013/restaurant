@@ -18,6 +18,15 @@ body {
   font-family: var(--font-geist-sans, Arial, Helvetica, sans-serif);
 }
 
+/* Reset browser defaults on buttons so custom shapes/sizes work correctly */
+button {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
 /* Pointer cursor on all interactive elements */
 button,
 a,
