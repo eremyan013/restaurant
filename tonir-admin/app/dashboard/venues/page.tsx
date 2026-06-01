@@ -81,7 +81,7 @@ export default async function VenuesPage() {
                       type="submit"
                       title={venue.is_active ? 'Deactivate' : 'Activate'}
                       className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${
-                        venue.is_active ? 'bg-green-500' : 'bg-zinc-300'
+                        venue.is_active ? 'bg-green-500' : 'bg-red-500'
                       }`}
                     >
                       <span

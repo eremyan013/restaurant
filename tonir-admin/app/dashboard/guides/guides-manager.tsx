@@ -108,7 +108,7 @@ export function GuidesManager({ guides, venues, toggleActive }: Props) {
                       <form action={toggleActive.bind(null, guide.id, guide.is_active)}>
                         <button
                           type="submit"
-                          className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${guide.is_active ? 'bg-green-500' : 'bg-zinc-300'}`}
+                          className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${guide.is_active ? 'bg-green-500' : 'bg-red-500'}`}
                         >
                           <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${guide.is_active ? 'translate-x-4' : 'translate-x-0.5'}`} />
                         </button>
