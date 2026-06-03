@@ -244,7 +244,7 @@ export default async function ReservationsPage({
               {reservations.map((r) => {
                 const statusClass = STATUS_CLASSES[r.status] ?? 'bg-zinc-100 text-zinc-700'
                 return (
-                  <tr key={r.id} className="border-b border-zinc-100 last:border-0 align-top">
+                  <tr key={r.id} className="odd:bg-white even:bg-zinc-100 hover:bg-zinc-200 transition-colors align-top">
                     <td className="px-4 py-3">
                       <p className="font-medium text-zinc-900">{r.date}</p>
                       <p className="text-xs text-zinc-400">{r.time}</p>
