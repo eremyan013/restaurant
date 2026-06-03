@@ -23,6 +23,14 @@ type Props = {
   isSuperAdmin: boolean
 }
 
+const KIND_OPTIONS = ['restaurant', 'bar', 'lounge', 'club']
+const RATING_OPTIONS = [
+  { label: 'Any rating', min: 0 },
+  { label: '≥ 3.0', min: 3 },
+  { label: '≥ 4.0', min: 4 },
+  { label: '≥ 4.5', min: 4.5 },
+]
+
 function matches(venue: Venue, query: string): boolean {
   if (!query) return true
   const q = transliterate(query.toLowerCase())
@@ -36,20 +44,61 @@ function matches(venue: Venue, query: string): boolean {
 
 export function VenuesSearchTable({ venues, toggleActive, isSuperAdmin }: Props) {
   const [query, setQuery] = useState('')
+  const [cuisine, setCuisine] = useState('')
+  const [kind, setKind] = useState('')
+  const [minRating, setMinRating] = useState(0)
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all')
 
-  const filtered = useMemo(() => venues.filter(v => matches(v, query)), [venues, query])
+  const cuisines = useMemo(() => Array.from(new Set(venues.map(v => v.cuisine))).sort(), [venues])
+
+  const filtered = useMemo(() => venues.filter(v =>
+    matches(v, query) &&
+    (cuisine === '' || v.cuisine === cuisine) &&
+    (kind === '' || v.kind === kind) &&
+    v.rating >= minRating &&
+    (activeFilter === 'all' || (activeFilter === 'active' ? v.is_active : !v.is_active))
+  ), [venues, query, cuisine, kind, minRating, activeFilter])
+
+  const hasFilters = query || cuisine || kind || minRating > 0 || activeFilter !== 'all'
+
+  const selectClass = "px-3 py-2 rounded-lg border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 bg-white text-zinc-700"
 
   return (
     <div>
-      <div className="mb-4">
+      <div className="flex flex-wrap gap-2 mb-4">
         <input
           type="text"
           placeholder="Search venues..."
           value={query}
           onChange={e => setQuery(e.target.value)}
-          className="w-full max-w-sm px-4 py-2 rounded-lg border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 bg-white"
+          className="px-4 py-2 rounded-lg border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 bg-white w-52"
         />
+        <select value={cuisine} onChange={e => setCuisine(e.target.value)} className={selectClass}>
+          <option value="">All cuisines</option>
+          {cuisines.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select value={kind} onChange={e => setKind(e.target.value)} className={selectClass}>
+          <option value="">All kinds</option>
+          {KIND_OPTIONS.map(k => <option key={k} value={k} className="capitalize">{k.charAt(0).toUpperCase() + k.slice(1)}</option>)}
+        </select>
+        <select value={minRating} onChange={e => setMinRating(Number(e.target.value))} className={selectClass}>
+          {RATING_OPTIONS.map(r => <option key={r.min} value={r.min}>{r.label}</option>)}
+        </select>
+        <select value={activeFilter} onChange={e => setActiveFilter(e.target.value as typeof activeFilter)} className={selectClass}>
+          <option value="all">All statuses</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        {hasFilters && (
+          <button
+            onClick={() => { setQuery(''); setCuisine(''); setKind(''); setMinRating(0); setActiveFilter('all') }}
+            className="px-3 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-500 hover:bg-zinc-50 transition-colors"
+          >
+            Clear
+          </button>
+        )}
       </div>
+      <p className="text-xs text-zinc-400 mb-3">{filtered.length} of {venues.length} venues</p>
 
       <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
         <table className="w-full text-sm">
