@@ -7,7 +7,7 @@ import { LangTabs, LANGS, type Lang } from '@/components/lang-tabs'
 
 type LangItemFields = { name: string; description: string; allergens: string }
 
-export function EditItemRow({ item, venueId }: { item: MenuItemRow; venueId: string }) {
+export function EditItemRow({ item, venueId, index = 0 }: { item: MenuItemRow; venueId: string; index?: number }) {
   const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -115,7 +115,7 @@ export function EditItemRow({ item, venueId }: { item: MenuItemRow; venueId: str
 
   return (
     <>
-      <tr className="border-b border-zinc-100 last:border-0">
+      <tr className={`${index % 2 === 0 ? 'bg-white' : 'bg-zinc-100'} hover:bg-zinc-200 transition-colors`}>
         <td className="px-4 py-2">
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element

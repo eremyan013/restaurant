@@ -112,8 +112,8 @@ export default async function MenuPage({
                       </tr>
                     </thead>
                     <tbody>
-                      {catItems.map((item: MenuItemRow) => (
-                        <EditItemRow key={item.id} item={item} venueId={venueId} />
+                      {catItems.map((item: MenuItemRow, i: number) => (
+                        <EditItemRow key={item.id} item={item} venueId={venueId} index={i} />
                       ))}
                     </tbody>
                   </table>
