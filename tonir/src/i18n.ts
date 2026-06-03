@@ -212,9 +212,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     auth_err_not_confirmed: 'Հաստատեք ձեր email հասցեն',
     auth_err_generic:       'Սխալ է տեղի ունեցել',
     auth_err_admin:         'Այս հաշիվը նախատեսված է միայն ադմինիստրատորի վահանակի համար',
-    auth_id_signin:         'ID',
-    auth_id_placeholder:    'Ձեր ID-ն',
-    auth_submit_id_signin:  'Մուտք ID-ով',
+    auth_email_or_id_placeholder: 'Email կամ ID',
     auth_err_id_not_found:  'Այս ID-ով օգտատեր չի գտնվել',
     prof_player_id:         'Ձեր ID',
     // DetailScreen
@@ -448,9 +446,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     auth_err_not_confirmed: 'Подтвердите ваш email адрес',
     auth_err_generic:       'Произошла ошибка',
     auth_err_admin:         'Этот аккаунт предназначен только для панели администратора',
-    auth_id_signin:         'ID',
-    auth_id_placeholder:    'Ваш ID',
-    auth_submit_id_signin:  'Войти по ID',
+    auth_email_or_id_placeholder: 'Email или ID',
     auth_err_id_not_found:  'Пользователь с таким ID не найден',
     prof_player_id:         'Ваш ID',
     // DetailScreen
@@ -684,9 +680,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     auth_err_not_confirmed: 'Confirm your email address',
     auth_err_generic:       'An error occurred',
     auth_err_admin:         'This account is for the admin panel only',
-    auth_id_signin:         'ID',
-    auth_id_placeholder:    'Your ID',
-    auth_submit_id_signin:  'Sign in with ID',
+    auth_email_or_id_placeholder: 'Email or ID',
     auth_err_id_not_found:  'No user found with this ID',
     prof_player_id:         'Your ID',
     // DetailScreen
