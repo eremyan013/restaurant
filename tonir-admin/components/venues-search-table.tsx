@@ -76,7 +76,7 @@ export function VenuesSearchTable({ venues, toggleActive, isSuperAdmin }: Props)
             {filtered.map(venue => (
               <tr
                 key={venue.id}
-                className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50/50 transition-colors"
+                className="odd:bg-white even:bg-zinc-100 hover:bg-zinc-200 transition-colors"
               >
                 <td className="px-4 py-3 font-medium text-zinc-900">{venue.name}</td>
                 <td className="px-4 py-3 text-zinc-600">{venue.cuisine}</td>
