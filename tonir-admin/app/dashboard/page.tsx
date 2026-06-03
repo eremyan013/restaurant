@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
@@ -83,10 +84,10 @@ export default async function DashboardPage() {
     }
 
     const cards = [
-      { label: stats.venueLabel.includes('venues') ? 'Venues' : 'Venue', value: stats.venueLabel, sub: 'your restaurant' },
-      { label: "Today's Reservations", value: stats.todayReservations, sub: 'bookings today' },
-      { label: 'Pending Review', value: stats.pendingReservations, sub: 'need confirmation', highlight: stats.pendingReservations > 0 },
-      { label: 'Total Reservations', value: stats.totalReservations, sub: 'all time' },
+      { label: stats.venueLabel.includes('venues') ? 'Venues' : 'Venue', value: stats.venueLabel, sub: 'your restaurant', href: '/dashboard/venues' },
+      { label: "Today's Reservations", value: stats.todayReservations, sub: 'bookings today', href: '/dashboard/reservations' },
+      { label: 'Pending Review', value: stats.pendingReservations, sub: 'need confirmation', highlight: stats.pendingReservations > 0, href: '/dashboard/reservations' },
+      { label: 'Total Reservations', value: stats.totalReservations, sub: 'all time', href: '/dashboard/reservations' },
     ]
 
     return (
@@ -94,13 +95,13 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-semibold text-zinc-900 mb-6">Dashboard</h1>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {cards.map(card => (
-            <div key={card.label} className="bg-white rounded-xl border border-zinc-200 p-5">
+            <Link key={card.label} href={card.href} className="bg-white rounded-xl border border-zinc-200 p-5 hover:border-zinc-300 hover:shadow-sm transition-all block">
               <p className="text-sm text-zinc-500">{card.label}</p>
               <p className={`text-3xl font-semibold mt-1 tabular-nums ${card.highlight ? 'text-amber-600' : 'text-zinc-900'}`}>
                 {card.value}
               </p>
               <p className="text-xs text-zinc-400 mt-1">{card.sub}</p>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
@@ -122,10 +123,10 @@ export default async function DashboardPage() {
   }
 
   const cards = [
-    { label: 'Active Venues', value: `${stats.activeVenues} / ${stats.totalVenues}`, sub: 'venues in app' },
-    { label: "Today's Reservations", value: stats.todayReservations, sub: 'bookings today' },
-    { label: 'Pending Review', value: stats.pendingReservations, sub: 'need confirmation', highlight: stats.pendingReservations > 0 },
-    { label: 'Registered Users', value: stats.totalUsers, sub: 'total accounts' },
+    { label: 'Active Venues', value: `${stats.activeVenues} / ${stats.totalVenues}`, sub: 'venues in app', href: '/dashboard/venues' },
+    { label: "Today's Reservations", value: stats.todayReservations, sub: 'bookings today', href: '/dashboard/reservations' },
+    { label: 'Pending Review', value: stats.pendingReservations, sub: 'need confirmation', highlight: stats.pendingReservations > 0, href: '/dashboard/reservations' },
+    { label: 'Registered Users', value: stats.totalUsers, sub: 'total accounts', href: '/dashboard/users' },
   ]
 
   return (
@@ -133,13 +134,13 @@ export default async function DashboardPage() {
       <h1 className="text-2xl font-semibold text-zinc-900 mb-6">Dashboard</h1>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map(card => (
-          <div key={card.label} className="bg-white rounded-xl border border-zinc-200 p-5">
+          <Link key={card.label} href={card.href} className="bg-white rounded-xl border border-zinc-200 p-5 hover:border-zinc-300 hover:shadow-sm transition-all block">
             <p className="text-sm text-zinc-500">{card.label}</p>
             <p className={`text-3xl font-semibold mt-1 tabular-nums ${'highlight' in card && card.highlight ? 'text-amber-600' : 'text-zinc-900'}`}>
               {card.value}
             </p>
             <p className="text-xs text-zinc-400 mt-1">{card.sub}</p>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
