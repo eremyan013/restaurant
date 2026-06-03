@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { YelAdjustForm } from '@/components/yel-adjust-form'
-import { TierNamesForm } from '@/components/tier-names-form'
+import { TierSettingsForm } from '@/components/tier-settings-form'
 
 const TIER_COLORS: Record<number, string> = {
   1: 'bg-zinc-100 text-zinc-600',
@@ -13,19 +13,41 @@ const TIER_COLORS: Record<number, string> = {
   4: 'bg-amber-50 text-amber-700',
 }
 
-async function loadTierNames(): Promise<Record<number, string>> {
+const ALL_SETTING_KEYS = [
+  'tier_1_name', 'tier_2_name', 'tier_3_name', 'tier_4_name',
+  'tier_2_min',  'tier_3_min',  'tier_4_min',
+]
+
+type TierSettings = {
+  names: Record<number, string>
+  mins:  Record<number, number>  // level -> min points (level 1 always 0)
+}
+
+async function loadTierSettings(): Promise<TierSettings> {
   const supabase = createSupabaseAdminClient()
   const { data } = await (supabase as any)
-    .from('settings')
-    .select('key, value')
-    .in('key', ['tier_1_name', 'tier_2_name', 'tier_3_name', 'tier_4_name'])
+    .from('settings').select('key, value').in('key', ALL_SETTING_KEYS)
 
-  const map: Record<number, string> = { 1: 'Tonir', 2: 'Pandok', 3: 'Areni', 4: 'Master' }
+  const names: Record<number, string> = { 1: 'Tonir', 2: 'Pandok', 3: 'Areni', 4: 'Master' }
+  const mins:  Record<number, number> = { 1: 0, 2: 1000, 3: 2000, 4: 3000 }
+
   for (const row of (data ?? [])) {
-    const level = parseInt(row.key.replace('tier_', '').replace('_name', ''))
-    if (level >= 1 && level <= 4) map[level] = row.value
+    if (row.key.endsWith('_name')) {
+      const level = parseInt(row.key[5])
+      if (level >= 1 && level <= 4) names[level] = row.value
+    } else if (row.key.endsWith('_min')) {
+      const level = parseInt(row.key[5])
+      if (level >= 2 && level <= 4) mins[level] = parseInt(row.value)
+    }
   }
-  return map
+  return { names, mins }
+}
+
+function calcTierLevel(points: number, mins: Record<number, number>): number {
+  if (points >= mins[4]) return 4
+  if (points >= mins[3]) return 3
+  if (points >= mins[2]) return 2
+  return 1
 }
 
 async function adjustPoints(formData: FormData) {
@@ -38,57 +60,67 @@ async function adjustPoints(formData: FormData) {
   if (!userId || isNaN(amount)) return
 
   const supabase = createSupabaseAdminClient()
-
-  const [profileRes, namesRes] = await Promise.all([
+  const [profileRes, settingsRes] = await Promise.all([
     (supabase as any).from('profiles').select('yel_points').eq('id', userId).single(),
-    (supabase as any).from('settings').select('key, value').in('key', ['tier_1_name', 'tier_2_name', 'tier_3_name', 'tier_4_name']),
+    (supabase as any).from('settings').select('key, value').in('key', ALL_SETTING_KEYS),
   ])
-
   if (!profileRes.data) return
 
-  const tierNames: Record<number, string> = { 1: 'Tonir', 2: 'Pandok', 3: 'Areni', 4: 'Master' }
-  for (const row of (namesRes.data ?? [])) {
-    const level = parseInt(row.key.replace('tier_', '').replace('_name', ''))
-    if (level >= 1 && level <= 4) tierNames[level] = row.value
+  const names: Record<number, string> = { 1: 'Tonir', 2: 'Pandok', 3: 'Areni', 4: 'Master' }
+  const mins:  Record<number, number> = { 1: 0, 2: 1000, 3: 2000, 4: 3000 }
+  for (const row of (settingsRes.data ?? [])) {
+    if (row.key.endsWith('_name')) { const l = parseInt(row.key[5]); if (l >= 1 && l <= 4) names[l] = row.value }
+    if (row.key.endsWith('_min'))  { const l = parseInt(row.key[5]); if (l >= 2 && l <= 4) mins[l]  = parseInt(row.value) }
   }
 
   const newPoints = Math.max(0, (profileRes.data.yel_points ?? 0) + amount)
-  const newLevel  = newPoints >= 3000 ? 4 : newPoints >= 2000 ? 3 : newPoints >= 1000 ? 2 : 1
+  const newLevel  = calcTierLevel(newPoints, mins)
 
   await (supabase as any).from('profiles').update({
     yel_points: newPoints,
     tier_level: newLevel,
-    tier: tierNames[newLevel],
+    tier: names[newLevel],
   }).eq('id', userId)
 
   revalidatePath('/dashboard/yel')
 }
 
-async function saveTierNames(formData: FormData) {
+async function saveTierSettings(formData: FormData) {
   'use server'
   const actor = await getCurrentAdmin()
   if (actor?.role !== 'super_admin') return
 
   const supabase = createSupabaseAdminClient()
 
-  const updates = [1, 2, 3, 4].map(level => ({
-    key: `tier_${level}_name`,
-    value: (formData.get(`tier_${level}_name`) as string)?.trim() || `Level ${level}`,
-  }))
+  const upserts = [
+    { key: 'tier_1_name', value: (formData.get('tier_1_name') as string)?.trim() || 'Level 1' },
+    { key: 'tier_2_name', value: (formData.get('tier_2_name') as string)?.trim() || 'Level 2' },
+    { key: 'tier_3_name', value: (formData.get('tier_3_name') as string)?.trim() || 'Level 3' },
+    { key: 'tier_4_name', value: (formData.get('tier_4_name') as string)?.trim() || 'Level 4' },
+    { key: 'tier_2_min',  value: formData.get('tier_2_min') as string || '1000' },
+    { key: 'tier_3_min',  value: formData.get('tier_3_min') as string || '2000' },
+    { key: 'tier_4_min',  value: formData.get('tier_4_min') as string || '3000' },
+  ]
 
-  await (supabase as any).from('settings').upsert(updates, { onConflict: 'key' })
+  await (supabase as any).from('settings').upsert(upserts, { onConflict: 'key' })
 
-  // Update tier field on all users to reflect the new names
-  const tierNames = Object.fromEntries(updates.map(u => [
-    parseInt(u.key.replace('tier_', '').replace('_name', '')),
-    u.value,
+  const names = Object.fromEntries(upserts.filter(u => u.key.endsWith('_name')).map(u => [
+    parseInt(u.key[5]), u.value,
   ])) as Record<number, string>
+  const mins = Object.fromEntries(upserts.filter(u => u.key.endsWith('_min')).map(u => [
+    parseInt(u.key[5]), parseInt(u.value),
+  ])) as Record<number, number>
+  mins[1] = 0
 
-  for (const [level, name] of Object.entries(tierNames)) {
+  // Re-assign tier + tier_level for all users based on new thresholds
+  const { data: users } = await (supabase as any)
+    .from('profiles').select('id, yel_points').eq('role', 'user')
+
+  for (const u of (users ?? [])) {
+    const level = calcTierLevel(u.yel_points ?? 0, mins)
     await (supabase as any).from('profiles')
-      .update({ tier: name })
-      .eq('role', 'user')
-      .eq('tier_level', parseInt(level))
+      .update({ tier_level: level, tier: names[level] })
+      .eq('id', u.id)
   }
 
   revalidatePath('/dashboard/yel')
@@ -100,7 +132,7 @@ export default async function YelPage() {
 
   const supabase = createSupabaseAdminClient()
 
-  const [profilesRes, recentRes, tierNames] = await Promise.all([
+  const [profilesRes, recentRes, { names: tierNames, mins: tierMins }] = await Promise.all([
     (supabase as any)
       .from('profiles')
       .select('id, player_id, name, email, yel_points, tier, tier_level, total_visits')
@@ -112,7 +144,7 @@ export default async function YelPage() {
       .eq('status', 'visited')
       .order('created_at', { ascending: false })
       .limit(30),
-    loadTierNames(),
+    loadTierSettings(),
   ])
 
   const users: any[]  = profilesRes.data ?? []
@@ -125,6 +157,12 @@ export default async function YelPage() {
 
   const tierCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 }
   for (const u of users) tierCounts[u.tier_level ?? 1] = (tierCounts[u.tier_level ?? 1] ?? 0) + 1
+
+  function tierRange(level: number) {
+    const from = tierMins[level]
+    const to   = level < 4 ? tierMins[level + 1] - 1 : null
+    return to !== null ? `${from.toLocaleString()} – ${to.toLocaleString()} pts` : `${from.toLocaleString()}+ pts`
+  }
 
   return (
     <div className="max-w-5xl space-y-8">
@@ -139,7 +177,6 @@ export default async function YelPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
         {/* Tier distribution */}
         <div className="bg-white rounded-xl border border-zinc-200 p-5">
           <h2 className="text-sm font-medium text-zinc-900 mb-4">Tier Distribution</h2>
@@ -167,10 +204,9 @@ export default async function YelPage() {
           </div>
           <div className="mt-5 pt-4 border-t border-zinc-100 space-y-1.5 text-xs text-zinc-500">
             <p className="font-medium text-zinc-700 mb-2">Tier thresholds</p>
-            <p>{tierNames[1]} — 0 – 999 pts</p>
-            <p>{tierNames[2]} — 1 000 – 1 999 pts</p>
-            <p>{tierNames[3]} — 2 000 – 2 999 pts</p>
-            <p>{tierNames[4]} — 3 000+ pts</p>
+            {([1, 2, 3, 4] as const).map(level => (
+              <p key={level}>{tierNames[level]} — {tierRange(level)}</p>
+            ))}
           </div>
         </div>
 
@@ -180,8 +216,8 @@ export default async function YelPage() {
         </div>
       </div>
 
-      {/* Tier name settings */}
-      <TierNamesForm tierNames={tierNames} saveTierNames={saveTierNames} />
+      {/* Tier settings */}
+      <TierSettingsForm tierNames={tierNames} tierMins={tierMins} saveTierSettings={saveTierSettings} />
 
       {/* Top earners */}
       <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
