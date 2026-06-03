@@ -50,6 +50,10 @@ function calcTierLevel(points: number, mins: Record<number, number>): number {
   return 1
 }
 
+function genCode() {
+  return 'YEL-' + Math.random().toString(36).substring(2, 8).toUpperCase()
+}
+
 async function adjustPoints(formData: FormData) {
   'use server'
   const actor = await getCurrentAdmin()
@@ -61,7 +65,7 @@ async function adjustPoints(formData: FormData) {
 
   const supabase = createSupabaseAdminClient()
   const [profileRes, settingsRes] = await Promise.all([
-    (supabase as any).from('profiles').select('yel_points').eq('id', userId).single(),
+    (supabase as any).from('profiles').select('yel_points, tier_level').eq('id', userId).single(),
     (supabase as any).from('settings').select('key, value').in('key', ALL_SETTING_KEYS),
   ])
   if (!profileRes.data) return
@@ -73,6 +77,7 @@ async function adjustPoints(formData: FormData) {
     if (row.key.endsWith('_min'))  { const l = parseInt(row.key[5]); if (l >= 2 && l <= 4) mins[l]  = parseInt(row.value) }
   }
 
+  const oldLevel  = profileRes.data.tier_level ?? 1
   const newPoints = Math.max(0, (profileRes.data.yel_points ?? 0) + amount)
   const newLevel  = calcTierLevel(newPoints, mins)
 
@@ -81,6 +86,33 @@ async function adjustPoints(formData: FormData) {
     tier_level: newLevel,
     tier: names[newLevel],
   }).eq('id', userId)
+
+  // Auto-assign tier prizes for every newly unlocked level
+  if (newLevel > oldLevel) {
+    for (let lvl = oldLevel + 1; lvl <= newLevel; lvl++) {
+      const { data: tierPrizes } = await (supabase as any)
+        .from('prizes')
+        .select('id, stock')
+        .eq('unlock_type', 'tier')
+        .eq('min_tier_level', lvl)
+        .eq('is_active', true)
+
+      for (const prize of (tierPrizes ?? [])) {
+        // Check stock
+        if (prize.stock != null) {
+          const { count } = await (supabase as any)
+            .from('user_prizes').select('id', { count: 'exact', head: true }).eq('prize_id', prize.id)
+          if ((count ?? 0) >= prize.stock) continue
+        }
+        await (supabase as any).from('user_prizes').insert({
+          user_id:  userId,
+          prize_id: prize.id,
+          code:     genCode(),
+          status:   'active',
+        })
+      }
+    }
+  }
 
   revalidatePath('/dashboard/yel')
 }
