@@ -183,6 +183,7 @@ export interface Database {
           managed_venue_ids: string[];
           push_token: string | null;
           web_push_sub: Record<string, unknown> | null;
+          player_id: number;
           created_at: string;
           updated_at: string;
         };
@@ -201,6 +202,7 @@ export interface Database {
           managed_venue_ids?: string[];
           push_token?: string | null;
           web_push_sub?: Record<string, unknown> | null;
+          player_id?: number;
           created_at?: string;
           updated_at?: string;
         };

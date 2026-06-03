@@ -10,7 +10,7 @@ export default async function UsersPage() {
   const supabase = createSupabaseAdminClient()
   const { data: users, error } = await supabase
     .from('profiles')
-    .select('id, name, email, tier, yel_points, total_visits, created_at')
+    .select('id, player_id, name, email, tier, yel_points, total_visits, created_at')
     .eq('role', 'user')
     .order('created_at', { ascending: false })
 
@@ -24,6 +24,7 @@ export default async function UsersPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
+              <th className="px-4 py-3 font-medium text-zinc-500">ID</th>
               <th className="px-4 py-3 font-medium text-zinc-500">Name</th>
               <th className="px-4 py-3 font-medium text-zinc-500">Email</th>
               <th className="px-4 py-3 font-medium text-zinc-500">Tier</th>
@@ -37,6 +38,7 @@ export default async function UsersPage() {
                 key={user.id}
                 className="relative odd:bg-white even:bg-zinc-100 hover:bg-zinc-200 transition-colors cursor-pointer"
               >
+                <td className="px-4 py-3 text-zinc-400 tabular-nums font-mono text-xs">{user.player_id}</td>
                 <td className="px-4 py-3 font-medium text-zinc-900">
                   <Link href={`/dashboard/users/${user.id}`} className="hover:text-zinc-600 after:absolute after:inset-0">
                     {user.name}
