@@ -19,6 +19,7 @@ export function PlatformWebView({ html, style, webViewRef, onMessage, scrollEnab
       javaScriptEnabled
       domStorageEnabled
       originWhitelist={['*']}
+      mixedContentMode="always"
       scrollEnabled={scrollEnabled}
     />
   );

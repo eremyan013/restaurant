@@ -243,7 +243,7 @@ export function MapScreen({ navigation, route }: Props) {
   }
 
   const mapHtml = useMemo(
-    () => Platform.OS === 'web' ? buildLeafletHtml(venues) : buildHtml(venues),
+    () => buildLeafletHtml(venues),
     [venues]
   );
 
