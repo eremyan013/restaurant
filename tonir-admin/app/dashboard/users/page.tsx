@@ -35,7 +35,7 @@ export default async function UsersPage() {
             {users?.map(user => (
               <tr
                 key={user.id}
-                className="relative border-b border-zinc-100 last:border-0 hover:bg-zinc-50/50 transition-colors cursor-pointer"
+                className="relative odd:bg-white even:bg-zinc-50 hover:bg-zinc-100 transition-colors cursor-pointer"
               >
                 <td className="px-4 py-3 font-medium text-zinc-900">
                   <Link href={`/dashboard/users/${user.id}`} className="hover:text-zinc-600 after:absolute after:inset-0">
