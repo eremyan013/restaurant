@@ -67,7 +67,7 @@ export default async function AdminsPage() {
                 </thead>
                 <tbody>
                   {(admins as { id: string; name: string; email: string; managed_venue_ids: string[] }[]).map((a) => (
-                    <tr key={a.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50/50">
+                    <tr key={a.id} className="odd:bg-white even:bg-zinc-100 hover:bg-zinc-200 transition-colors">
                       <td className="px-4 py-3 font-medium text-zinc-900">{a.name}</td>
                       <td className="px-4 py-3 text-zinc-500">{a.email}</td>
                       <td className="px-4 py-3">
