@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, Pressable, Image, StyleSheet, StatusBar, Switch, ActivityIndicator, Alert, Platform,
   Modal, TextInput, KeyboardAvoidingView,
@@ -28,10 +28,32 @@ type Nav = CompositeNavigationProp<
 const haptic = () => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); };
 
 export function ProfileScreen({ navigation }: { navigation: Nav }) {
-  const { theme: t, dark, palette, userId, setDark, setPalette } = useStore();
+  const { theme: t, dark, palette, userId, setDark, setPalette, lastKnownTierLevel, setLastKnownTierLevel } = useStore();
   const insets = useSafeAreaInsets();
   const { profile, loading, refetch } = useProfile();
   const { tr, tra, trf } = useTranslation();
+
+  const [tierUpVisible, setTierUpVisible] = useState(false);
+  const [tierUpName, setTierUpName] = useState('');
+  const initialLoad = useRef(true);
+
+  useEffect(() => {
+    if (!profile) return;
+    const currentLevel = profile.tier_level ?? 1;
+    if (initialLoad.current) {
+      // On first load just record the level, no popup
+      initialLoad.current = false;
+      if (lastKnownTierLevel === 1 && currentLevel > 1) {
+        setLastKnownTierLevel(currentLevel);
+      }
+      return;
+    }
+    if (currentLevel > lastKnownTierLevel) {
+      setTierUpName(profile.tier ?? `Level ${currentLevel}`);
+      setTierUpVisible(true);
+      setLastKnownTierLevel(currentLevel);
+    }
+  }, [profile?.tier_level]);
 
   const [editVisible, setEditVisible] = useState(false);
   const [editName, setEditName] = useState('');
@@ -100,10 +122,10 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
   const user = profile ?? FALLBACK;
   const yelProgress = (user.yel_points % 1000) / 1000;
 
-  const QUICK_ACTIONS: Array<{ icon: IconName; label: string; sub: string; route?: keyof TabParamList; comingSoon?: boolean }> = [
-    { icon: 'gift',     label: tr('prof_qa_coupons'),  sub: tr('prof_qa_coupons_sub'),  comingSoon: true },
+  const QUICK_ACTIONS: Array<{ icon: IconName; label: string; sub: string; route?: keyof TabParamList; stackRoute?: keyof RootStackParamList; comingSoon?: boolean }> = [
+    { icon: 'gift',     label: tr('prof_qa_market'),   sub: tr('prof_qa_market_sub'),   stackRoute: 'Market' },
+    { icon: 'sparkle',  label: tr('prof_qa_prizes'),   sub: tr('prof_qa_prizes_sub'),   stackRoute: 'MyPrizes' },
     { icon: 'split',    label: tr('prof_qa_split'),    sub: tr('prof_qa_split_sub'),    comingSoon: true },
-    { icon: 'users',    label: tr('prof_qa_friends'),  sub: tr('prof_qa_friends_sub'),  comingSoon: true },
     { icon: 'calendar', label: tr('prof_qa_calendar'), sub: tr('prof_qa_calendar_sub'), route: 'Reservations' },
   ];
 
@@ -215,7 +237,8 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
               key={a.label}
               onPress={() => {
                 haptic();
-                if (a.route) navigation.navigate(a.route);
+                if (a.stackRoute) (navigation as any).navigate(a.stackRoute);
+                else if (a.route) navigation.navigate(a.route);
                 else if (a.comingSoon) Alert.alert(tr('prof_soon_title'), trf('prof_soon_sub', { section: a.label }));
               }}
               style={[styles.quickCard, { backgroundColor: t.surface, borderColor: t.border }]}
@@ -308,6 +331,32 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
           {tr('prof_footer')}
         </Text>
       </ScrollView>
+
+      {/* Tier-up popup */}
+      <Modal visible={tierUpVisible} transparent animationType="fade" onRequestClose={() => setTierUpVisible(false)}>
+        <View style={tierStyles.overlay}>
+          <View style={[tierStyles.sheet, { backgroundColor: t.surface }]}>
+            <Text style={tierStyles.emoji}>🏆</Text>
+            <Text style={[tierStyles.title, { color: t.text }]}>{tr('tierup_title')}</Text>
+            <Text style={[tierStyles.sub, { color: t.textMute }]}>{trf('tierup_sub', { tier: tierUpName })}</Text>
+            <Text style={[tierStyles.hint, { color: t.textFaint }]}>{tr('tierup_no_prizes')}</Text>
+            <View style={tierStyles.btns}>
+              <Pressable
+                onPress={() => { haptic(); setTierUpVisible(false); (navigation as any).navigate('MyPrizes'); }}
+                style={[tierStyles.btn, tierStyles.btnPrimary, { backgroundColor: t.primary }]}
+              >
+                <Text style={[tierStyles.btnText, { color: '#FBF5E8' }]}>{tr('tierup_cta')}</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => { haptic(); setTierUpVisible(false); }}
+                style={[tierStyles.btn, { borderColor: t.border, borderWidth: 1 }]}
+              >
+                <Text style={[tierStyles.btnText, { color: t.textMute }]}>{tr('tierup_close')}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Edit profile modal */}
       <Modal visible={editVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setEditVisible(false)}>
@@ -582,4 +631,17 @@ const styles = StyleSheet.create({
   fieldLabel: { fontSize: 11, fontFamily: FONTS.medium, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.5 },
   fieldInput: { fontSize: 15, padding: 0 },
   editErrorText: { color: '#9B2335', fontSize: 13, textAlign: 'center' },
+});
+
+const tierStyles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  sheet: { width: '100%', borderRadius: 24, padding: 28, alignItems: 'center', gap: 10 },
+  emoji: { fontSize: 52 },
+  title: { fontSize: 22, fontFamily: FONTS.extraBold, fontWeight: '800', textAlign: 'center' },
+  sub: { fontSize: 16, fontFamily: FONTS.semiBold, fontWeight: '600', textAlign: 'center' },
+  hint: { fontSize: 13, textAlign: 'center', marginTop: 4 },
+  btns: { width: '100%', gap: 8, marginTop: 8 },
+  btn: { paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
+  btnPrimary: {},
+  btnText: { fontSize: 15, fontFamily: FONTS.semiBold, fontWeight: '600' },
 });

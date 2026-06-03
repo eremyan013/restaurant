@@ -179,6 +179,84 @@ export async function fetchGuides(): Promise<GuideRow[]> {
 }
 
 // ─────────────────────────────────────────────
+// PRIZES
+// ─────────────────────────────────────────────
+
+export type Prize = {
+  id: string;
+  name: string;
+  description: string | null;
+  type: 'discount' | 'free_item' | 'experience' | 'voucher';
+  unlock_type: 'points' | 'tier';
+  points_cost: number | null;
+  min_tier_level: number | null;
+  venue_id: string | null;
+  image_url: string | null;
+  stock: number | null;
+  sort_order: number;
+};
+
+export type UserPrize = {
+  id: string;
+  prize_id: string;
+  status: 'active' | 'used' | 'expired';
+  code: string | null;
+  claimed_at: string;
+  used_at: string | null;
+  prize: Prize & { venues: { name: string } | null };
+};
+
+export async function fetchMarketPrizes(): Promise<Prize[]> {
+  const { data, error } = await sb
+    .from('prizes')
+    .select('*')
+    .eq('unlock_type', 'points')
+    .eq('is_active', true)
+    .order('sort_order');
+  if (error) throw error;
+  return (data ?? []) as Prize[];
+}
+
+export async function fetchUserPrizes(userId: string): Promise<UserPrize[]> {
+  const { data, error } = await sb
+    .from('user_prizes')
+    .select('*, prize:prizes(*, venues(name))')
+    .eq('user_id', userId)
+    .order('claimed_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as UserPrize[];
+}
+
+export async function redeemPrize(
+  userId: string,
+  prizeId: string,
+): Promise<{ success: true; code: string; new_points: number } | { error: string }> {
+  const { data, error } = await sb.rpc('redeem_prize', {
+    p_user_id: userId,
+    p_prize_id: prizeId,
+  });
+  if (error) return { error: error.message };
+  return data as { success: true; code: string; new_points: number } | { error: string };
+}
+
+export async function fetchTierSettings(): Promise<{
+  names: Record<number, string>;
+  mins: Record<number, number>;
+}> {
+  const { data } = await sb
+    .from('settings')
+    .select('key, value')
+    .in('key', ['tier_1_name','tier_2_name','tier_3_name','tier_4_name','tier_2_min','tier_3_min','tier_4_min']);
+  const names: Record<number, string> = { 1: 'Tonir', 2: 'Pandok', 3: 'Areni', 4: 'Master' };
+  const mins:  Record<number, number> = { 1: 0, 2: 1000, 3: 2000, 4: 3000 };
+  for (const row of (data ?? [])) {
+    if (row.key.endsWith('_name')) { const l = parseInt(row.key[5]); if (l >= 1 && l <= 4) names[l] = row.value; }
+    if (row.key.endsWith('_min'))  { const l = parseInt(row.key[5]); if (l >= 2 && l <= 4) mins[l]  = parseInt(row.value); }
+  }
+  return { names, mins };
+}
+
+// ─────────────────────────────────────────────
 // MENU
 // ─────────────────────────────────────────────
 

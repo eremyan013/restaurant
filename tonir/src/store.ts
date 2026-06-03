@@ -31,6 +31,10 @@ interface AppState {
   // Favorites (shared across all screens, not persisted)
   favs: Set<string>;
   setFavs: (favs: Set<string>) => void;
+
+  // Tier-up detection (persisted — compare against live profile.tier_level)
+  lastKnownTierLevel: number;
+  setLastKnownTierLevel: (level: number) => void;
 }
 
 export interface BookingDraft {
@@ -69,12 +73,14 @@ export const useStore = create<AppState>()(
 
       favs: new Set<string>(),
       setFavs: (favs) => set({ favs }),
+
+      lastKnownTierLevel: 1,
+      setLastKnownTierLevel: (lastKnownTierLevel) => set({ lastKnownTierLevel }),
     }),
     {
       name: 'tonir-prefs',
       storage: createJSONStorage(() => AsyncStorage),
-      // Only persist palette + dark; recompute derived theme after hydration
-      partialize: (state) => ({ palette: state.palette, dark: state.dark, language: state.language }),
+      partialize: (state) => ({ palette: state.palette, dark: state.dark, language: state.language, lastKnownTierLevel: state.lastKnownTierLevel }),
       onRehydrateStorage: () => (state) => {
         if (state) {
           // palette and dark are now restored from storage — sync the derived theme

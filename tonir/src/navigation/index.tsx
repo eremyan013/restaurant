@@ -69,6 +69,8 @@ import { ReservationsScreen } from '../screens/ReservationsScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { ConciergeScreen } from '../screens/ConciergeScreen';
+import { MarketScreen } from '../screens/MarketScreen';
+import { MyPrizesScreen } from '../screens/MyPrizesScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -79,6 +81,8 @@ export type RootStackParamList = {
   Confirmation: undefined;
   Map: { focusVenueId?: string; fromDetail?: boolean };
   Concierge: undefined;
+  Market: undefined;
+  MyPrizes: undefined;
 };
 
 export type TabParamList = {
@@ -241,6 +245,16 @@ export function AppNavigator() {
               name="Concierge"
               component={ConciergeScreen}
               options={{ animation: 'slide_from_bottom' }}
+            />
+            <Stack.Screen
+              name="Market"
+              component={MarketScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="MyPrizes"
+              component={MyPrizesScreen}
+              options={{ animation: 'slide_from_right' }}
             />
           </>
         ) : (
