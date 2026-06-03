@@ -173,7 +173,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                   {reservations.map((r) => {
                     const venue = r.venues
                     return (
-                      <tr key={r.id} className="border-t border-zinc-100 hover:bg-zinc-50/50 transition-colors">
+                      <tr key={r.id} className="odd:bg-white even:bg-zinc-100 hover:bg-zinc-200 transition-colors">
                         <td className="px-4 py-3 text-zinc-900">{venue?.name ?? '—'}</td>
                         <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">{r.date} {r.time}</td>
                         <td className="px-4 py-3 text-zinc-600">{r.people}</td>
