@@ -152,6 +152,11 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
           <View style={{ flex: 1 }}>
             <Text style={[styles.userName, { color: t.text }]}>{user.name}</Text>
             {!!user.email && <Text style={[styles.userEmail, { color: t.textMute }]}>{user.email}</Text>}
+            {'player_id' in user && !!user.player_id && (
+              <Text style={[styles.userPlayerId, { color: t.textFaint }]}>
+                {tr('prof_player_id')}: <Text style={{ fontFamily: FONTS.semiBold, fontWeight: '600', color: t.textMute }}>{(user as any).player_id}</Text>
+              </Text>
+            )}
             <View style={[styles.tierBadge, { backgroundColor: `${t.accent}20` }]}>
               <Text style={[styles.tierText, { color: t.accent }]}>
                 {trf('prof_tier_label', { tier: user.tier, level: user.tier_level })}
@@ -390,7 +395,8 @@ const styles = StyleSheet.create({
   },
   avatar: { width: '100%', height: '100%' },
   userName: { fontSize: 17, fontFamily: FONTS.bold, fontWeight: '700', marginBottom: 2 },
-  userEmail: { fontSize: 12, marginBottom: 8 },
+  userEmail: { fontSize: 12, marginBottom: 4 },
+  userPlayerId: { fontSize: 11, marginBottom: 8 },
   tierBadge: {
     alignSelf: 'flex-start',
     paddingVertical: 4,

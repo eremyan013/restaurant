@@ -24,16 +24,50 @@ export function AuthScreen({ navigation }: Props) {
   const { tr } = useTranslation();
   const insets = useSafeAreaInsets();
 
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [mode, setMode] = useState<'signin' | 'id_signin' | 'signup'>('signin');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [playerId, setPlayerId] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isInfo = error === tr('auth_err_confirm');
 
+  function switchMode(next: 'signin' | 'id_signin' | 'signup') {
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setMode(next);
+    setError(null);
+  }
+
   async function submit() {
     setError(null);
+
+    if (mode === 'id_signin') {
+      if (!playerId.trim() || !password.trim()) { setError(tr('auth_err_fields')); return; }
+      if (password.length < 6) { setError(tr('auth_err_pass_short')); return; }
+      setLoading(true);
+      try {
+        const { data: resolvedEmail } = await (supabase as any).rpc('get_email_by_player_id', { p_id: parseInt(playerId, 10) });
+        if (!resolvedEmail) { setError(tr('auth_err_id_not_found')); return; }
+        const { data, error: err } = await (supabase as any).auth.signInWithPassword({ email: resolvedEmail, password });
+        if (err) throw err;
+        if (data?.user) {
+          const { data: profile } = await (supabase as any).from('profiles').select('role').eq('id', data.user.id).single();
+          if (profile?.role === 'admin' || profile?.role === 'super_admin') {
+            await (supabase as any).auth.signOut();
+            setError(tr('auth_err_admin'));
+            return;
+          }
+        }
+      } catch (err: any) {
+        const msg = err?.message ?? tr('auth_err_generic');
+        setError(msg.includes('Invalid login credentials') ? tr('auth_err_invalid') : msg);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     if (!email.trim() || !password.trim()) {
       setError(tr('auth_err_fields'));
       return;
@@ -140,7 +174,7 @@ export function AuthScreen({ navigation }: Props) {
           {/* Mode toggle */}
           <View style={[styles.toggle, { backgroundColor: `${t.primary}14` }]}>
             <Pressable
-              onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setMode('signin'); setError(null); }}
+              onPress={() => switchMode('signin')}
               style={[styles.toggleBtn, mode === 'signin' && [styles.toggleBtnActive, { backgroundColor: t.primary }]]}
             >
               <Text style={[styles.toggleText, { color: mode === 'signin' ? '#FBF5E8' : t.text }]}>
@@ -148,7 +182,15 @@ export function AuthScreen({ navigation }: Props) {
               </Text>
             </Pressable>
             <Pressable
-              onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setMode('signup'); setError(null); }}
+              onPress={() => switchMode('id_signin')}
+              style={[styles.toggleBtn, mode === 'id_signin' && [styles.toggleBtnActive, { backgroundColor: t.primary }]]}
+            >
+              <Text style={[styles.toggleText, { color: mode === 'id_signin' ? '#FBF5E8' : t.text }]}>
+                {tr('auth_id_signin')}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => switchMode('signup')}
               style={[styles.toggleBtn, mode === 'signup' && [styles.toggleBtnActive, { backgroundColor: t.primary }]]}
             >
               <Text style={[styles.toggleText, { color: mode === 'signup' ? '#FBF5E8' : t.text }]}>
@@ -173,19 +215,33 @@ export function AuthScreen({ navigation }: Props) {
               </View>
             )}
 
-            <View style={[styles.inputWrap, { backgroundColor: t.surface, borderColor: t.border }]}>
-              <Icon name="mail" size={16} color={t.textMute} strokeWidth={1.75} />
-              <TextInput
-                value={email}
-                onChangeText={setEmail}
-                placeholder={tr('auth_email_placeholder')}
-                placeholderTextColor={t.textFaint}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoComplete="email"
-                style={[styles.input, { color: t.text }]}
-              />
-            </View>
+            {mode === 'id_signin' ? (
+              <View style={[styles.inputWrap, { backgroundColor: t.surface, borderColor: t.border }]}>
+                <Icon name="user" size={16} color={t.textMute} strokeWidth={1.75} />
+                <TextInput
+                  value={playerId}
+                  onChangeText={setPlayerId}
+                  placeholder={tr('auth_id_placeholder')}
+                  placeholderTextColor={t.textFaint}
+                  keyboardType="number-pad"
+                  style={[styles.input, { color: t.text }]}
+                />
+              </View>
+            ) : (
+              <View style={[styles.inputWrap, { backgroundColor: t.surface, borderColor: t.border }]}>
+                <Icon name="mail" size={16} color={t.textMute} strokeWidth={1.75} />
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder={tr('auth_email_placeholder')}
+                  placeholderTextColor={t.textFaint}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  autoComplete="email"
+                  style={[styles.input, { color: t.text }]}
+                />
+              </View>
+            )}
 
             <View style={[styles.inputWrap, { backgroundColor: t.surface, borderColor: t.border }]}>
               <Icon name="lock" size={16} color={t.textMute} strokeWidth={1.75} />
@@ -228,7 +284,7 @@ export function AuthScreen({ navigation }: Props) {
             ) : (
               <>
                 <Text style={styles.submitText}>
-                  {mode === 'signin' ? tr('auth_submit_signin') : tr('auth_submit_signup')}
+                  {mode === 'signin' ? tr('auth_submit_signin') : mode === 'id_signin' ? tr('auth_submit_id_signin') : tr('auth_submit_signup')}
                 </Text>
                 <Icon name="arrow" size={18} color="#FBF5E8" strokeWidth={2} />
               </>
@@ -236,15 +292,17 @@ export function AuthScreen({ navigation }: Props) {
           </Pressable>
 
           {/* Switch mode hint */}
-          <Text style={[styles.switchHint, { color: t.textMute }]}>
-            {mode === 'signin' ? tr('auth_hint_signin') : tr('auth_hint_signup')}
-            <Text
-              onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); }}
-              style={{ color: t.primary, fontFamily: FONTS.semiBold, fontWeight: '600' }}
-            >
-              {mode === 'signin' ? tr('auth_switch_to_signup') : tr('auth_switch_to_signin')}
+          {mode !== 'id_signin' && (
+            <Text style={[styles.switchHint, { color: t.textMute }]}>
+              {mode === 'signin' ? tr('auth_hint_signin') : tr('auth_hint_signup')}
+              <Text
+                onPress={() => switchMode(mode === 'signin' ? 'signup' : 'signin')}
+                style={{ color: t.primary, fontFamily: FONTS.semiBold, fontWeight: '600' }}
+              >
+                {mode === 'signin' ? tr('auth_switch_to_signup') : tr('auth_switch_to_signin')}
+              </Text>
             </Text>
-          </Text>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
