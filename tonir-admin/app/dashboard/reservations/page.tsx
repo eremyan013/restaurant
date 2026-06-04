@@ -4,6 +4,8 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import type { ReservationRow } from '@/lib/database.types'
 import { ReservationFilters } from '@/components/reservation-filters'
+import { ReservationEditModal } from './reservation-edit-modal'
+import { NewReservationModal } from './new-reservation-modal'
 
 const STATUS_CLASSES: Record<string, string> = {
   pending:   'bg-amber-100 text-amber-800',
@@ -106,7 +108,7 @@ export default async function ReservationsPage({
   if (admin.role === 'super_admin') {
     const { data } = await supabase.from('venues').select('id, name').order('name')
     venuesList = data ?? []
-  } else if (admin.managed_venue_ids.length > 1) {
+  } else if (admin.managed_venue_ids.length) {
     const { data } = await (supabase as any)
       .from('venues').select('id, name').in('id', admin.managed_venue_ids).order('name')
     venuesList = data ?? []
@@ -194,7 +196,13 @@ export default async function ReservationsPage({
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-zinc-900">Reservations</h1>
-        <span className="text-sm text-zinc-400">{total} total</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-zinc-400">{total} total</span>
+          <NewReservationModal
+            venues={venuesList.length ? venuesList : []}
+            defaultVenueId={admin.role === 'admin' && admin.managed_venue_ids.length === 1 ? admin.managed_venue_ids[0] : undefined}
+          />
+        </div>
       </div>
 
       {/* Filters */}
@@ -269,6 +277,16 @@ export default async function ReservationsPage({
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1.5">
+                        <div className="flex gap-1.5 flex-wrap">
+                          <ReservationEditModal reservation={{
+                            id: r.id,
+                            date_iso: r.date_iso,
+                            time: r.time,
+                            people: r.people,
+                            occasion: r.occasion,
+                            note: r.note,
+                          }} />
+                        </div>
                         <div className="flex gap-1.5 flex-wrap">
                           {r.status === 'pending' && (
                             <>
