@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import type { ProfileRow, ReservationRow } from '@/lib/database.types'
+import { UserEditForm } from './user-edit-form'
 
 type ReservationWithVenue = ReservationRow & { venues: { name: string } | null }
 type FavoriteWithVenue = {
@@ -97,9 +98,18 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
             <p className="text-zinc-400 text-xs mt-1">Member since {memberSince}</p>
           </div>
 
-          <span className="px-3 py-1 rounded-full text-sm font-medium bg-zinc-100 text-zinc-700 shrink-0">
-            {user.tier}
-          </span>
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="px-3 py-1 rounded-full text-sm font-medium bg-zinc-100 text-zinc-700">
+              {user.tier}
+            </span>
+            <UserEditForm user={{
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              phone: (user as any).phone ?? null,
+              tier_level: user.tier_level,
+            }} />
+          </div>
         </div>
 
         {/* Stats row */}
