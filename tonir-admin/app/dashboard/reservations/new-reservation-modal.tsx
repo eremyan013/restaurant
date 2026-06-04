@@ -17,7 +17,7 @@ interface Props {
 }
 
 const INIT_CREATE: ActionState = { ok: false }
-const INIT_SEARCH: { results: UserResult[] } = { results: [] }
+const INIT_SEARCH: { results: UserResult[] } = { results: [] as UserResult[] }
 
 const TODAY = new Date().toISOString().split('T')[0]
 
@@ -84,7 +84,7 @@ export function NewReservationModal({ venues, defaultVenueId }: Props) {
                   </form>
                   {searchState.results.length > 0 && (
                     <div className="mt-1.5 border border-zinc-200 rounded-lg overflow-hidden">
-                      {searchState.results.map((u) => (
+                      {searchState.results.map((u: UserResult) => (
                         <button
                           key={u.id}
                           type="button"
