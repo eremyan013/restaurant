@@ -176,6 +176,7 @@ export interface Database {
           total_visits: number;
           is_admin: boolean;
           player_id: number;
+          phone: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -190,6 +191,7 @@ export interface Database {
           total_visits?: number;
           is_admin?: boolean;
           player_id?: number;
+          phone?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -204,6 +206,7 @@ export interface Database {
           total_visits?: number;
           is_admin?: boolean;
           player_id?: number;
+          phone?: string | null;
           created_at?: string;
           updated_at?: string;
         };

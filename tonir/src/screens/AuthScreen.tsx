@@ -27,6 +27,7 @@ export function AuthScreen({ navigation }: Props) {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +48,10 @@ export function AuthScreen({ navigation }: Props) {
     }
     if (mode === 'signup' && !name.trim()) {
       setError(tr('auth_err_name'));
+      return;
+    }
+    if (mode === 'signup' && !/^\d{8}$/.test(phone.trim())) {
+      setError(tr('auth_err_phone'));
       return;
     }
     if (password.length < 6) {
@@ -74,6 +79,7 @@ export function AuthScreen({ navigation }: Props) {
           id: data.session.user.id,
           name: name.trim(),
           email: email.trim(),
+          phone: `+374${phone.trim()}`,
         }, { onConflict: 'id' });
         // onAuthStateChange handles navigation
       } else {
@@ -171,17 +177,33 @@ export function AuthScreen({ navigation }: Props) {
           {/* Fields */}
           <View style={styles.fields}>
             {mode === 'signup' && (
-              <View style={[styles.inputWrap, { backgroundColor: t.surface, borderColor: t.border }]}>
-                <Icon name="user" size={16} color={t.textMute} strokeWidth={1.75} />
-                <TextInput
-                  value={name}
-                  onChangeText={setName}
-                  placeholder={tr('auth_name_placeholder')}
-                  placeholderTextColor={t.textFaint}
-                  autoCapitalize="words"
-                  style={[styles.input, { color: t.text }]}
-                />
-              </View>
+              <>
+                <View style={[styles.inputWrap, { backgroundColor: t.surface, borderColor: t.border }]}>
+                  <Icon name="user" size={16} color={t.textMute} strokeWidth={1.75} />
+                  <TextInput
+                    value={name}
+                    onChangeText={setName}
+                    placeholder={tr('auth_name_placeholder')}
+                    placeholderTextColor={t.textFaint}
+                    autoCapitalize="words"
+                    style={[styles.input, { color: t.text }]}
+                  />
+                </View>
+                <View style={[styles.inputWrap, { backgroundColor: t.surface, borderColor: t.border }]}>
+                  <Icon name="phone" size={16} color={t.textMute} strokeWidth={1.75} />
+                  <Text style={[styles.countryCode, { color: t.text }]}>+374</Text>
+                  <View style={[styles.codeDivider, { backgroundColor: t.border }]} />
+                  <TextInput
+                    value={phone}
+                    onChangeText={(v) => setPhone(v.replace(/\D/g, '').slice(0, 8))}
+                    placeholder={tr('auth_phone_placeholder')}
+                    placeholderTextColor={t.textFaint}
+                    keyboardType="number-pad"
+                    maxLength={8}
+                    style={[styles.input, { color: t.text }]}
+                  />
+                </View>
+              </>
             )}
 
             <View style={[styles.inputWrap, { backgroundColor: t.surface, borderColor: t.border }]}>
@@ -327,6 +349,16 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     padding: 0,
+  },
+  countryCode: {
+    fontSize: 15,
+    fontFamily: FONTS.semiBold,
+    fontWeight: '600',
+  },
+  codeDivider: {
+    width: 1,
+    height: 18,
+    marginHorizontal: 4,
   },
   errorBox: {
     flexDirection: 'row',
