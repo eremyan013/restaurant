@@ -118,6 +118,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
             <h2 className="text-sm font-medium text-zinc-900 mb-4">Account Details</h2>
             <dl className="space-y-3 text-sm">
               <DetailRow label="Player ID" value={<span className="font-mono font-semibold text-zinc-900">{user.player_id}</span>} />
+              <DetailRow label="Phone" value={<span className="tabular-nums">{(user as any).phone ?? '—'}</span>} />
               <DetailRow label="User ID" value={<span className="font-mono text-xs break-all">{user.id}</span>} />
               <DetailRow label="Role" value={user.role} />
               <DetailRow label="Last updated" value={new Date(user.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} />
