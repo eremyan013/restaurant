@@ -13,7 +13,7 @@ import { useProfile } from '../hooks/useProfile';
 import { useTranslation } from '../hooks/useTranslation';
 import { PALETTES, Palette, FONTS} from '../theme';
 import { supabase } from '../lib/supabase';
-import { updateProfile, uploadAvatar } from '../lib/api';
+import { updateProfile, uploadAvatar, fetchTierSettings } from '../lib/api';
 import { Icon, IconName } from '../components/Icon';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -36,6 +36,11 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
   const [tierUpVisible, setTierUpVisible] = useState(false);
   const [tierUpName, setTierUpName] = useState('');
   const initialLoad = useRef(true);
+  const [tierMins, setTierMins] = useState<Record<number, number>>({ 1: 0, 2: 1000, 3: 2000, 4: 3000 });
+
+  useEffect(() => {
+    fetchTierSettings().then(({ mins }) => setTierMins(mins)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!profile) return;
@@ -120,7 +125,12 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
   };
 
   const user = profile ?? FALLBACK;
-  const yelProgress = (user.yel_points % 1000) / 1000;
+  const MAX_TIER = 4;
+  const currentMin = tierMins[user.tier_level] ?? 0;
+  const nextMin    = user.tier_level < MAX_TIER ? (tierMins[user.tier_level + 1] ?? currentMin + 1000) : null;
+  const yelProgress = nextMin !== null
+    ? Math.min(1, Math.max(0, (user.yel_points - currentMin) / (nextMin - currentMin)))
+    : 1;
 
   const QUICK_ACTIONS: Array<{ icon: IconName; label: string; sub: string; route?: keyof TabParamList; stackRoute?: keyof RootStackParamList; comingSoon?: boolean }> = [
     { icon: 'gift',     label: tr('prof_qa_market'),   sub: tr('prof_qa_market_sub'),   stackRoute: 'Market' },
@@ -206,6 +216,11 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
               ]}
             />
           </View>
+          {nextMin !== null && (
+            <Text style={styles.yelProgressHint}>
+              {user.yel_points.toLocaleString()} / {nextMin.toLocaleString()} pts
+            </Text>
+          )}
           <View style={styles.tiers}>
             {tierNames.map((tier, i) => (
               <Text
@@ -490,6 +505,14 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: 3,
+  },
+  yelProgressHint: {
+    color: 'rgba(251,245,232,0.55)',
+    fontSize: 11,
+    fontFamily: FONTS.medium,
+    fontWeight: '500',
+    textAlign: 'right',
+    marginTop: -4,
   },
   tiers: {
     flexDirection: 'row',
