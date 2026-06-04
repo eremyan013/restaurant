@@ -264,6 +264,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     auth_phone_placeholder: 'Հեռ. համար (8 նիշ)',
     auth_err_phone:         'Մուտքագրեք 8-նիշ հեռախոսահամար',
     prof_player_id:         'Ձեր ID',
+    prof_phone:             'Հեռ.',
     // DetailScreen
     det_map:              'Քարտեզ',
     det_open_until:       'Բաց մինչև 23:30',
@@ -544,6 +545,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     tierup_cta:             'Смотреть призы',
     tierup_close:           'Закрыть',
     prof_player_id:         'Ваш ID',
+    prof_phone:             'Тел.',
     // DetailScreen
     det_map:              'Карта',
     det_open_until:       'Открыто до 23:30',
@@ -824,6 +826,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     tierup_cta:             'View prizes',
     tierup_close:           'Close',
     prof_player_id:         'Your ID',
+    prof_phone:             'Phone',
     // DetailScreen
     det_map:              'Map',
     det_open_until:       'Open until 11:30 PM',

@@ -122,6 +122,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
     tier: 'Tonir',
     tier_level: 1,
     yel_points: 0,
+    phone: null as string | null,
   };
 
   const user = profile ?? FALLBACK;
@@ -184,6 +185,11 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
           <View style={{ flex: 1 }}>
             <Text style={[styles.userName, { color: t.text }]}>{user.name}</Text>
             {!!user.email && <Text style={[styles.userEmail, { color: t.textMute }]}>{user.email}</Text>}
+            {!!(user as any).phone && (
+              <Text style={[styles.userEmail, { color: t.textMute }]}>
+                {tr('prof_phone')}: <Text style={{ fontFamily: FONTS.semiBold, fontWeight: '600' }}>{(user as any).phone}</Text>
+              </Text>
+            )}
             {'player_id' in user && !!user.player_id && (
               <Text style={[styles.userPlayerId, { color: t.textFaint }]}>
                 {tr('prof_player_id')}: <Text style={{ fontFamily: FONTS.semiBold, fontWeight: '600', color: t.textMute }}>{(user as any).player_id}</Text>
