@@ -4,6 +4,44 @@ import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { DeleteButton } from '@/components/delete-button'
 import { VenueFormClient, type VenueFormDefaults } from '@/components/venue-form-client'
+import type { VenueHoursRow, VenueBlockedDateRow } from '@/lib/database.types'
+
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+async function saveVenueHours(venueId: string, formData: FormData) {
+  'use server'
+  const supabase = createSupabaseAdminClient()
+  const upserts = Array.from({ length: 7 }, (_, day) => ({
+    venue_id:    venueId,
+    day_of_week: day,
+    is_open:     formData.get(`is_open_${day}`) === 'true',
+    open_time:   (formData.get(`open_time_${day}`) as string) || null,
+    close_time:  (formData.get(`close_time_${day}`) as string) || null,
+  }))
+  await (supabase as any)
+    .from('venue_hours')
+    .upsert(upserts, { onConflict: 'venue_id,day_of_week' })
+  revalidatePath(`/dashboard/venues/${venueId}`)
+}
+
+async function addBlockedDate(venueId: string, formData: FormData) {
+  'use server'
+  const date   = (formData.get('date') as string)?.trim()
+  const reason = (formData.get('reason') as string)?.trim() || null
+  if (!date) return
+  const supabase = createSupabaseAdminClient()
+  await (supabase as any)
+    .from('venue_blocked_dates')
+    .upsert({ venue_id: venueId, date, reason }, { onConflict: 'venue_id,date' })
+  revalidatePath(`/dashboard/venues/${venueId}`)
+}
+
+async function removeBlockedDate(venueId: string, dateId: string) {
+  'use server'
+  const supabase = createSupabaseAdminClient()
+  await (supabase as any).from('venue_blocked_dates').delete().eq('id', dateId)
+  revalidatePath(`/dashboard/venues/${venueId}`)
+}
 
 async function updateVenue(id: string, formData: FormData) {
   'use server'
@@ -78,13 +116,18 @@ export default async function EditVenuePage({
   const { id } = await params
   const supabase = createSupabaseAdminClient()
 
-  const { data: venue, error } = await (supabase as any)
-    .from('venues')
-    .select('*')
-    .eq('id', id)
-    .single()
+  const [{ data: venue, error }, { data: hoursRaw }, { data: blockedRaw }] = await Promise.all([
+    (supabase as any).from('venues').select('*').eq('id', id).single(),
+    (supabase as any).from('venue_hours').select('*').eq('venue_id', id).order('day_of_week'),
+    (supabase as any).from('venue_blocked_dates').select('*').eq('venue_id', id).order('date'),
+  ])
 
   if (error || !venue) notFound()
+
+  const hoursMap: Record<number, VenueHoursRow> = {}
+  for (const h of (hoursRaw ?? [])) hoursMap[h.day_of_week] = h
+
+  const blockedDates: VenueBlockedDateRow[] = blockedRaw ?? []
 
   const defaults: VenueFormDefaults = {
     id:             venue.id,
@@ -131,6 +174,133 @@ export default async function EditVenuePage({
       </div>
 
       <VenueFormClient action={updateVenue.bind(null, id)} defaults={defaults} />
+
+      {/* ── Opening Hours ───────────────────────────────────────────────────── */}
+      <div className="mt-10">
+        <h2 className="text-lg font-semibold text-zinc-900 mb-4">Opening Hours</h2>
+        <form action={saveVenueHours.bind(null, id)}>
+          <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-zinc-50 border-b border-zinc-100 text-left">
+                  <th className="px-4 py-3 font-medium text-zinc-500 w-32">Day</th>
+                  <th className="px-4 py-3 font-medium text-zinc-500 w-24">Open?</th>
+                  <th className="px-4 py-3 font-medium text-zinc-500">Opens at</th>
+                  <th className="px-4 py-3 font-medium text-zinc-500">Closes at</th>
+                </tr>
+              </thead>
+              <tbody>
+                {DAY_NAMES.map((name, day) => {
+                  const h = hoursMap[day]
+                  const isOpen = h ? h.is_open : true
+                  return (
+                    <tr key={day} className="border-b border-zinc-100 last:border-0">
+                      <td className="px-4 py-3 font-medium text-zinc-700">{name}</td>
+                      <td className="px-4 py-3">
+                        <select
+                          name={`is_open_${day}`}
+                          defaultValue={isOpen ? 'true' : 'false'}
+                          className="text-sm border border-zinc-200 rounded-lg px-2 py-1.5 bg-white text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                        >
+                          <option value="true">Open</option>
+                          <option value="false">Closed</option>
+                        </select>
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="time"
+                          name={`open_time_${day}`}
+                          defaultValue={h?.open_time ?? '10:00'}
+                          className="text-sm border border-zinc-200 rounded-lg px-2 py-1.5 bg-white text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="time"
+                          name={`close_time_${day}`}
+                          defaultValue={h?.close_time ?? '23:00'}
+                          className="text-sm border border-zinc-200 rounded-lg px-2 py-1.5 bg-white text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                        />
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          <button
+            type="submit"
+            className="mt-3 px-4 py-2 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors"
+          >
+            Save hours
+          </button>
+        </form>
+      </div>
+
+      {/* ── Blocked Dates ───────────────────────────────────────────────────── */}
+      <div className="mt-10">
+        <h2 className="text-lg font-semibold text-zinc-900 mb-4">Blocked Dates</h2>
+
+        {blockedDates.length > 0 && (
+          <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden mb-4">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-zinc-50 border-b border-zinc-100 text-left">
+                  <th className="px-4 py-3 font-medium text-zinc-500">Date</th>
+                  <th className="px-4 py-3 font-medium text-zinc-500">Reason</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody>
+                {blockedDates.map((bd) => (
+                  <tr key={bd.id} className="border-b border-zinc-100 last:border-0">
+                    <td className="px-4 py-3 font-medium text-zinc-900 tabular-nums">{bd.date}</td>
+                    <td className="px-4 py-3 text-zinc-500">{bd.reason ?? '—'}</td>
+                    <td className="px-4 py-3 text-right">
+                      <form action={removeBlockedDate.bind(null, id, bd.id)}>
+                        <button
+                          type="submit"
+                          className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                          onClick={e => { if (!confirm(`Remove blocked date ${bd.date}?`)) e.preventDefault() }}
+                        >
+                          Remove
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <form action={addBlockedDate.bind(null, id)} className="flex items-end gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-zinc-500">Date</label>
+            <input
+              type="date"
+              name="date"
+              required
+              className="text-sm border border-zinc-200 rounded-lg px-3 py-2 bg-white text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+            />
+          </div>
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="text-xs font-medium text-zinc-500">Reason (optional)</label>
+            <input
+              type="text"
+              name="reason"
+              placeholder="e.g. Private event, Holiday"
+              className="text-sm border border-zinc-200 rounded-lg px-3 py-2 bg-white text-zinc-700 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+            />
+          </div>
+          <button
+            type="submit"
+            className="px-4 py-2 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors shrink-0"
+          >
+            Block date
+          </button>
+        </form>
+      </div>
 
       <form action={deleteVenue.bind(null, id)} className="mt-6">
         <DeleteButton

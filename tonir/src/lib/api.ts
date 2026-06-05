@@ -1,7 +1,7 @@
 import { supabase as _supabase } from './supabase';
 
 const ADMIN_URL = process.env.EXPO_PUBLIC_CONCIERGE_URL?.replace(/\/$/, '');
-import { VenueRow, ReservationRow, ProfileRow, MenuCategoryRow, MenuItemRow, GuideRow } from './database.types';
+import { VenueRow, ReservationRow, ProfileRow, MenuCategoryRow, MenuItemRow, GuideRow, VenueHoursRow, VenueBlockedDateRow } from './database.types';
 
 // Cast to any to escape Supabase TS generic inference issue with this package version.
 // All public functions carry explicit return type annotations for safety.
@@ -259,6 +259,24 @@ export async function fetchTierSettings(): Promise<{
 // ─────────────────────────────────────────────
 // MENU
 // ─────────────────────────────────────────────
+
+// ─────────────────────────────────────────────
+// VENUE AVAILABILITY
+// ─────────────────────────────────────────────
+
+export async function fetchVenueAvailability(venueId: string): Promise<{
+  hours: VenueHoursRow[];
+  blockedDates: VenueBlockedDateRow[];
+}> {
+  const [hoursRes, blockedRes] = await Promise.all([
+    sb.from('venue_hours').select('*').eq('venue_id', venueId),
+    sb.from('venue_blocked_dates').select('*').eq('venue_id', venueId),
+  ]);
+  return {
+    hours: (hoursRes.data ?? []) as VenueHoursRow[],
+    blockedDates: (blockedRes.data ?? []) as VenueBlockedDateRow[],
+  };
+}
 
 export async function fetchMenuByVenue(venueId: string): Promise<{
   categories: MenuCategoryRow[];

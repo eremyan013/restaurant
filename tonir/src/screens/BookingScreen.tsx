@@ -16,6 +16,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { Icon } from '../components/Icon';
 import { FONTS } from '../theme';
 import { notifyAdminsNewReservation } from '../lib/api';
+import { useVenueAvailability, isDateAvailable, filterAvailableTimes } from '../hooks/useVenueAvailability';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Booking'>;
@@ -50,12 +51,30 @@ export function BookingScreen({ navigation, route }: Props) {
   const { venue } = useVenue(venueId);
   const { book } = useReservations();
   const { tr, tra, language } = useTranslation();
+  const { hoursMap, blockedDates } = useVenueAvailability(venueId);
 
   const OCCASIONS = tra('book_occasions');
   const DATES = useMemo(
     () => generateDates(tra('book_days'), tra('book_months'), tr('book_today'), tr('book_tomorrow')),
     [language]
   );
+
+  const isoDates = useMemo(() => {
+    const today = new Date();
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      return d.toISOString().split('T')[0]!;
+    });
+  }, []);
+
+  const availableTimes = useMemo(() => {
+    if (!venue) return [];
+    const today = new Date();
+    const d = new Date(today);
+    d.setDate(today.getDate() + dateIndex);
+    return filterAvailableTimes(venue.times, d.getDay(), hoursMap);
+  }, [venue, dateIndex, hoursMap]);
 
   const [people, setPeople] = useState(initialPeople ?? 2);
   const [dateIndex, setDateIndex] = useState(0);
@@ -198,36 +217,51 @@ export function BookingScreen({ navigation, route }: Props) {
           <Text style={[styles.sectionLabel, { color: t.text }]}>{tr('book_date')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }}>
             <View style={styles.datesRow}>
-              {DATES.map((d, i) => (
-                <Pressable
-                  key={d.date + i}
-                  onPress={() => {
-                    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setDateIndex(i);
-                  }}
-                  style={[
-                    styles.dateCard,
-                    {
-                      backgroundColor: dateIndex === i ? t.primary : t.surface,
-                      borderColor: dateIndex === i ? t.primary : t.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.dateDayText, { color: dateIndex === i ? 'rgba(251,245,232,0.7)' : t.textMute }]}>
-                    {d.day}
-                  </Text>
-                  <Text style={[styles.dateDateText, { color: dateIndex === i ? '#FBF5E8' : t.text }]}>
-                    {d.date}
-                  </Text>
-                  {d.label ? (
-                    <Text style={[styles.dateLabelText, { color: dateIndex === i ? t.accent : t.primary }]}>
-                      {d.label}
+              {DATES.map((d, i) => {
+                const today = new Date();
+                const dayDate = new Date(today);
+                dayDate.setDate(today.getDate() + i);
+                const isoDate = isoDates[i]!;
+                const unavailable = !isDateAvailable(isoDate, dayDate.getDay(), hoursMap, blockedDates);
+                const selected = dateIndex === i;
+                return (
+                  <Pressable
+                    key={d.date + i}
+                    onPress={() => {
+                      if (unavailable) return;
+                      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setDateIndex(i);
+                      setTime('');
+                    }}
+                    style={[
+                      styles.dateCard,
+                      {
+                        backgroundColor: selected ? t.primary : t.surface,
+                        borderColor: selected ? t.primary : t.border,
+                        opacity: unavailable ? 0.35 : 1,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.dateDayText, { color: selected ? 'rgba(251,245,232,0.7)' : t.textMute }]}>
+                      {d.day}
                     </Text>
-                  ) : (
-                    <View style={{ height: 14 }} />
-                  )}
-                </Pressable>
-              ))}
+                    <Text style={[styles.dateDateText, { color: selected ? '#FBF5E8' : t.text }]}>
+                      {d.date}
+                    </Text>
+                    {unavailable ? (
+                      <Text style={[styles.dateLabelText, { color: selected ? 'rgba(251,245,232,0.5)' : t.textFaint }]}>
+                        Closed
+                      </Text>
+                    ) : d.label ? (
+                      <Text style={[styles.dateLabelText, { color: selected ? t.accent : t.primary }]}>
+                        {d.label}
+                      </Text>
+                    ) : (
+                      <View style={{ height: 14 }} />
+                    )}
+                  </Pressable>
+                );
+              })}
             </View>
           </ScrollView>
         </View>
@@ -235,28 +269,34 @@ export function BookingScreen({ navigation, route }: Props) {
         {/* Time */}
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { color: t.text }]}>{tr('book_time')}</Text>
-          <View style={styles.timeGrid}>
-            {venue.times.map((t2) => (
-              <Pressable
-                key={t2}
-                onPress={() => {
-                  if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setTime(t2);
-                }}
-                style={[
-                  styles.timeBtn,
-                  {
-                    backgroundColor: time === t2 ? t.primary : t.surface,
-                    borderColor: time === t2 ? t.primary : t.border,
-                  },
-                ]}
-              >
-                <Text style={[styles.timeBtnText, { color: time === t2 ? '#FBF5E8' : t.text }]}>
-                  {t2}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+          {availableTimes.length === 0 ? (
+            <Text style={[styles.timeBtnText, { color: t.textMute }]}>
+              No available times for this day
+            </Text>
+          ) : (
+            <View style={styles.timeGrid}>
+              {availableTimes.map((t2) => (
+                <Pressable
+                  key={t2}
+                  onPress={() => {
+                    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setTime(t2);
+                  }}
+                  style={[
+                    styles.timeBtn,
+                    {
+                      backgroundColor: time === t2 ? t.primary : t.surface,
+                      borderColor: time === t2 ? t.primary : t.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.timeBtnText, { color: time === t2 ? '#FBF5E8' : t.text }]}>
+                    {t2}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Occasion */}

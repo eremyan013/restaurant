@@ -417,6 +417,44 @@ export interface Database {
         };
       };
 
+      venue_hours: {
+        Row: {
+          id: string;
+          venue_id: string;
+          day_of_week: number;
+          is_open: boolean;
+          open_time: string | null;
+          close_time: string | null;
+        };
+        Insert: {
+          id?: string;
+          venue_id: string;
+          day_of_week: number;
+          is_open?: boolean;
+          open_time?: string | null;
+          close_time?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['venue_hours']['Insert']>;
+      };
+
+      venue_blocked_dates: {
+        Row: {
+          id: string;
+          venue_id: string;
+          date: string;
+          reason: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          venue_id: string;
+          date: string;
+          reason?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['venue_blocked_dates']['Insert']>;
+      };
+
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -433,4 +471,6 @@ export type ProfileRow        = Database['public']['Tables']['profiles']['Row'];
 export type MenuCategoryRow   = Database['public']['Tables']['menu_categories']['Row'];
 export type MenuItemRow       = Database['public']['Tables']['menu_items']['Row'];
 export type GuideRow          = Database['public']['Tables']['guides']['Row'];
-export type ReviewRow         = Database['public']['Tables']['reviews']['Row'];
+export type ReviewRow             = Database['public']['Tables']['reviews']['Row'];
+export type VenueHoursRow         = Database['public']['Tables']['venue_hours']['Row'];
+export type VenueBlockedDateRow   = Database['public']['Tables']['venue_blocked_dates']['Row'];
