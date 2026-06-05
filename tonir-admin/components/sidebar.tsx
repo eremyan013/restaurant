@@ -7,6 +7,7 @@ import type { AdminRole } from '@/lib/current-admin'
 
 const SUPER_ADMIN_NAV = [
   { href: '/dashboard', label: 'Dashboard', exact: true },
+  { href: '/dashboard/analytics', label: 'Analytics', exact: false },
   { href: '/dashboard/venues', label: 'Venues', exact: false },
   { href: '/dashboard/reservations', label: 'Reservations', exact: false },
   { href: '/dashboard/users', label: 'Users', exact: false },
