@@ -19,6 +19,7 @@ const SUPER_ADMIN_NAV = [
   { href: '/dashboard/redemption', label: 'Redeem', exact: false },
   { href: '/dashboard/notifications', label: 'Notifications', exact: false },
   { href: '/dashboard/admins', label: 'Admins', exact: false },
+  { href: '/dashboard/activity', label: 'Activity Log', exact: false },
 ]
 
 export function Sidebar({

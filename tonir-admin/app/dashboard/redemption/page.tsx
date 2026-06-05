@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { logActivity } from '@/lib/log-activity'
 
 const TYPE_LABELS: Record<string, string> = {
   discount:   'Discount',
@@ -26,9 +27,9 @@ const TIER_COLORS: Record<number, string> = {
 
 async function markUsed(formData: FormData) {
   'use server'
-  await getCurrentAdmin() // auth check — any admin can redeem
-  const id   = formData.get('id') as string
-  const code = formData.get('code') as string
+  const actor = await getCurrentAdmin()
+  const id    = formData.get('id')   as string
+  const code  = formData.get('code') as string
   if (!id) return
 
   const supabase = createSupabaseAdminClient()
@@ -37,6 +38,7 @@ async function markUsed(formData: FormData) {
     .update({ status: 'used', used_at: new Date().toISOString() })
     .eq('id', id)
     .eq('status', 'active')
+  await logActivity(actor, 'mark_prize_used', 'user_prize', id, code)
 
   revalidatePath(`/dashboard/redemption?code=${encodeURIComponent(code)}`)
   redirect(`/dashboard/redemption?code=${encodeURIComponent(code)}`)

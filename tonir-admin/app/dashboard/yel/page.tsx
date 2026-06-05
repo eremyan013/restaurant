@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { YelAdjustForm } from '@/components/yel-adjust-form'
 import { TierSettingsForm } from '@/components/tier-settings-form'
+import { logActivity } from '@/lib/log-activity'
 
 const TIER_COLORS: Record<number, string> = {
   1: 'bg-zinc-100 text-zinc-600',
@@ -114,6 +115,8 @@ async function adjustPoints(formData: FormData) {
     }
   }
 
+  const { data: profile } = await (supabase as any).from('profiles').select('name').eq('id', userId).single()
+  await logActivity(actor, 'adjust_yel', 'profile', userId, profile?.name ?? userId, { amount })
   revalidatePath('/dashboard/yel')
 }
 
@@ -198,7 +201,12 @@ export default async function YelPage() {
 
   return (
     <div className="max-w-5xl space-y-8">
-      <h1 className="text-2xl font-semibold text-zinc-900">Yel Points</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-zinc-900">Yel Points</h1>
+        <Link href="/dashboard/yel/bulk" className="px-4 py-2 rounded-lg border border-zinc-200 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors">
+          Bulk adjustment →
+        </Link>
+      </div>
 
       {/* Overview stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

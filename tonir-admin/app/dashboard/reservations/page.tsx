@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { logActivity } from '@/lib/log-activity'
 import type { ReservationRow } from '@/lib/database.types'
 import { ReservationFilters } from '@/components/reservation-filters'
 import { ReservationEditModal } from './reservation-edit-modal'
@@ -36,6 +37,8 @@ async function setStatus(id: string, status: ReservationRow['status']) {
   if (admin.role === 'admin' && !admin.managed_venue_ids.includes(res.venue_id)) return
 
   await (supabase as any).from('reservations').update({ status }).eq('id', id)
+  await logActivity(admin, status === 'confirmed' ? 'confirm_reservation' : status === 'cancelled' ? 'cancel_reservation' : status === 'visited' ? 'mark_visited' : 'confirm_reservation',
+    'reservation', id, `${res.venues?.name ?? ''} – ${res.date} ${res.time}`)
 
   if (res?.profiles?.push_token && (status === 'confirmed' || status === 'cancelled')) {
     const venueName: string = res.venues?.name ?? 'your reservation'

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { logActivity } from '@/lib/log-activity'
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'hidden'
 
@@ -32,11 +33,12 @@ async function approveReview(formData: FormData) {
   'use server'
   const actor = await getCurrentAdmin()
   if (actor?.role !== 'super_admin') return
-  const id      = formData.get('id') as string
-  const venueId = formData.get('venue_id') as string
+  const id       = formData.get('id') as string
+  const venueId  = formData.get('venue_id') as string
   const supabase = createSupabaseAdminClient()
   await (supabase as any).from('reviews').update({ status: 'approved' }).eq('id', id)
   await recalcVenueRating(supabase as any, venueId)
+  await logActivity(actor, 'approve_review', 'review', id, venueId)
   revalidatePath('/dashboard/reviews')
 }
 
@@ -44,11 +46,12 @@ async function hideReview(formData: FormData) {
   'use server'
   const actor = await getCurrentAdmin()
   if (actor?.role !== 'super_admin') return
-  const id      = formData.get('id') as string
-  const venueId = formData.get('venue_id') as string
+  const id       = formData.get('id') as string
+  const venueId  = formData.get('venue_id') as string
   const supabase = createSupabaseAdminClient()
   await (supabase as any).from('reviews').update({ status: 'hidden' }).eq('id', id)
   await recalcVenueRating(supabase as any, venueId)
+  await logActivity(actor, 'hide_review', 'review', id, venueId)
   revalidatePath('/dashboard/reviews')
 }
 
@@ -56,11 +59,12 @@ async function deleteReview(formData: FormData) {
   'use server'
   const actor = await getCurrentAdmin()
   if (actor?.role !== 'super_admin') return
-  const id      = formData.get('id') as string
-  const venueId = formData.get('venue_id') as string
+  const id       = formData.get('id') as string
+  const venueId  = formData.get('venue_id') as string
   const supabase = createSupabaseAdminClient()
   await (supabase as any).from('reviews').delete().eq('id', id)
   await recalcVenueRating(supabase as any, venueId)
+  await logActivity(actor, 'delete_review', 'review', id, venueId)
   revalidatePath('/dashboard/reviews')
 }
 

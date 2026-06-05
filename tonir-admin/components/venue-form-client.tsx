@@ -1,7 +1,81 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { LangTabs, LANGS, type Lang } from '@/components/lang-tabs'
+
+function ImageField({
+  label, name, defaultValue,
+}: { label: string; name: string; defaultValue?: string }) {
+  const [url, setUrl]         = useState(defaultValue ?? '')
+  const [uploading, setUploading] = useState(false)
+  const [error, setError]     = useState<string | null>(null)
+  const fileRef               = useRef<HTMLInputElement>(null)
+
+  const handleFile = useCallback(async (file: File) => {
+    setError(null)
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res  = await fetch('/api/upload-venue-photo', { method: 'POST', body: fd })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Upload failed')
+      setUrl(json.url)
+    } catch (e: any) {
+      setError(e.message)
+    } finally {
+      setUploading(false)
+    }
+  }, [])
+
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-sm font-medium text-zinc-700">{label}</label>
+      <input type="hidden" name={name} value={url} />
+
+      {/* Preview */}
+      {url && (
+        <div className="relative w-full h-32 rounded-lg overflow-hidden border border-zinc-200 bg-zinc-50">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={url} alt={label} className="w-full h-full object-cover" />
+          <button
+            type="button"
+            onClick={() => setUrl('')}
+            className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white text-xs flex items-center justify-center hover:bg-black/70"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <input
+          type="url"
+          value={url}
+          onChange={e => setUrl(e.target.value)}
+          placeholder="https://…"
+          className="flex-1 h-10 px-3 rounded-lg border border-zinc-300 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300"
+        />
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => fileRef.current?.click()}
+          className="h-10 px-3 rounded-lg border border-zinc-300 text-xs text-zinc-600 hover:bg-zinc-50 transition-colors disabled:opacity-50 whitespace-nowrap"
+        >
+          {uploading ? 'Uploading…' : 'Upload'}
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
+        />
+      </div>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  )
+}
 
 type LangFields = {
   name: string
@@ -151,8 +225,8 @@ export function VenueFormClient({
           </select>
         </div>
 
-        <F label="Photo URL"     name="photo_url"   type="url"    required defaultValue={defaults.photo_url} />
-        <F label="Dish URL"      name="dish_url"    type="url"    required defaultValue={defaults.dish_url} />
+        <ImageField label="Photo"      name="photo_url" defaultValue={defaults.photo_url} />
+        <ImageField label="Dish photo" name="dish_url"  defaultValue={defaults.dish_url} />
         <F label="Distance (km)" name="distance_km"               defaultValue={defaults.distance_km} />
 
         {/* Translatable: perk */}
