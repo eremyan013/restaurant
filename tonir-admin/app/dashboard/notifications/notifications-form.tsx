@@ -1,0 +1,340 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+
+type TargetType = 'all' | 'tier' | 'user'
+
+const TIER_LABELS: Record<number, string> = {
+  1: 'Tier 1 — Tonir',
+  2: 'Tier 2 — Ոսկի',
+  3: 'Tier 3 — Արծաթ',
+  4: 'Tier 4 — Ադամանդ',
+}
+
+const QUICK_TEMPLATES = [
+  { label: '✅ Booking Confirmed', title: 'Booking Confirmed', body: 'Your reservation has been confirmed. See you soon!' },
+  { label: '❌ Booking Cancelled', title: 'Booking Cancelled', body: 'Your reservation has been cancelled. Please contact us for more info.' },
+  { label: '🎉 Special Promo', title: 'Special Offer Just for You', body: 'Exclusive deal at your favourite Tonir venue tonight. Tap to book!' },
+  { label: '🏆 Tier Up', title: "You've Levelled Up!", body: "Congrats! You've reached a new tier. Check your new rewards in the app." },
+]
+
+interface UserResult {
+  id: string
+  name: string
+  email: string
+  push_token: string | null
+}
+
+export function NotificationsForm({ venues }: { venues: { id: string; name: string }[] }) {
+  const [targetType, setTargetType] = useState<TargetType>('all')
+  const [tier, setTier] = useState(1)
+  const [userSearch, setUserSearch] = useState('')
+  const [userResults, setUserResults] = useState<UserResult[]>([])
+  const [selectedUser, setSelectedUser] = useState<UserResult | null>(null)
+  const [searchLoading, setSearchLoading] = useState(false)
+
+  const [title, setTitle] = useState('')
+  const [body, setBody] = useState('')
+
+  const [recipientCount, setRecipientCount] = useState<number | null>(null)
+  const [countLoading, setCountLoading] = useState(false)
+
+  const [sending, setSending] = useState(false)
+  const [result, setResult] = useState<{ sent: number; failed: number; total: number } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch recipient preview count whenever target changes
+  const fetchCount = useCallback(async () => {
+    setCountLoading(true)
+    setRecipientCount(null)
+    try {
+      const params = new URLSearchParams({ type: targetType })
+      if (targetType === 'tier') params.set('tier', String(tier))
+      if (targetType === 'user' && selectedUser) params.set('userId', selectedUser.id)
+      const res = await fetch(`/api/send-push?${params}`)
+      const data = await res.json()
+      setRecipientCount(data.count ?? 0)
+    } catch {
+      setRecipientCount(null)
+    } finally {
+      setCountLoading(false)
+    }
+  }, [targetType, tier, selectedUser])
+
+  useEffect(() => {
+    if (targetType === 'user' && !selectedUser) return
+    fetchCount()
+  }, [fetchCount])
+
+  // User search
+  useEffect(() => {
+    if (targetType !== 'user' || userSearch.trim().length < 2) {
+      setUserResults([])
+      return
+    }
+    const t = setTimeout(async () => {
+      setSearchLoading(true)
+      try {
+        const res = await fetch(`/api/users/search?q=${encodeURIComponent(userSearch.trim())}`)
+        const data = await res.json()
+        setUserResults(data.users ?? [])
+      } catch {
+        setUserResults([])
+      } finally {
+        setSearchLoading(false)
+      }
+    }, 300)
+    return () => clearTimeout(t)
+  }, [userSearch, targetType])
+
+  function applyTemplate(t: typeof QUICK_TEMPLATES[number]) {
+    setTitle(t.title)
+    setBody(t.body)
+  }
+
+  async function send() {
+    if (!title.trim() || !body.trim()) {
+      setError('Title and body are required.')
+      return
+    }
+    if (targetType === 'user' && !selectedUser) {
+      setError('Select a user to send to.')
+      return
+    }
+
+    setSending(true)
+    setError(null)
+    setResult(null)
+
+    try {
+      const target =
+        targetType === 'all'
+          ? { type: 'all' as const }
+          : targetType === 'tier'
+          ? { type: 'tier' as const, tier }
+          : { type: 'user' as const, userId: selectedUser!.id }
+
+      const res = await fetch('/api/send-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title.trim(), body: body.trim(), target }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Send failed')
+      setResult(data)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to send notifications')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      {/* ── Compose panel ── */}
+      <div className="lg:col-span-2 space-y-6">
+        {/* Quick templates */}
+        <div className="bg-white rounded-xl border border-zinc-200 p-5">
+          <p className="text-sm font-medium text-zinc-700 mb-3">Quick Templates</p>
+          <div className="flex flex-wrap gap-2">
+            {QUICK_TEMPLATES.map((t) => (
+              <button
+                key={t.label}
+                onClick={() => applyTemplate(t)}
+                className="text-xs px-3 py-1.5 rounded-full border border-zinc-200 text-zinc-600 hover:border-zinc-400 hover:text-zinc-900 transition-colors"
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Message */}
+        <div className="bg-white rounded-xl border border-zinc-200 p-5 space-y-4">
+          <p className="text-sm font-medium text-zinc-700">Message</p>
+          <div>
+            <label className="block text-xs text-zinc-500 mb-1">Title</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Your booking is confirmed"
+              maxLength={100}
+              className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-400"
+            />
+            <p className="text-right text-xs text-zinc-400 mt-0.5">{title.length}/100</p>
+          </div>
+          <div>
+            <label className="block text-xs text-zinc-500 mb-1">Body</label>
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="e.g. Your table at Dolmama on June 7 at 20:00 is confirmed!"
+              maxLength={200}
+              rows={3}
+              className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 resize-none"
+            />
+            <p className="text-right text-xs text-zinc-400 mt-0.5">{body.length}/200</p>
+          </div>
+        </div>
+
+        {/* Target */}
+        <div className="bg-white rounded-xl border border-zinc-200 p-5 space-y-4">
+          <p className="text-sm font-medium text-zinc-700">Audience</p>
+
+          <div className="flex gap-2 flex-wrap">
+            {(['all', 'tier', 'user'] as TargetType[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => { setTargetType(t); setSelectedUser(null); setUserSearch('') }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                  targetType === t
+                    ? 'bg-zinc-900 text-white border-zinc-900'
+                    : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400'
+                }`}
+              >
+                {t === 'all' ? 'All Users' : t === 'tier' ? 'By Tier' : 'Specific User'}
+              </button>
+            ))}
+          </div>
+
+          {targetType === 'tier' && (
+            <div>
+              <label className="block text-xs text-zinc-500 mb-1">Tier Level</label>
+              <select
+                value={tier}
+                onChange={(e) => setTier(Number(e.target.value))}
+                className="px-3 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-900 focus:outline-none focus:border-zinc-400"
+              >
+                {[1, 2, 3, 4].map((n) => (
+                  <option key={n} value={n}>{TIER_LABELS[n]}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {targetType === 'user' && (
+            <div className="relative">
+              <label className="block text-xs text-zinc-500 mb-1">Search by name or email</label>
+              {selectedUser ? (
+                <div className="flex items-center gap-3 px-3 py-2 rounded-lg border border-zinc-200 bg-zinc-50">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-zinc-900">{selectedUser.name}</p>
+                    <p className="text-xs text-zinc-500">{selectedUser.email}</p>
+                    {!selectedUser.push_token && (
+                      <p className="text-xs text-amber-600 mt-0.5">No push token — notification will not be delivered</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => { setSelectedUser(null); setUserSearch('') }}
+                    className="text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  >
+                    Change
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    placeholder="Type name or email…"
+                    className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-400"
+                  />
+                  {searchLoading && (
+                    <p className="text-xs text-zinc-400 mt-1">Searching…</p>
+                  )}
+                  {userResults.length > 0 && (
+                    <div className="mt-1 border border-zinc-200 rounded-lg overflow-hidden shadow-sm">
+                      {userResults.map((u) => (
+                        <button
+                          key={u.id}
+                          onClick={() => { setSelectedUser(u); setUserSearch(''); setUserResults([]) }}
+                          className="w-full text-left px-3 py-2.5 hover:bg-zinc-50 border-b border-zinc-100 last:border-0 transition-colors"
+                        >
+                          <p className="text-sm font-medium text-zinc-900">{u.name}</p>
+                          <p className="text-xs text-zinc-500">{u.email}</p>
+                          {!u.push_token && (
+                            <p className="text-xs text-amber-500">No push token</p>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Error / result */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+        {result && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-700">
+            Sent <strong>{result.sent}</strong> of <strong>{result.total}</strong> notifications.
+            {result.failed > 0 && (
+              <span className="ml-1 text-amber-600">{result.failed} failed (invalid/expired tokens).</span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Preview sidebar ── */}
+      <div className="space-y-4">
+        {/* Phone preview */}
+        <div className="bg-white rounded-xl border border-zinc-200 p-5">
+          <p className="text-sm font-medium text-zinc-700 mb-4">Preview</p>
+          <div className="bg-zinc-900 rounded-2xl p-4 text-white">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-zinc-700 flex items-center justify-center text-lg shrink-0">
+                🍽️
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-zinc-300 uppercase tracking-wide">Tonir</p>
+                  <p className="text-xs text-zinc-500">now</p>
+                </div>
+                <p className="text-sm font-semibold mt-0.5 leading-snug">
+                  {title.trim() || <span className="text-zinc-500 font-normal">Notification title</span>}
+                </p>
+                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                  {body.trim() || <span>Notification body text will appear here.</span>}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recipient count */}
+        <div className="bg-white rounded-xl border border-zinc-200 p-5">
+          <p className="text-sm font-medium text-zinc-700 mb-2">Recipients</p>
+          {countLoading ? (
+            <p className="text-2xl font-semibold text-zinc-400">…</p>
+          ) : recipientCount !== null ? (
+            <p className="text-3xl font-semibold text-zinc-900 tabular-nums">{recipientCount}</p>
+          ) : (
+            <p className="text-2xl font-semibold text-zinc-300">—</p>
+          )}
+          <p className="text-xs text-zinc-400 mt-1">users with push token</p>
+        </div>
+
+        {/* Send button */}
+        <button
+          onClick={send}
+          disabled={sending || !title.trim() || !body.trim() || (targetType === 'user' && !selectedUser)}
+          className="w-full px-4 py-3 rounded-xl bg-zinc-900 text-white text-sm font-semibold hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          {sending ? 'Sending…' : `Send Notification${recipientCount !== null ? ` (${recipientCount})` : ''}`}
+        </button>
+
+        <p className="text-xs text-zinc-400 text-center">
+          Delivered via Expo Push Service to iOS and Android.
+        </p>
+      </div>
+    </div>
+  )
+}
