@@ -413,6 +413,35 @@ export interface Database {
         Relationships: [];
       };
 
+      reviews: {
+        Row: {
+          id: string;
+          user_id: string;
+          venue_id: string;
+          reservation_id: string;
+          rating: number;
+          comment: string | null;
+          status: 'pending' | 'approved' | 'hidden';
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          venue_id: string;
+          reservation_id: string;
+          rating: number;
+          comment?: string | null;
+          status?: 'pending' | 'approved' | 'hidden';
+          created_at?: string;
+        };
+        Update: {
+          status?: 'pending' | 'approved' | 'hidden';
+          comment?: string | null;
+          rating?: number;
+        };
+        Relationships: [];
+      };
+
       venue_hours: {
         Row: {
           id: string;
@@ -468,5 +497,6 @@ export type ProfileRow      = Database['public']['Tables']['profiles']['Row'];
 export type MenuCategoryRow = Database['public']['Tables']['menu_categories']['Row'];
 export type MenuItemRow     = Database['public']['Tables']['menu_items']['Row'];
 export type GuideRow              = Database['public']['Tables']['guides']['Row'];
+export type ReviewRow             = Database['public']['Tables']['reviews']['Row'];
 export type VenueHoursRow         = Database['public']['Tables']['venue_hours']['Row'];
 export type VenueBlockedDateRow   = Database['public']['Tables']['venue_blocked_dates']['Row'];

@@ -400,6 +400,7 @@ export interface Database {
           reservation_id: string;
           rating: number;
           comment: string | null;
+          status: 'pending' | 'approved' | 'hidden';
           created_at: string;
         };
         Insert: {
