@@ -413,6 +413,46 @@ export interface Database {
         Relationships: [];
       };
 
+      concierge_sessions: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          status: 'active' | 'escalated' | 'resolved';
+          started_at: string;
+          last_message_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          status?: 'active' | 'escalated' | 'resolved';
+          started_at?: string;
+          last_message_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['concierge_sessions']['Insert']>;
+        Relationships: [];
+      };
+
+      concierge_messages: {
+        Row: {
+          id: string;
+          session_id: string;
+          role: 'user' | 'assistant';
+          text: string;
+          suggestions: string[] | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          role: 'user' | 'assistant';
+          text: string;
+          suggestions?: string[] | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['concierge_messages']['Insert']>;
+        Relationships: [];
+      };
+
       reviews: {
         Row: {
           id: string;
@@ -497,6 +537,8 @@ export type ProfileRow      = Database['public']['Tables']['profiles']['Row'];
 export type MenuCategoryRow = Database['public']['Tables']['menu_categories']['Row'];
 export type MenuItemRow     = Database['public']['Tables']['menu_items']['Row'];
 export type GuideRow              = Database['public']['Tables']['guides']['Row'];
+export type ConciergeSessionRow   = Database['public']['Tables']['concierge_sessions']['Row'];
+export type ConciergeMessageRow   = Database['public']['Tables']['concierge_messages']['Row'];
 export type ReviewRow             = Database['public']['Tables']['reviews']['Row'];
 export type VenueHoursRow         = Database['public']['Tables']['venue_hours']['Row'];
 export type VenueBlockedDateRow   = Database['public']['Tables']['venue_blocked_dates']['Row'];

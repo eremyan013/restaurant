@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -39,16 +40,65 @@ interface ClaudeMessage {
   content: string
 }
 
+interface RequestBody {
+  messages:    ClaudeMessage[]
+  user_id?:    string
+  session_id?: string
+}
+
+async function persistMessages(
+  userText: string,
+  assistantText: string,
+  suggestions: string[],
+  userId: string | undefined,
+  sessionId: string | undefined,
+): Promise<string | undefined> {
+  if (!userId) return undefined
+  try {
+    const supabase = createSupabaseAdminClient()
+    let sid = sessionId
+
+    if (!sid) {
+      const { data } = await (supabase as any)
+        .from('concierge_sessions')
+        .insert({ user_id: userId, status: 'active' })
+        .select('id')
+        .single()
+      sid = data?.id
+    } else {
+      await (supabase as any)
+        .from('concierge_sessions')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('id', sid)
+    }
+
+    if (!sid) return undefined
+
+    await (supabase as any).from('concierge_messages').insert([
+      { session_id: sid, role: 'user',      text: userText },
+      { session_id: sid, role: 'assistant', text: assistantText, suggestions },
+    ])
+
+    return sid
+  } catch {
+    return sessionId
+  }
+}
+
 export async function POST(request: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
     return NextResponse.json({ error: 'Not configured' }, { status: 503, headers: CORS })
   }
 
-  const { messages } = await request.json() as { messages: ClaudeMessage[] }
+  const body = await request.json() as RequestBody
+  const { messages, user_id, session_id } = body
+
   if (!Array.isArray(messages) || messages.length === 0) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400, headers: CORS })
   }
+
+  const userText = messages[messages.length - 1]?.content ?? ''
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -78,11 +128,13 @@ export async function POST(request: NextRequest) {
     try {
       const parsed = JSON.parse(match[0])
       if (typeof parsed.text === 'string' && Array.isArray(parsed.suggestions)) {
-        return NextResponse.json(parsed, { headers: CORS })
+        const sid = await persistMessages(userText, parsed.text, parsed.suggestions, user_id, session_id)
+        return NextResponse.json({ ...parsed, session_id: sid }, { headers: CORS })
       }
     } catch {}
   }
 
-  // Fallback: return raw text with no suggestions
-  return NextResponse.json({ text: raw.replace(/```[a-z]*\n?/g, '').replace(/```/g, '').trim(), suggestions: [] }, { headers: CORS })
+  const fallbackText = raw.replace(/```[a-z]*\n?/g, '').replace(/```/g, '').trim()
+  const sid = await persistMessages(userText, fallbackText, [], user_id, session_id)
+  return NextResponse.json({ text: fallbackText, suggestions: [], session_id: sid }, { headers: CORS })
 }

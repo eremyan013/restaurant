@@ -15,6 +15,7 @@ const SUPER_ADMIN_NAV = [
   { href: '/dashboard/prizes', label: 'Prizes', exact: false },
   { href: '/dashboard/guides', label: 'Guides', exact: false },
   { href: '/dashboard/reviews', label: 'Reviews', exact: false },
+  { href: '/dashboard/concierge', label: 'Concierge', exact: false },
   { href: '/dashboard/notifications', label: 'Notifications', exact: false },
   { href: '/dashboard/admins', label: 'Admins', exact: false },
 ]

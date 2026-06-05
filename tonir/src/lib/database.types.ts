@@ -392,6 +392,44 @@ export interface Database {
         };
       };
 
+      concierge_sessions: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          status: 'active' | 'escalated' | 'resolved';
+          started_at: string;
+          last_message_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          status?: 'active' | 'escalated' | 'resolved';
+          started_at?: string;
+          last_message_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['concierge_sessions']['Insert']>;
+      };
+
+      concierge_messages: {
+        Row: {
+          id: string;
+          session_id: string;
+          role: 'user' | 'assistant';
+          text: string;
+          suggestions: string[] | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          role: 'user' | 'assistant';
+          text: string;
+          suggestions?: string[] | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['concierge_messages']['Insert']>;
+      };
+
       reviews: {
         Row: {
           id: string;

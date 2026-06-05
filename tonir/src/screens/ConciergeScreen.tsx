@@ -134,7 +134,9 @@ async function askConcierge(
   userText: string,
   history: Message[],
   tr: (key: string) => string,
-): Promise<{ text: string; suggestions: string[] }> {
+  userId?: string | null,
+  sessionId?: string | null,
+): Promise<{ text: string; suggestions: string[]; session_id?: string }> {
   if (!CONCIERGE_API) return buildReply(userText, tr);
   try {
     const res = await fetch(`${CONCIERGE_API}/api/concierge`, {
@@ -145,6 +147,8 @@ async function askConcierge(
           role: m.role === 'user' ? 'user' : 'assistant',
           content: m.text,
         })),
+        ...(userId    ? { user_id:    userId    } : {}),
+        ...(sessionId ? { session_id: sessionId } : {}),
       }),
     });
     if (!res.ok) throw new Error(`${res.status}`);
@@ -156,8 +160,17 @@ async function askConcierge(
   }
 }
 
+async function escalateSession(sessionId: string): Promise<void> {
+  if (!CONCIERGE_API || !sessionId) return;
+  await fetch(`${CONCIERGE_API}/api/concierge/escalate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: sessionId }),
+  }).catch(() => {});
+}
+
 export function ConciergeScreen({ navigation }: Props) {
-  const { theme: t } = useStore();
+  const { theme: t, userId } = useStore();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   const { venues } = useVenues();
@@ -175,6 +188,8 @@ export function ConciergeScreen({ navigation }: Props) {
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const [quickUsed, setQuickUsed] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [escalated, setEscalated] = useState(false);
 
   const QUICK_CHIPS = tra('conc_chips');
 
@@ -201,6 +216,21 @@ export function ConciergeScreen({ navigation }: Props) {
     setMessages([makeInitial()]);
     setInput('');
     setQuickUsed(false);
+    setSessionId(null);
+    setEscalated(false);
+  }
+
+  async function handleEscalate() {
+    if (escalated || !sessionId) return;
+    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    setEscalated(true);
+    await escalateSession(sessionId);
+    const note: Message = {
+      id: `e${Date.now()}`,
+      role: 'concierge',
+      text: tr('conc_escalated'),
+    };
+    setMessages((prev) => [...prev, note]);
   }
 
   async function dispatchMessage(text: string) {
@@ -210,9 +240,10 @@ export function ConciergeScreen({ navigation }: Props) {
     setInput('');
     setTyping(true);
     const [matched] = await Promise.all([
-      askConcierge(text, nextHistory, tr),
+      askConcierge(text, nextHistory, tr, userId, sessionId),
       new Promise<void>((r) => setTimeout(r, 800)),
     ]);
+    if (matched.session_id && !sessionId) setSessionId(matched.session_id);
     setMessages((prev) => [...prev, {
       id: `c${Date.now()}`, role: 'concierge',
       text: matched.text, suggestions: matched.suggestions,
@@ -348,6 +379,11 @@ export function ConciergeScreen({ navigation }: Props) {
 
       {/* Composer */}
       <View style={[styles.composer, { backgroundColor: t.bg, borderTopColor: t.border, paddingBottom: insets.bottom + 8 }]}>
+        {sessionId && !escalated && messages.filter(m => m.role === 'user').length >= 3 && (
+          <Pressable onPress={handleEscalate} style={styles.escalateBtn}>
+            <Text style={[styles.escalateText, { color: t.textMute }]}>{tr('conc_need_help')}</Text>
+          </Pressable>
+        )}
         <View style={[styles.inputRow, { backgroundColor: t.surface, borderColor: t.border }]}>
           <TextInput
             value={input}
@@ -411,4 +447,6 @@ const styles = StyleSheet.create({
   quickChips: { gap: 8, paddingHorizontal: 16, paddingBottom: 4 },
   quickChip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1 },
   quickChipText: { fontSize: 13, fontFamily: FONTS.medium, fontWeight: '500' },
+  escalateBtn: { alignItems: 'center', paddingBottom: 8 },
+  escalateText: { fontSize: 12, textDecorationLine: 'underline' },
 });
