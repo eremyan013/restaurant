@@ -16,6 +16,7 @@ const SUPER_ADMIN_NAV = [
   { href: '/dashboard/guides', label: 'Guides', exact: false },
   { href: '/dashboard/reviews', label: 'Reviews', exact: false },
   { href: '/dashboard/concierge', label: 'Concierge', exact: false },
+  { href: '/dashboard/redemption', label: 'Redeem', exact: false },
   { href: '/dashboard/notifications', label: 'Notifications', exact: false },
   { href: '/dashboard/admins', label: 'Admins', exact: false },
 ]
@@ -38,6 +39,7 @@ export function Sidebar({
       : [
           { href: '/dashboard', label: 'Dashboard', exact: true },
           { href: '/dashboard/reservations', label: 'Reservations', exact: false },
+          { href: '/dashboard/redemption', label: 'Redeem', exact: false },
           ...(managedVenueIds.length === 1
             ? [
                 { href: `/dashboard/menus/${managedVenueIds[0]}`, label: 'Menu', exact: false },
