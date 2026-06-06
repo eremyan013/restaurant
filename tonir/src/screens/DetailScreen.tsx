@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, Pressable, Image, StyleSheet, StatusBar, Dimensions, ActivityIndicator, Share, Platform,
 } from 'react-native';
@@ -14,6 +14,7 @@ import { useVenues, useVenue } from '../hooks/useVenues';
 import { useMenu } from '../hooks/useMenu';
 import { useFavorites } from '../hooks/useFavorites';
 import { useTranslation } from '../hooks/useTranslation';
+import { fetchTodayReservationCount } from '../lib/api';
 import { Icon } from '../components/Icon';
 import { Stars } from '../components/Stars';
 import { TimePill } from '../components/TimePill';
@@ -41,10 +42,17 @@ export function DetailScreen({ navigation, route }: Props) {
   const [people, setPeople] = useState(2);
   const [showAllTimes, setShowAllTimes] = useState(false);
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
+  const [bookedToday, setBookedToday] = useState<number | null>(null);
 
   const TABS = tra('det_tabs');
 
   const { venue, loading, error, retry } = useVenue(venueId);
+
+  useEffect(() => {
+    fetchTodayReservationCount(venueId)
+      .then(setBookedToday)
+      .catch(() => {}); // falls back to venue.booked_today below
+  }, [venueId]);
   const { venues: allVenues } = useVenues();
   const { categories: menuCats, items: menuItems, loading: menuLoading } = useMenu(venueId);
   const similar = allVenues.filter((v) => v.id !== venueId && venue && v.kind === venue.kind).slice(0, 4);
@@ -140,7 +148,9 @@ export function DetailScreen({ navigation, route }: Props) {
           <View style={[styles.heatCard, { backgroundColor: t.bgAlt, borderColor: t.border }]}>
             <HeatDot level={venue.heat} t={t} withLabel size={8} />
             <Text style={[styles.heatText, { color: t.text }]}>
-              <Text style={{ fontFamily: FONTS.bold, fontWeight: '700' }}>{venue.booked_today}</Text> {tr('det_booked_today')}
+              <Text style={{ fontFamily: FONTS.bold, fontWeight: '700' }}>
+                {bookedToday ?? venue.booked_today}
+              </Text> {tr('det_booked_today')}
             </Text>
           </View>
           {/* Tags */}
