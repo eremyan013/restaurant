@@ -185,6 +185,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     conc_reply_italian:   'Իտալական ճաշ, փայտով թխված պիցցա կամ բաց պատշգամբ — ահա ձեր տարբերակը:',
     conc_need_help:       'Ուզու՞մ եք մարդու հետ խոսել',
     conc_escalated:       'Ձեր հարցումն ուղարկվել է թիմին։ Մոտ ժամանակներս կկապվենք ձեզ հետ։',
+    conc_offline:         'Կապի խնդիր — ցուցադրվում են արագ առաջարկներ',
     // OnboardingScreen
     onb_skip:         'Բաց թողնել',
     onb_step0_title:  'Սեղան՝ պատրաստ,\nցանկացած ժամի։',
@@ -472,6 +473,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     conc_reply_italian:   'Итальянская еда, пицца из дровяной печи или открытая терраса — вот ваш вариант.',
     conc_need_help:       'Хотите поговорить с человеком?',
     conc_escalated:       'Ваш запрос передан команде. Мы свяжемся с вами в ближайшее время.',
+    conc_offline:         'Проблема соединения — показаны быстрые предложения',
     // OnboardingScreen
     onb_skip:         'Пропустить',
     onb_step0_title:  'Стол готов,\nв любое время.',
@@ -756,6 +758,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     conc_reply_italian:   'Italian food, wood-fired pizza or an open terrace — here\'s your option.',
     conc_need_help:       'Need to speak with someone?',
     conc_escalated:       'Your request has been passed to our team. We\'ll be in touch shortly.',
+    conc_offline:         'Connection issue — showing quick suggestions',
     // OnboardingScreen
     onb_skip:         'Skip',
     onb_step0_title:  'Table ready,\nany time.',

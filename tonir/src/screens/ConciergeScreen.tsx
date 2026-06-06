@@ -136,7 +136,7 @@ async function askConcierge(
   tr: (key: string) => string,
   userId?: string | null,
   sessionId?: string | null,
-): Promise<{ text: string; suggestions: string[]; session_id?: string }> {
+): Promise<{ text: string; suggestions: string[]; session_id?: string; offline?: boolean }> {
   if (!CONCIERGE_API) return buildReply(userText, tr);
   try {
     const res = await fetch(`${CONCIERGE_API}/api/concierge`, {
@@ -156,7 +156,7 @@ async function askConcierge(
     if (typeof data.text === 'string' && Array.isArray(data.suggestions)) return data;
     throw new Error('bad_response');
   } catch {
-    return buildReply(userText, tr);
+    return { ...buildReply(userText, tr), offline: true };
   }
 }
 
@@ -190,6 +190,7 @@ export function ConciergeScreen({ navigation }: Props) {
   const [quickUsed, setQuickUsed] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [escalated, setEscalated] = useState(false);
+  const [apiOffline, setApiOffline] = useState(false);
 
   const QUICK_CHIPS = tra('conc_chips');
 
@@ -218,6 +219,7 @@ export function ConciergeScreen({ navigation }: Props) {
     setQuickUsed(false);
     setSessionId(null);
     setEscalated(false);
+    setApiOffline(false);
   }
 
   async function handleEscalate() {
@@ -244,6 +246,7 @@ export function ConciergeScreen({ navigation }: Props) {
       new Promise<void>((r) => setTimeout(r, 800)),
     ]);
     if (matched.session_id && !sessionId) setSessionId(matched.session_id);
+    setApiOffline(matched.offline === true);
     setMessages((prev) => [...prev, {
       id: `c${Date.now()}`, role: 'concierge',
       text: matched.text, suggestions: matched.suggestions,
@@ -289,6 +292,18 @@ export function ConciergeScreen({ navigation }: Props) {
           </Pressable>
         )}
       </View>
+
+      {/* Offline banner */}
+      {apiOffline && (
+        <View style={[styles.offlineBanner, { backgroundColor: `${t.textMute}22` }]}>
+          <Text style={[styles.offlineText, { color: t.textMute }]}>
+            {tr('conc_offline')}
+          </Text>
+          <Pressable onPress={() => setApiOffline(false)} hitSlop={8}>
+            <Text style={[styles.offlineText, { color: t.textMute }]}>✕</Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* Messages */}
       <ScrollView
@@ -449,4 +464,9 @@ const styles = StyleSheet.create({
   quickChipText: { fontSize: 13, fontFamily: FONTS.medium, fontWeight: '500' },
   escalateBtn: { alignItems: 'center', paddingBottom: 8 },
   escalateText: { fontSize: 12, textDecorationLine: 'underline' },
+  offlineBanner: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 8,
+  },
+  offlineText: { fontSize: 12 },
 });
