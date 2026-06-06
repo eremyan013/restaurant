@@ -40,7 +40,7 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
   const { venues, loading, error, retry } = useVenues();
   const { favs, toggleFav } = useFavorites();
   const { profile } = useProfile();
-  const { guides } = useGuides();
+  const { guides, loading: guidesLoading } = useGuides();
   const [refreshing, setRefreshing] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
 
@@ -172,101 +172,109 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
         </View>
 
         {/* Tonight */}
-        <View style={{ marginTop: 28 }}>
-          <SectionHeader
-            title={tr('tonight_title')}
-            eyebrow={tr('tonight_eyebrow')}
-            t={t}
-            onAction={() => navigation.navigate('Search')}
-          />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
-          >
-            {tonightVenues.map((v) => (
-              <HeroCard
-                key={v.id}
-                venue={v}
-                t={t}
-                onOpen={() => navigation.navigate('Detail', { venueId: v.id })}
-                onFav={() => toggleFav(v.id)}
-                isFav={favs.has(v.id)}
-              />
-            ))}
-          </ScrollView>
-        </View>
+        {tonightVenues.length > 0 && (
+          <View style={{ marginTop: 28 }}>
+            <SectionHeader
+              title={tr('tonight_title')}
+              eyebrow={tr('tonight_eyebrow')}
+              t={t}
+              onAction={() => navigation.navigate('Search')}
+            />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
+            >
+              {tonightVenues.map((v) => (
+                <HeroCard
+                  key={v.id}
+                  venue={v}
+                  t={t}
+                  onOpen={() => navigation.navigate('Detail', { venueId: v.id })}
+                  onFav={() => toggleFav(v.id)}
+                  isFav={favs.has(v.id)}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Guides */}
-        <View style={{ marginTop: 28 }}>
-          <SectionHeader
-            title={tr('guides_title')}
-            eyebrow={tr('guides_eyebrow')}
-            t={t}
-            onAction={() => {}}
-          />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
-          >
-            {guides.map((g) => (
-              <GuideCard key={g.id} guide={g} t={t} onOpen={() => navigation.navigate('Search')} />
-            ))}
-          </ScrollView>
-        </View>
+        {!guidesLoading && guides.length > 0 && (
+          <View style={{ marginTop: 28 }}>
+            <SectionHeader
+              title={tr('guides_title')}
+              eyebrow={tr('guides_eyebrow')}
+              t={t}
+              onAction={() => {}}
+            />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
+            >
+              {guides.map((g) => (
+                <GuideCard key={g.id} guide={g} t={t} onOpen={() => navigation.navigate('Search')} />
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Trending */}
-        <View style={{ marginTop: 28 }}>
-          <SectionHeader
-            title={tr('trending_title')}
-            eyebrow={tr('trending_eyebrow')}
-            t={t}
-            onAction={() => navigation.navigate('Search')}
-          />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
-          >
-            {trendingVenues.map((v) => (
-              <HeroCard
-                key={v.id}
-                venue={v}
-                t={t}
-                onOpen={() => navigation.navigate('Detail', { venueId: v.id })}
-                onFav={() => toggleFav(v.id)}
-                isFav={favs.has(v.id)}
-              />
-            ))}
-          </ScrollView>
-        </View>
+        {trendingVenues.length > 0 && (
+          <View style={{ marginTop: 28 }}>
+            <SectionHeader
+              title={tr('trending_title')}
+              eyebrow={tr('trending_eyebrow')}
+              t={t}
+              onAction={() => navigation.navigate('Search')}
+            />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
+            >
+              {trendingVenues.map((v) => (
+                <HeroCard
+                  key={v.id}
+                  venue={v}
+                  t={t}
+                  onOpen={() => navigation.navigate('Detail', { venueId: v.id })}
+                  onFav={() => toggleFav(v.id)}
+                  isFav={favs.has(v.id)}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Nightlife */}
-        <View style={{ marginTop: 28 }}>
-          <SectionHeader
-            title={tr('nightlife_title')}
-            eyebrow={tr('nightlife_eyebrow')}
-            t={t}
-            onAction={() => navigation.navigate('Search')}
-          />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
-          >
-            {nightlifeVenues.map((v) => (
-              <HeroCard
-                key={v.id}
-                venue={v}
-                t={t}
-                onOpen={() => navigation.navigate('Detail', { venueId: v.id })}
-                onFav={() => toggleFav(v.id)}
-                isFav={favs.has(v.id)}
-              />
-            ))}
-          </ScrollView>
-        </View>
+        {nightlifeVenues.length > 0 && (
+          <View style={{ marginTop: 28 }}>
+            <SectionHeader
+              title={tr('nightlife_title')}
+              eyebrow={tr('nightlife_eyebrow')}
+              t={t}
+              onAction={() => navigation.navigate('Search')}
+            />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
+            >
+              {nightlifeVenues.map((v) => (
+                <HeroCard
+                  key={v.id}
+                  venue={v}
+                  t={t}
+                  onOpen={() => navigation.navigate('Detail', { venueId: v.id })}
+                  onFav={() => toggleFav(v.id)}
+                  isFav={favs.has(v.id)}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Loyalty teaser */}
         <LinearGradient
