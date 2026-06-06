@@ -13,7 +13,7 @@ import { useVenues } from '../hooks/useVenues';
 import { useFavorites } from '../hooks/useFavorites';
 import { useLocation } from '../hooks/useLocation';
 import { useTranslation } from '../hooks/useTranslation';
-import { haversineKm, formatDistance } from '../lib/distance';
+import { haversineKm, formatDistance, parseDistanceToKm } from '../lib/distance';
 import { SearchBar } from '../components/SearchBar';
 import { Chip } from '../components/Chip';
 import { ListCard } from '../components/ListCard';
@@ -83,7 +83,7 @@ export function SearchScreen({ navigation }: { navigation: Nav }) {
           haversineKm(userLocation.lat, userLocation.lng, b.coord_y, b.coord_x)
         );
       } else {
-        list = list.sort((a, b) => parseFloat(a.distance_km) - parseFloat(b.distance_km));
+        list = list.sort((a, b) => parseDistanceToKm(a.distance_km) - parseDistanceToKm(b.distance_km));
       }
     }
     if (activeFilter === 'wine') list = list.filter((v) => v.kind === 'bar');

@@ -13,14 +13,20 @@ export function haversineKm(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-/**
- * Format a distance in km for display.
- * Always returns a string that starts with a parseable number so that
- * parseFloat(formatDistance(x)) is still sortable.
- *   0.35 → "350 մ"    (but stored as "0.35 կմ" for sort correctness)
- *   1.2  → "1.2 կմ"
- */
+/** Format a distance in km for display. */
 export function formatDistance(km: number): string {
   if (km < 1) return `${Math.round(km * 1000)} մ`;
   return `${km.toFixed(1)} կմ`;
+}
+
+/**
+ * Parse a display distance string back to kilometres for sorting.
+ * Handles all stored formats: "350 մ", "0.35 կմ", "1.2 km", "800 м".
+ */
+export function parseDistanceToKm(s: string): number {
+  const n = parseFloat(s);
+  if (isNaN(n)) return Infinity;
+  // Metre suffixes: Armenian "մ" (without "կ"), Cyrillic "м", Latin "m" alone
+  if (/^\d[\d\s]*\s*[մмm](?!.*[կk])/u.test(s.trim())) return n / 1000;
+  return n;
 }
