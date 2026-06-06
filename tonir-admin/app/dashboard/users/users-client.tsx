@@ -9,25 +9,27 @@ type User = {
   name: string | null
   email: string | null
   phone: string | null
-  tier: number | null
+  tier: string | null
   yel_points: number | null
   total_visits: number | null
   created_at: string | null
 }
 
-const TIER_LABELS: Record<number, string> = { 1: 'Tonir', 2: 'Pandok', 3: 'Areni', 4: 'Master' }
-const TIER_COLORS: Record<number, string> = {
-  1: 'bg-zinc-100 text-zinc-600',
-  2: 'bg-blue-50 text-blue-700',
-  3: 'bg-purple-50 text-purple-700',
-  4: 'bg-amber-50 text-amber-700',
+const TIER_COLORS: Record<string, string> = {
+  '1': 'bg-zinc-100 text-zinc-600',
+  '2': 'bg-blue-50 text-blue-700',
+  '3': 'bg-purple-50 text-purple-700',
+  '4': 'bg-amber-50 text-amber-700',
+}
+const TIER_LABELS: Record<string, string> = {
+  '1': 'Tonir', '2': 'Pandok', '3': 'Areni', '4': 'Master',
 }
 
 type SortKey = 'created_at' | 'yel_points' | 'total_visits' | 'name'
 
 export default function UsersClient({ users }: { users: User[] }) {
   const [query, setQuery] = useState('')
-  const [tierFilter, setTierFilter] = useState<number | 'all'>('all')
+  const [tierFilter, setTierFilter] = useState<string | 'all'>('all')
   const [sortKey, setSortKey] = useState<SortKey>('created_at')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
@@ -95,11 +97,11 @@ export default function UsersClient({ users }: { users: User[] }) {
 
         <select
           value={tierFilter}
-          onChange={e => setTierFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+          onChange={e => setTierFilter(e.target.value === 'all' ? 'all' : e.target.value)}
           className="px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-white text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-300"
         >
           <option value="all">All tiers</option>
-          {[1, 2, 3, 4].map(t => (
+          {['1', '2', '3', '4'].map(t => (
             <option key={t} value={t}>Tier {t} — {TIER_LABELS[t]}</option>
           ))}
         </select>
@@ -186,8 +188,8 @@ export default function UsersClient({ users }: { users: User[] }) {
                   <td className="px-4 py-3 text-zinc-600">{user.email ?? '—'}</td>
                   <td className="px-4 py-3 text-zinc-600 tabular-nums whitespace-nowrap">{user.phone ?? '—'}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs ${TIER_COLORS[user.tier ?? 1] ?? 'bg-zinc-100 text-zinc-600'}`}>
-                      {TIER_LABELS[user.tier ?? 1] ?? `Tier ${user.tier}`}
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${TIER_COLORS[user.tier ?? '1'] ?? 'bg-zinc-100 text-zinc-600'}`}>
+                      {TIER_LABELS[user.tier ?? '1'] ?? `Tier ${user.tier}`}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-zinc-600 tabular-nums">{user.yel_points ?? 0}</td>
