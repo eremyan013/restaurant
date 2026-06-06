@@ -39,19 +39,32 @@ export function isDateAvailable(
   hoursMap: Record<number, VenueHoursRow>,
   blockedDates: Set<string>,
 ): boolean {
+  const today = new Date().toISOString().split('T')[0]!;
+  if (isoDate < today) return false;           // past date
   if (blockedDates.has(isoDate)) return false;
   const h = hoursMap[dayOfWeek];
   if (!h) return true; // no hours set → all days available (backwards-compatible)
   return h.is_open;
 }
 
-/** Filters a venue's time slots to those within the opening window for the given day. */
+/** Filters a venue's time slots to those within the opening window for the given day.
+ *  For today, also strips slots that are already in the past. */
 export function filterAvailableTimes(
   times: string[],
   dayOfWeek: number,
   hoursMap: Record<number, VenueHoursRow>,
+  isToday = false,
 ): string[] {
   const h = hoursMap[dayOfWeek];
-  if (!h || !h.is_open || !h.open_time || !h.close_time) return times;
-  return times.filter(t => t >= h.open_time! && t <= h.close_time!);
+  let filtered = (!h || !h.is_open || !h.open_time || !h.close_time)
+    ? times
+    : times.filter(t => t >= h.open_time! && t <= h.close_time!);
+
+  if (isToday) {
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    filtered = filtered.filter(t => t > currentTime);
+  }
+
+  return filtered;
 }

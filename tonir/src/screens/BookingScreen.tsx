@@ -73,7 +73,7 @@ export function BookingScreen({ navigation, route }: Props) {
     const today = new Date();
     const d = new Date(today);
     d.setDate(today.getDate() + dateIndex);
-    return filterAvailableTimes(venue.times, d.getDay(), hoursMap);
+    return filterAvailableTimes(venue.times, d.getDay(), hoursMap, dateIndex === 0);
   }, [venue, dateIndex, hoursMap]);
 
   const [people, setPeople] = useState(initialPeople ?? 2);
@@ -250,7 +250,7 @@ export function BookingScreen({ navigation, route }: Props) {
                     </Text>
                     {unavailable ? (
                       <Text style={[styles.dateLabelText, { color: selected ? 'rgba(251,245,232,0.5)' : t.textFaint }]}>
-                        Closed
+                        {tr('book_closed')}
                       </Text>
                     ) : d.label ? (
                       <Text style={[styles.dateLabelText, { color: selected ? t.accent : t.primary }]}>
