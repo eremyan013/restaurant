@@ -33,12 +33,17 @@ export function useFavorites() {
       else next.add(venueId);
       setFavs(next);
 
-      // Sync to DB (only if logged in)
+      // Sync to DB — roll back optimistic update on failure
       if (!userId) return;
-      if (wasFav) {
-        await removeFavorite(userId, venueId).catch(console.error);
-      } else {
-        await addFavorite(userId, venueId).catch(console.error);
+      try {
+        if (wasFav) {
+          await removeFavorite(userId, venueId);
+        } else {
+          await addFavorite(userId, venueId);
+        }
+      } catch {
+        // Restore previous state
+        setFavs(new Set(favs));
       }
     },
     [userId, favs, setFavs]
