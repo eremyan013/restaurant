@@ -81,12 +81,22 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
       quality: 0.8,
     });
     if (!result.canceled && result.assets[0]) {
-      setEditAvatarUri(result.assets[0].uri);
+      const asset = result.assets[0];
+      const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+      if (asset.fileSize && asset.fileSize > MAX_BYTES) {
+        setEditError(tr('prof_edit_photo_too_large'));
+        return;
+      }
+      setEditAvatarUri(asset.uri);
+      setEditError(null);
     }
   }
 
   async function saveProfile() {
     if (!userId) return;
+    const trimmed = editName.trim();
+    if (trimmed.length < 2) { setEditError(tr('prof_edit_name_too_short')); return; }
+    if (trimmed.length > 60) { setEditError(tr('prof_edit_name_too_long'));  return; }
     setEditSaving(true);
     setEditError(null);
     try {
@@ -96,7 +106,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
       } else if (!editAvatarUri) {
         avatar_url = null;
       }
-      await updateProfile(userId, { name: editName.trim(), avatar_url });
+      await updateProfile(userId, { name: trimmed, avatar_url });
       setEditVisible(false);
       refetch();
     } catch (e: any) {
@@ -422,14 +432,22 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
               </Pressable>
 
               {/* Name field */}
-              <View style={[styles.fieldWrap, { backgroundColor: t.surface, borderColor: t.border }]}>
-                <Text style={[styles.fieldLabel, { color: t.textMute }]}>{tr('prof_edit_name')}</Text>
+              <View style={[styles.fieldWrap, { backgroundColor: t.surface, borderColor: editName.trim().length > 60 ? '#9B2335' : t.border }]}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={[styles.fieldLabel, { color: t.textMute }]}>{tr('prof_edit_name')}</Text>
+                  {editName.length > 40 && (
+                    <Text style={[styles.fieldLabel, { color: editName.trim().length > 60 ? '#9B2335' : t.textFaint }]}>
+                      {editName.trim().length}/60
+                    </Text>
+                  )}
+                </View>
                 <TextInput
                   value={editName}
-                  onChangeText={setEditName}
+                  onChangeText={(v) => { setEditName(v); setEditError(null); }}
                   placeholder={tr('prof_edit_name_placeholder')}
                   placeholderTextColor={t.textFaint}
                   autoCapitalize="words"
+                  maxLength={61}
                   style={[styles.fieldInput, { color: t.text }]}
                 />
               </View>
