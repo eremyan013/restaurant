@@ -35,6 +35,10 @@ interface AppState {
   // Tier-up detection (persisted — compare against live profile.tier_level)
   lastKnownTierLevel: number;
   setLastKnownTierLevel: (level: number) => void;
+
+  // Phone verification gate — true while new user hasn't verified their phone yet
+  pendingPhoneVerification: boolean;
+  setPendingPhoneVerification: (v: boolean) => void;
 }
 
 export interface BookingDraft {
@@ -76,6 +80,9 @@ export const useStore = create<AppState>()(
 
       lastKnownTierLevel: 1,
       setLastKnownTierLevel: (lastKnownTierLevel) => set({ lastKnownTierLevel }),
+
+      pendingPhoneVerification: false,
+      setPendingPhoneVerification: (pendingPhoneVerification) => set({ pendingPhoneVerification }),
     }),
     {
       name: 'tonir-prefs',

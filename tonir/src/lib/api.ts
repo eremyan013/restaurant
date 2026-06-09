@@ -294,6 +294,38 @@ export async function fetchVenueAvailability(venueId: string): Promise<{
   };
 }
 
+// ─────────────────────────────────────────────
+// PHONE VERIFICATION
+// ─────────────────────────────────────────────
+
+export async function sendPhoneOtp(userId: string, phone: string): Promise<void> {
+  if (!ADMIN_URL) throw new Error('Admin URL not configured');
+  const res = await fetch(`${ADMIN_URL}/api/send-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: userId, phone }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.error ?? 'Failed to send OTP');
+  }
+}
+
+export async function verifyPhoneOtp(
+  userId: string,
+  phone: string,
+  code: string,
+): Promise<{ success: true } | { error: string }> {
+  if (!ADMIN_URL) return { error: 'Admin URL not configured' };
+  const res = await fetch(`${ADMIN_URL}/api/verify-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: userId, phone, code }),
+  });
+  const body = await res.json().catch(() => ({ error: 'unknown' }));
+  return body;
+}
+
 export async function fetchMenuByVenue(venueId: string): Promise<{
   categories: MenuCategoryRow[];
   items: MenuItemRow[];

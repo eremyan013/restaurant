@@ -71,10 +71,12 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { ConciergeScreen } from '../screens/ConciergeScreen';
 import { MarketScreen } from '../screens/MarketScreen';
 import { MyPrizesScreen } from '../screens/MyPrizesScreen';
+import { PhoneVerifyScreen } from '../screens/PhoneVerifyScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
   Auth: undefined;
+  PhoneVerify: { phone: string; userId: string };
   Tabs: undefined;
   Detail: { venueId: string };
   Booking: { venueId: string; time?: string; people?: number };
@@ -175,7 +177,7 @@ function TabNavigator() {
 }
 
 export function AppNavigator() {
-  const { theme: t } = useStore();
+  const { theme: t, pendingPhoneVerification } = useStore();
   const [session, setSession] = useState<boolean | null>(null);          // null = still checking
   const [seenOnboarding, setSeenOnboarding] = useState<boolean | null>(null); // null = still checking
 
@@ -217,7 +219,7 @@ export function AppNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {session ? (
+        {session && !pendingPhoneVerification ? (
           // ── Authenticated ──────────────────────────────
           <>
             <Stack.Screen name="Tabs" component={TabNavigator} />
@@ -258,15 +260,22 @@ export function AppNavigator() {
             />
           </>
         ) : (
-          // ── Not authenticated ──────────────────────────
+          // ── Not authenticated / pending phone verification ──
           <>
-            {!seenOnboarding && (
+            {!seenOnboarding && !pendingPhoneVerification && (
               <Stack.Screen name="Onboarding" component={OnboardingScreen} />
             )}
+            {!pendingPhoneVerification && (
+              <Stack.Screen
+                name="Auth"
+                component={AuthScreen}
+                options={{ animation: 'slide_from_bottom' }}
+              />
+            )}
             <Stack.Screen
-              name="Auth"
-              component={AuthScreen}
-              options={{ animation: 'slide_from_bottom' }}
+              name="PhoneVerify"
+              component={PhoneVerifyScreen}
+              options={{ animation: 'slide_from_right', gestureEnabled: false }}
             />
           </>
         )}

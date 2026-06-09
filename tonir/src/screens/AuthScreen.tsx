@@ -20,7 +20,7 @@ type Props = {
 };
 
 export function AuthScreen({ navigation }: Props) {
-  const { theme: t } = useStore();
+  const { theme: t, setPendingPhoneVerification } = useStore();
   const { tr } = useTranslation();
   const insets = useSafeAreaInsets();
 
@@ -74,14 +74,22 @@ export function AuthScreen({ navigation }: Props) {
           setLoading(false);
           return;
         }
+        const fullPhone = `+374${phone.trim()}`;
         // Create profile row for new user
         await (supabase as any).from('profiles').upsert({
           id: data.session.user.id,
           name: name.trim(),
           email: email.trim(),
-          phone: `+374${phone.trim()}`,
+          phone: fullPhone,
         }, { onConflict: 'id' });
-        // onAuthStateChange handles navigation
+        // Gate the app behind phone verification
+        setPendingPhoneVerification(true);
+        navigation.navigate('PhoneVerify', {
+          phone: fullPhone,
+          userId: data.session.user.id,
+        });
+        setLoading(false);
+        return;
       } else {
         // Auto-detect: all digits = player ID, otherwise email
         let loginEmail = email.trim();
