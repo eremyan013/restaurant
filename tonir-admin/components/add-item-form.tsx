@@ -146,7 +146,7 @@ export function AddItemForm({
             </div>
           )}
           <button type="button" onClick={() => fileRef.current?.click()}
-            className="h-8 px-2 rounded border border-zinc-300 text-xs bg-white hover:bg-zinc-50 transition-colors whitespace-nowrap">
+            className="h-8 px-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors whitespace-nowrap">
             {preview ? 'Change photo' : '+ Photo'}
           </button>
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
@@ -155,7 +155,7 @@ export function AddItemForm({
         </div>
 
         <button type="submit" disabled={loading}
-          className="h-8 px-3 rounded bg-zinc-900 text-white text-xs hover:bg-zinc-700 disabled:opacity-50 transition-colors">
+          className="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium disabled:opacity-50 transition-colors">
           {loading ? 'Adding…' : 'Add'}
         </button>
       </form>

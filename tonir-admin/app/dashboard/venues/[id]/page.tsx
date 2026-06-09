@@ -230,7 +230,7 @@ export default async function EditVenuePage({
           </div>
           <button
             type="submit"
-            className="mt-3 px-4 py-2 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors"
+            className="mt-3 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors"
           >
             Save hours
           </button>
@@ -260,7 +260,7 @@ export default async function EditVenuePage({
                       <form action={removeBlockedDate.bind(null, id, bd.id)}>
                         <button
                           type="submit"
-                          className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                          className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
                           onClick={e => { if (!confirm(`Remove blocked date ${bd.date}?`)) e.preventDefault() }}
                         >
                           Remove
@@ -295,7 +295,7 @@ export default async function EditVenuePage({
           </div>
           <button
             type="submit"
-            className="px-4 py-2 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors shrink-0"
+            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors shrink-0"
           >
             Block date
           </button>

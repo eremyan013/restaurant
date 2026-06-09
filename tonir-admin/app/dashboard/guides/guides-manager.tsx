@@ -37,7 +37,7 @@ export function GuidesManager({ guides, venues, toggleActive }: Props) {
         {!showCreate && (
           <button
             onClick={() => { setShowCreate(true); setEditingId(null) }}
-            className="px-3 py-1.5 rounded-md bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-700 transition-colors"
+            className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
           >
             + New guide
           </button>
@@ -121,14 +121,14 @@ export function GuidesManager({ guides, venues, toggleActive }: Props) {
                             setEditingId(editingId === guide.id ? null : guide.id)
                             setShowCreate(false)
                           }}
-                          className="text-xs text-zinc-500 hover:text-zinc-900 transition-colors"
+                          className="px-3 py-1.5 rounded-lg bg-[#F0AB0C] hover:bg-[#d99a0b] text-zinc-900 text-xs font-medium transition-colors"
                         >
                           {editingId === guide.id ? 'Close' : 'Edit'}
                         </button>
                         <button
                           onClick={() => handleDelete(guide.id)}
                           disabled={deletingId === guide.id}
-                          className="text-xs text-red-400 hover:text-red-600 disabled:opacity-40 transition-colors"
+                          className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium disabled:opacity-40 transition-colors"
                         >
                           {deletingId === guide.id ? '…' : '✕'}
                         </button>

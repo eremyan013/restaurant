@@ -294,26 +294,26 @@ export default async function ReservationsPage({
                           {r.status === 'pending' && (
                             <>
                               <form action={setStatus.bind(null, r.id, 'confirmed')}>
-                                <button className="text-xs px-2.5 py-1 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors">Confirm</button>
+                                <button className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors">Confirm</button>
                               </form>
                               <form action={setStatus.bind(null, r.id, 'cancelled')}>
-                                <button className="text-xs px-2.5 py-1 rounded-md bg-red-500 text-white hover:bg-red-600 transition-colors">Cancel</button>
+                                <button className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors">Cancel</button>
                               </form>
                             </>
                           )}
                           {r.status === 'confirmed' && (
                             <>
                               <form action={setStatus.bind(null, r.id, 'visited')}>
-                                <button className="text-xs px-2.5 py-1 rounded-md bg-blue-500 text-white hover:bg-blue-600 transition-colors">Visited</button>
+                                <button className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors">Visited</button>
                               </form>
                               <form action={setStatus.bind(null, r.id, 'cancelled')}>
-                                <button className="text-xs px-2.5 py-1 rounded-md border border-red-300 text-red-500 hover:bg-red-50 transition-colors">Cancel</button>
+                                <button className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors">Cancel</button>
                               </form>
                             </>
                           )}
                           {(r.status === 'cancelled' || r.status === 'visited') && (
                             <form action={setStatus.bind(null, r.id, 'pending')}>
-                              <button className="text-xs px-2.5 py-1 rounded-md border border-zinc-300 text-zinc-500 hover:bg-zinc-50 transition-colors">Reopen</button>
+                              <button className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors">Reopen</button>
                             </form>
                           )}
                         </div>

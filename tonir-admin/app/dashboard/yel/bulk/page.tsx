@@ -229,14 +229,14 @@ export default async function BulkYelPage({
               className="w-40 border border-zinc-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900" />
             {[50, 100, 250, 500].map(n => (
               <button key={n} type="submit" name="amount" value={String(n)}
-                className="px-3 py-2 rounded-lg border border-zinc-200 text-xs text-zinc-600 hover:bg-zinc-50 transition-colors">
+                className="px-3 py-2 rounded-lg bg-[#F0AB0C] hover:bg-[#d99a0b] text-zinc-900 text-xs font-medium transition-colors">
                 +{n}
               </button>
             ))}
           </div>
         </div>
 
-        <button type="submit" className="px-5 py-2.5 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors">
+        <button type="submit" className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
           Preview
         </button>
       </form>
@@ -318,7 +318,7 @@ export default async function BulkYelPage({
                 <input type="hidden" name="amount"      value={amount} />
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-xl bg-zinc-900 text-white text-sm font-semibold hover:bg-zinc-800 transition-colors"
+                  className="w-full py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition-colors"
                   onClick={e => { if (!confirm(`Apply ${amountNum > 0 ? '+' : ''}${amountNum} points to ${matchingUsers.length} users?`)) e.preventDefault() }}
                 >
                   Apply to {matchingUsers.length} user{matchingUsers.length !== 1 ? 's' : ''} →

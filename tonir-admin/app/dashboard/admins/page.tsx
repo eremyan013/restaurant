@@ -87,7 +87,7 @@ export default async function AdminsPage() {
                         <div className="flex items-center gap-2">
                           <Link
                             href={`/dashboard/admins/${a.id}/edit`}
-                            className="text-xs px-2.5 py-1 rounded-md border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors"
+                            className="px-3 py-1.5 rounded-lg bg-[#F0AB0C] hover:bg-[#d99a0b] text-zinc-900 text-xs font-medium transition-colors"
                           >
                             Edit
                           </Link>
@@ -95,7 +95,7 @@ export default async function AdminsPage() {
                             <input type="hidden" name="id" value={a.id} />
                             <button
                               type="submit"
-                              className="text-xs px-2.5 py-1 rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
+                              className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
                             >
                               Remove
                             </button>

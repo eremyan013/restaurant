@@ -326,7 +326,7 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
         <button
           onClick={send}
           disabled={sending || !title.trim() || !body.trim() || (targetType === 'user' && !selectedUser)}
-          className="w-full px-4 py-3 rounded-xl bg-zinc-900 text-white text-sm font-semibold hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="w-full px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           {sending ? 'Sending…' : `Send Notification${recipientCount !== null ? ` (${recipientCount})` : ''}`}
         </button>

@@ -37,7 +37,7 @@ export function ReservationEditModal({ reservation: r }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="text-xs px-2.5 py-1 rounded-md border border-zinc-300 text-zinc-600 hover:bg-zinc-100 transition-colors"
+        className="px-3 py-1.5 rounded-lg bg-[#F0AB0C] hover:bg-[#d99a0b] text-zinc-900 text-xs font-medium transition-colors"
       >
         Edit
       </button>
@@ -118,10 +118,10 @@ export function ReservationEditModal({ reservation: r }: Props) {
               )}
 
               <div className="flex gap-3 pt-1">
-                <button type="button" onClick={() => setOpen(false)} className="flex-1 px-4 py-2.5 text-sm font-medium border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors">
+                <button type="button" onClick={() => setOpen(false)} className="flex-1 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors">
                   Cancel
                 </button>
-                <button type="submit" disabled={pending} className="flex-1 px-4 py-2.5 text-sm font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-50 transition-colors">
+                <button type="submit" disabled={pending} className="flex-1 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-50 transition-colors">
                   {pending ? 'Saving…' : 'Save'}
                 </button>
               </div>

@@ -156,17 +156,17 @@ export function VenuesSearchTable({ venues, toggleActive, isSuperAdmin }: Props)
                 <td className="px-4 py-3">
                   <Link
                     href={`/dashboard/menus/${venue.id}`}
-                    className="text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                    className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors"
                   >
-                    Menu →
+                    Menu
                   </Link>
                 </td>
                 <td className="px-4 py-3">
                   <Link
                     href={`/dashboard/venues/${venue.id}`}
-                    className="text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                    className="px-3 py-1.5 rounded-lg bg-[#F0AB0C] hover:bg-[#d99a0b] text-zinc-900 text-xs font-medium transition-colors"
                   >
-                    Edit →
+                    Edit
                   </Link>
                 </td>
               </tr>

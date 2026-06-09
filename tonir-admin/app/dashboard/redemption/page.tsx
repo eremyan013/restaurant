@@ -99,7 +99,7 @@ export default async function RedemptionPage({
         />
         <button
           type="submit"
-          className="px-5 py-3 rounded-xl bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors"
+          className="px-5 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
         >
           Look up
         </button>
@@ -215,7 +215,7 @@ export default async function RedemptionPage({
                   <input type="hidden" name="code" value={result.code} />
                   <button
                     type="submit"
-                    className="w-full py-3 rounded-xl bg-zinc-900 text-white text-sm font-semibold hover:bg-zinc-800 active:scale-[0.98] transition-all"
+                    className="w-full py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold active:scale-[0.98] transition-all"
                     onClick={e => { if (!confirm(`Mark "${result.prizes?.name}" as used for ${result.profiles?.name}?`)) e.preventDefault() }}
                   >
                     Mark as used

@@ -267,7 +267,7 @@ export function VenueFormClient({
       {validErr && <p className="text-sm text-red-500">{validErr}</p>}
 
       <div className="pt-2 border-t border-zinc-100">
-        <button type="submit" className="px-5 py-2.5 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors">
+        <button type="submit" className="px-5 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors">
           {isNew ? 'Create venue' : 'Save changes'}
         </button>
       </div>

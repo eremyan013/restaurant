@@ -203,7 +203,7 @@ export default async function YelPage() {
     <div className="max-w-5xl space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-zinc-900">Yel Points</h1>
-        <Link href="/dashboard/yel/bulk" className="px-4 py-2 rounded-lg border border-zinc-200 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors">
+        <Link href="/dashboard/yel/bulk" className="px-4 py-2 rounded-lg bg-[#F0AB0C] hover:bg-[#d99a0b] text-zinc-900 text-sm font-medium transition-colors">
           Bulk adjustment →
         </Link>
       </div>

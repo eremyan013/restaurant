@@ -40,7 +40,7 @@ export function AddCategoryForm({ action }: { action: (fd: FormData) => void }) 
         </div>
         <button
           type="submit"
-          className="h-9 px-4 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors"
+          className="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
         >
           Add category
         </button>

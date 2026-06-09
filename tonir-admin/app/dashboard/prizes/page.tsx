@@ -75,7 +75,7 @@ export default async function PrizesPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-zinc-900">Prizes</h1>
-        <Link href="/dashboard/prizes/new" className="px-4 py-2 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors">
+        <Link href="/dashboard/prizes/new" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
           + New prize
         </Link>
       </div>
@@ -154,12 +154,12 @@ export default async function PrizesPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <Link href={`/dashboard/prizes/${p.id}`} className="text-xs text-zinc-500 hover:text-zinc-900 transition-colors">
-                        Edit →
+                      <Link href={`/dashboard/prizes/${p.id}`} className="px-3 py-1.5 rounded-lg bg-[#F0AB0C] hover:bg-[#d99a0b] text-zinc-900 text-xs font-medium transition-colors">
+                        Edit
                       </Link>
                       <form action={deletePrize}>
                         <input type="hidden" name="id" value={p.id} />
-                        <button type="submit" className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                        <button type="submit" className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
                           onClick={e => { if (!confirm(`Delete "${p.name}"?`)) e.preventDefault() }}>
                           Delete
                         </button>

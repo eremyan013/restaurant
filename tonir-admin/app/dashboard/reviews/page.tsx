@@ -196,7 +196,7 @@ export default async function ReviewsPage({
                         <form action={approveReview}>
                           <input type="hidden" name="id" value={r.id} />
                           <input type="hidden" name="venue_id" value={r.venue_id} />
-                          <button type="submit" className="text-xs text-green-600 hover:text-green-800 font-medium transition-colors">
+                          <button type="submit" className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors">
                             Approve
                           </button>
                         </form>
@@ -205,7 +205,7 @@ export default async function ReviewsPage({
                         <form action={hideReview}>
                           <input type="hidden" name="id" value={r.id} />
                           <input type="hidden" name="venue_id" value={r.venue_id} />
-                          <button type="submit" className="text-xs text-zinc-400 hover:text-zinc-700 transition-colors">
+                          <button type="submit" className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors">
                             Hide
                           </button>
                         </form>
@@ -215,7 +215,7 @@ export default async function ReviewsPage({
                         <input type="hidden" name="venue_id" value={r.venue_id} />
                         <button
                           type="submit"
-                          className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                          className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
                           onClick={e => { if (!confirm('Delete this review permanently?')) e.preventDefault() }}
                         >
                           Delete

@@ -72,21 +72,21 @@ export default async function ConciergeSessionPage({
         <div className="flex flex-col gap-2 items-end">
           {session.status === 'escalated' && (
             <form action={setSessionStatus.bind(null, id, 'resolved')}>
-              <button type="submit" className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors">
+              <button type="submit" className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors">
                 Mark resolved
               </button>
             </form>
           )}
           {session.status === 'active' && (
             <form action={setSessionStatus.bind(null, id, 'escalated')}>
-              <button type="submit" className="px-4 py-2 rounded-lg border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 transition-colors">
+              <button type="submit" className="px-4 py-2 rounded-lg bg-[#F0AB0C] hover:bg-[#d99a0b] text-zinc-900 text-sm font-medium transition-colors">
                 Mark escalated
               </button>
             </form>
           )}
           {session.status === 'resolved' && (
             <form action={setSessionStatus.bind(null, id, 'active')}>
-              <button type="submit" className="px-4 py-2 rounded-lg border border-zinc-200 text-zinc-600 text-sm font-medium hover:bg-zinc-50 transition-colors">
+              <button type="submit" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
                 Reopen
               </button>
             </form>
