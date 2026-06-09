@@ -113,47 +113,56 @@ export default async function EditVenuePage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const { id } = await params
-  let supabase: ReturnType<typeof createSupabaseAdminClient>
   try {
-    supabase = createSupabaseAdminClient()
+    const { id } = await params
+    return await renderPage(id)
   } catch (e: any) {
-    throw new Error(`Supabase init failed: ${e?.message}`)
+    const msg = String(e?.message ?? e ?? 'unknown')
+    const stack = String(e?.stack ?? '')
+    const type = String(e?.constructor?.name ?? typeof e)
+    return (
+      <div style={{ padding: 24, background: '#fee2e2', borderRadius: 12, fontFamily: 'monospace', fontSize: 13 }}>
+        <strong>Error rendering venue edit page</strong>
+        <p>Type: {type}</p>
+        <p>Message: {msg}</p>
+        <pre style={{ whiteSpace: 'pre-wrap', marginTop: 8 }}>{stack}</pre>
+      </div>
+    )
   }
+}
 
-  let venue: any, hoursRaw: any, blockedRaw: any
-  try {
-    const [venueRes, hoursRes, blockedRes] = await Promise.all([
-      (supabase as any).from('venues').select('*').eq('id', id).single(),
-      (supabase as any).from('venue_hours').select('*').eq('venue_id', id).order('day_of_week'),
-      (supabase as any).from('venue_blocked_dates').select('*').eq('venue_id', id).order('date'),
-    ])
+async function renderPage(id: string) {
+  const supabase = createSupabaseAdminClient()
 
-    if (venueRes.error || !venueRes.data) {
-      const msg = venueRes.error?.message ?? 'venue not found'
-      return (
-        <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-mono">
-          venues query error: {msg}
-        </div>
-      )
-    }
+  const [venueRes, hoursRes, blockedRes] = await Promise.all([
+    (supabase as any).from('venues').select('*').eq('id', id).single(),
+    (supabase as any).from('venue_hours').select('*').eq('venue_id', id).order('day_of_week'),
+    (supabase as any).from('venue_blocked_dates').select('*').eq('venue_id', id).order('date'),
+  ])
 
-    venue = venueRes.data
-    hoursRaw = hoursRes.data
-    blockedRaw = blockedRes.data
-
-    if (hoursRes.error || blockedRes.error) {
-      return (
-        <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-mono space-y-1">
-          {hoursRes.error && <p>venue_hours error: {hoursRes.error.message}</p>}
-          {blockedRes.error && <p>venue_blocked_dates error: {blockedRes.error.message}</p>}
-        </div>
-      )
-    }
-  } catch (e: any) {
+  if (venueRes.error || !venueRes.data) {
     return (
       <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-mono">
-        Unexpected exception: {String(e?.message ?? e)}
+        venues query failed: {venueRes.error?.message ?? 'not found'}
+      </div>
+    )
+  }
+
+  const venue    = venueRes.data
+  const hoursRaw = hoursRes.data
+  const blockedRaw = blockedRes.data
+
+  if (hoursRes.error) {
+    return (
+      <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-mono">
+        venue_hours query failed: {hoursRes.error.message}
+      </div>
+    )
+  }
+  if (blockedRes.error) {
+    return (
+      <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-mono">
+        venue_blocked_dates query failed: {blockedRes.error.message}
       </div>
     )
   }
