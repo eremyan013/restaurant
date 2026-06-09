@@ -185,6 +185,7 @@ export interface Database {
           web_push_sub: Record<string, unknown> | null;
           player_id: number;
           phone: string | null;
+          phone_verified: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -205,6 +206,7 @@ export interface Database {
           web_push_sub?: Record<string, unknown> | null;
           player_id?: number;
           phone?: string | null;
+          phone_verified?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -224,6 +226,7 @@ export interface Database {
           push_token?: string | null;
           web_push_sub?: Record<string, unknown> | null;
           phone?: string | null;
+          phone_verified?: boolean;
           created_at?: string;
           updated_at?: string;
         };
