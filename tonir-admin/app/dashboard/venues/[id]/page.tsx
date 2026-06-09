@@ -108,27 +108,8 @@ async function deleteVenue(id: string) {
   redirect('/dashboard/venues')
 }
 
-export default async function EditVenuePage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
-  try {
-    const { id } = await params
-    return await renderPage(id)
-  } catch (e: any) {
-    const msg = String(e?.message ?? e ?? 'unknown')
-    const stack = String(e?.stack ?? '')
-    const type = String(e?.constructor?.name ?? typeof e)
-    return (
-      <div style={{ padding: 24, background: '#fee2e2', borderRadius: 12, fontFamily: 'monospace', fontSize: 13 }}>
-        <strong>Error rendering venue edit page</strong>
-        <p>Type: {type}</p>
-        <p>Message: {msg}</p>
-        <pre style={{ whiteSpace: 'pre-wrap', marginTop: 8 }}>{stack}</pre>
-      </div>
-    )
-  }
+export default async function EditVenuePage() {
+  return <div style={{ padding: 32, fontFamily: 'sans-serif' }}>Hello — module loaded OK</div>
 }
 
 async function renderPage(id: string) {
