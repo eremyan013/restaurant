@@ -128,15 +128,34 @@ export default async function EditVenuePage({
       (supabase as any).from('venue_hours').select('*').eq('venue_id', id).order('day_of_week'),
       (supabase as any).from('venue_blocked_dates').select('*').eq('venue_id', id).order('date'),
     ])
-    if (venueRes.error) throw new Error(`venues query: ${venueRes.error.message}`)
-    if (!venueRes.data) notFound()
+
+    if (venueRes.error || !venueRes.data) {
+      const msg = venueRes.error?.message ?? 'venue not found'
+      return (
+        <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-mono">
+          venues query error: {msg}
+        </div>
+      )
+    }
+
     venue = venueRes.data
     hoursRaw = hoursRes.data
     blockedRaw = blockedRes.data
-    if (hoursRes.error) console.error('venue_hours error:', hoursRes.error.message)
-    if (blockedRes.error) console.error('venue_blocked_dates error:', blockedRes.error.message)
+
+    if (hoursRes.error || blockedRes.error) {
+      return (
+        <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-mono space-y-1">
+          {hoursRes.error && <p>venue_hours error: {hoursRes.error.message}</p>}
+          {blockedRes.error && <p>venue_blocked_dates error: {blockedRes.error.message}</p>}
+        </div>
+      )
+    }
   } catch (e: any) {
-    throw new Error(`DB fetch failed: ${e?.message}`)
+    return (
+      <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-mono">
+        Unexpected exception: {String(e?.message ?? e)}
+      </div>
+    )
   }
 
   const hoursMap: Record<number, VenueHoursRow> = {}
