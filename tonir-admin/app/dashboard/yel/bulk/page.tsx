@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ConfirmButton } from '@/components/confirm-button'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
@@ -316,13 +317,12 @@ export default async function BulkYelPage({
                 <input type="hidden" name="to_date"     value={toDate} />
                 <input type="hidden" name="tier_level"  value={tierLevel} />
                 <input type="hidden" name="amount"      value={amount} />
-                <button
-                  type="submit"
+                <ConfirmButton
+                  message={`Apply ${amountNum > 0 ? '+' : ''}${amountNum} points to ${matchingUsers.length} users?`}
                   className="w-full py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition-colors"
-                  onClick={e => { if (!confirm(`Apply ${amountNum > 0 ? '+' : ''}${amountNum} points to ${matchingUsers.length} users?`)) e.preventDefault() }}
                 >
                   Apply to {matchingUsers.length} user{matchingUsers.length !== 1 ? 's' : ''} →
-                </button>
+                </ConfirmButton>
               </form>
             </>
           )}

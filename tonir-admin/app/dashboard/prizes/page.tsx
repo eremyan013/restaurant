@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ConfirmButton } from '@/components/confirm-button'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
@@ -159,10 +160,12 @@ export default async function PrizesPage() {
                       </Link>
                       <form action={deletePrize}>
                         <input type="hidden" name="id" value={p.id} />
-                        <button type="submit" className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
-                          onClick={e => { if (!confirm(`Delete "${p.name}"?`)) e.preventDefault() }}>
+                        <ConfirmButton
+                          message={`Delete "${p.name}"?`}
+                          className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
+                        >
                           Delete
-                        </button>
+                        </ConfirmButton>
                       </form>
                     </div>
                   </td>

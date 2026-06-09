@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { logActivity } from '@/lib/log-activity'
+import { ConfirmButton } from '@/components/confirm-button'
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'hidden'
 
@@ -213,13 +214,12 @@ export default async function ReviewsPage({
                       <form action={deleteReview}>
                         <input type="hidden" name="id" value={r.id} />
                         <input type="hidden" name="venue_id" value={r.venue_id} />
-                        <button
-                          type="submit"
+                        <ConfirmButton
+                          message="Delete this review permanently?"
                           className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
-                          onClick={e => { if (!confirm('Delete this review permanently?')) e.preventDefault() }}
                         >
                           Delete
-                        </button>
+                        </ConfirmButton>
                       </form>
                     </div>
                   </td>

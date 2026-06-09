@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { ConfirmButton } from '@/components/confirm-button'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
@@ -213,13 +214,12 @@ export default async function RedemptionPage({
                 <form action={markUsed}>
                   <input type="hidden" name="id"   value={result.id} />
                   <input type="hidden" name="code" value={result.code} />
-                  <button
-                    type="submit"
+                  <ConfirmButton
+                    message={`Mark "${result.prizes?.name}" as used for ${result.profiles?.name}?`}
                     className="w-full py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold active:scale-[0.98] transition-all"
-                    onClick={e => { if (!confirm(`Mark "${result.prizes?.name}" as used for ${result.profiles?.name}?`)) e.preventDefault() }}
                   >
                     Mark as used
-                  </button>
+                  </ConfirmButton>
                 </form>
               </>
             )}
