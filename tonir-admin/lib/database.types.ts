@@ -522,6 +522,29 @@ export interface Database {
         Relationships: [];
       };
 
+      phone_otp_codes: {
+        Row: {
+          id: string;
+          user_id: string;
+          phone: string;
+          code: string;
+          expires_at: string;
+          used: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          phone: string;
+          code: string;
+          expires_at?: string;
+          used?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['phone_otp_codes']['Insert']>;
+        Relationships: [];
+      };
+
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
