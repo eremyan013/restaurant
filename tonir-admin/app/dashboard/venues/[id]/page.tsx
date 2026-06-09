@@ -114,15 +114,30 @@ export default async function EditVenuePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const supabase = createSupabaseAdminClient()
+  let supabase: ReturnType<typeof createSupabaseAdminClient>
+  try {
+    supabase = createSupabaseAdminClient()
+  } catch (e: any) {
+    throw new Error(`Supabase init failed: ${e?.message}`)
+  }
 
-  const [{ data: venue, error }, { data: hoursRaw }, { data: blockedRaw }] = await Promise.all([
-    (supabase as any).from('venues').select('*').eq('id', id).single(),
-    (supabase as any).from('venue_hours').select('*').eq('venue_id', id).order('day_of_week'),
-    (supabase as any).from('venue_blocked_dates').select('*').eq('venue_id', id).order('date'),
-  ])
-
-  if (error || !venue) notFound()
+  let venue: any, hoursRaw: any, blockedRaw: any
+  try {
+    const [venueRes, hoursRes, blockedRes] = await Promise.all([
+      (supabase as any).from('venues').select('*').eq('id', id).single(),
+      (supabase as any).from('venue_hours').select('*').eq('venue_id', id).order('day_of_week'),
+      (supabase as any).from('venue_blocked_dates').select('*').eq('venue_id', id).order('date'),
+    ])
+    if (venueRes.error) throw new Error(`venues query: ${venueRes.error.message}`)
+    if (!venueRes.data) notFound()
+    venue = venueRes.data
+    hoursRaw = hoursRes.data
+    blockedRaw = blockedRes.data
+    if (hoursRes.error) console.error('venue_hours error:', hoursRes.error.message)
+    if (blockedRes.error) console.error('venue_blocked_dates error:', blockedRes.error.message)
+  } catch (e: any) {
+    throw new Error(`DB fetch failed: ${e?.message}`)
+  }
 
   const hoursMap: Record<number, VenueHoursRow> = {}
   for (const h of (hoursRaw ?? [])) hoursMap[h.day_of_week] = h
