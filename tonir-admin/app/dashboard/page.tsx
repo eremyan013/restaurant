@@ -127,7 +127,7 @@ async function getSuperAdminStats() {
       supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
       (supabase as any)
         .from('reviews')
-        .select('id, rating, comment, created_at, profiles(name), venues(name)')
+        .select('id, rating, comment, created_at, user_id, venue_id')
         .eq('status', 'pending')
         .order('created_at', { ascending: true })
         .limit(5),
@@ -143,6 +143,30 @@ async function getSuperAdminStats() {
       supabase.from('prizes').select('*', { count: 'exact', head: true }),
       (supabase as any).from('reservations').select('venue_id').gte('date_iso', monthStart).neq('status', 'cancelled').limit(2000),
     ])
+
+    // Resolve profiles/venues for pending reviews separately (no FK join available)
+    const rawPending: any[] = pendingReviewsList.data ?? []
+    const prUserIds  = [...new Set(rawPending.map(r => r.user_id).filter(Boolean))]
+    const prVenueIds = [...new Set(rawPending.map(r => r.venue_id).filter(Boolean))]
+    const [prProfilesRes, prVenuesRes] = await Promise.all([
+      prUserIds.length > 0
+        ? (supabase as any).from('profiles').select('id, name').in('id', prUserIds)
+        : Promise.resolve({ data: [] }),
+      prVenueIds.length > 0
+        ? (supabase as any).from('venues').select('id, name').in('id', prVenueIds)
+        : Promise.resolve({ data: [] }),
+    ])
+    const prProfileMap: Record<string, string> = Object.fromEntries(
+      (prProfilesRes.data ?? []).map((p: any) => [p.id, p.name])
+    )
+    const prVenueMap: Record<string, string> = Object.fromEntries(
+      (prVenuesRes.data ?? []).map((v: any) => [v.id, v.name])
+    )
+    const resolvedPendingReviews: PendingReview[] = rawPending.map(r => ({
+      id: r.id, rating: r.rating, comment: r.comment, created_at: r.created_at,
+      profiles: prProfileMap[r.user_id]  ? { name: prProfileMap[r.user_id] }  : null,
+      venues:   prVenueMap[r.venue_id]   ? { name: prVenueMap[r.venue_id] }   : null,
+    }))
 
     const venueNameMap: Record<string, string> = Object.fromEntries(
       (venues.data ?? []).map((v: { id: string; name: string }) => [v.id, v.name])
@@ -168,7 +192,7 @@ async function getSuperAdminStats() {
       showVenueCol: true,
       activity: (activityRes.data ?? []) as ActivityEntry[],
       pendingReviewsCount: pendingReviewsCount.count ?? 0,
-      pendingReviewsList: (pendingReviewsList.data ?? []) as PendingReview[],
+      pendingReviewsList: resolvedPendingReviews,
       resWeek:       resWeek.count       ?? 0,
       resMonth:      resMonth.count      ?? 0,
       usersWeek:     usersWeek.count     ?? 0,

@@ -25,13 +25,19 @@ export default async function ConciergeSessionPage({
   const { id } = await params
   const supabase = createSupabaseAdminClient()
 
-  const { data: session, error } = await (supabase as any)
+  const { data: rawSession, error } = await (supabase as any)
     .from('concierge_sessions')
-    .select('*, profiles(name, email, player_id, tier, yel_points)')
+    .select('*')
     .eq('id', id)
     .single()
 
-  if (error || !session) notFound()
+  if (error || !rawSession) notFound()
+
+  const { data: profileData } = rawSession.user_id
+    ? await (supabase as any).from('profiles').select('name, email, player_id, tier, yel_points').eq('id', rawSession.user_id).single()
+    : { data: null }
+
+  const session = { ...rawSession, profiles: profileData ?? null }
 
   const { data: messagesRaw } = await (supabase as any)
     .from('concierge_messages')

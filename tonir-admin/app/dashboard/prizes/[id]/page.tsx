@@ -25,7 +25,7 @@ export default async function EditPrizePage({ params }: { params: Promise<{ id: 
     (supabase as any).from('settings').select('key, value').in('key', ['tier_1_name','tier_2_name','tier_3_name','tier_4_name']),
     (supabase as any)
       .from('user_prizes')
-      .select('id, status, code, claimed_at, used_at, profiles(name, player_id, email)')
+      .select('id, status, code, claimed_at, used_at, user_id')
       .eq('prize_id', id)
       .order('claimed_at', { ascending: false })
       .limit(30),
@@ -33,9 +33,21 @@ export default async function EditPrizePage({ params }: { params: Promise<{ id: 
 
   if (!prizeRes.data) notFound()
 
-  const prize   = prizeRes.data
-  const venues:  any[] = venuesRes.data  ?? []
-  const claims:  any[] = claimsRes.data  ?? []
+  const prize  = prizeRes.data
+  const venues: any[] = venuesRes.data ?? []
+  const rawClaims: any[] = claimsRes.data ?? []
+
+  const claimUserIds = [...new Set(rawClaims.map((c: any) => c.user_id).filter(Boolean))]
+  const claimProfilesRes = claimUserIds.length > 0
+    ? await (supabase as any).from('profiles').select('id, name, player_id, email').in('id', claimUserIds)
+    : { data: [] }
+  const claimProfileMap: Record<string, any> = Object.fromEntries(
+    (claimProfilesRes.data ?? []).map((p: any) => [p.id, p])
+  )
+  const claims: any[] = rawClaims.map((c: any) => ({
+    ...c,
+    profiles: claimProfileMap[c.user_id] ?? null,
+  }))
 
   const tierNames: Record<number, string> = { 1: 'Tonir', 2: 'Pandok', 3: 'Areni', 4: 'Master' }
   for (const s of (settingsRes.data ?? [])) {

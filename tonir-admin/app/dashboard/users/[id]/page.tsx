@@ -43,7 +43,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
       .limit(20),
     supabase
       .from('favorites')
-      .select('id, created_at, venues(id, name, cuisine, photo_url)')
+      .select('id, created_at, venue_id')
       .eq('user_id', id)
       .order('created_at', { ascending: false }),
   ])
@@ -52,7 +52,19 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
 
   const user = profileResult.data as ProfileRow
   const reservations = (reservationsResult.data ?? []) as unknown as ReservationWithVenue[]
-  const favorites = (favoritesResult.data ?? []) as unknown as FavoriteWithVenue[]
+
+  const rawFavorites: any[] = favoritesResult.data ?? []
+  const favVenueIds = [...new Set(rawFavorites.map((f: any) => f.venue_id).filter(Boolean))]
+  const favVenuesRes = favVenueIds.length > 0
+    ? await supabase.from('venues').select('id, name, cuisine, photo_url').in('id', favVenueIds as any)
+    : { data: [] }
+  const favVenueMap: Record<string, any> = Object.fromEntries(
+    ((favVenuesRes.data ?? []) as any[]).map((v: any) => [v.id, v])
+  )
+  const favorites = rawFavorites.map((f: any) => ({
+    ...f,
+    venues: favVenueMap[f.venue_id] ?? null,
+  })) as FavoriteWithVenue[]
 
   const initials = user.name
     .split(' ')
