@@ -88,7 +88,7 @@ export default async function ReviewsPage({
   const [reviewsRes, countsRes] = await Promise.all([
     (supabase as any)
       .from('reviews')
-      .select('id, rating, comment, status, created_at, venue_id, user_id, profiles(name, player_id), venues(name)')
+      .select('id, rating, comment, status, created_at, venue_id, user_id')
       .order('created_at', { ascending: false })
       .limit(200),
     (supabase as any)
@@ -96,8 +96,32 @@ export default async function ReviewsPage({
       .select('status'),
   ])
 
-  const allReviews: any[] = reviewsRes.data ?? []
+  const rawReviews: any[] = reviewsRes.data ?? []
   const allCounts: any[]  = countsRes.data ?? []
+
+  // Fetch profiles and venues separately to avoid relying on PostgREST FK joins
+  const userIds  = [...new Set(rawReviews.map((r: any) => r.user_id).filter(Boolean))]
+  const venueIds = [...new Set(rawReviews.map((r: any) => r.venue_id).filter(Boolean))]
+
+  const [profilesRes, venuesRes] = await Promise.all([
+    userIds.length > 0
+      ? (supabase as any).from('profiles').select('id, name, player_id').in('id', userIds)
+      : Promise.resolve({ data: [] }),
+    venueIds.length > 0
+      ? (supabase as any).from('venues').select('id, name').in('id', venueIds)
+      : Promise.resolve({ data: [] }),
+  ])
+
+  const profileMap: Record<string, { name: string; player_id: number }> =
+    Object.fromEntries((profilesRes.data ?? []).map((p: any) => [p.id, p]))
+  const venueMap: Record<string, { name: string }> =
+    Object.fromEntries((venuesRes.data ?? []).map((v: any) => [v.id, v]))
+
+  const allReviews = rawReviews.map((r: any) => ({
+    ...r,
+    profiles: profileMap[r.user_id] ?? null,
+    venues:   venueMap[r.venue_id]  ?? null,
+  }))
 
   const counts = {
     all:      allCounts.length,
