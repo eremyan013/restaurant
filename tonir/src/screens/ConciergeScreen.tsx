@@ -137,7 +137,7 @@ async function askConcierge(
   userId?: string | null,
   sessionId?: string | null,
 ): Promise<{ text: string; suggestions: string[]; session_id?: string; offline?: boolean }> {
-  if (!CONCIERGE_API) return buildReply(userText, tr);
+  if (!CONCIERGE_API) return { ...buildReply(userText, tr), offline: true };
   try {
     const res = await fetch(`${CONCIERGE_API}/api/concierge`, {
       method: 'POST',

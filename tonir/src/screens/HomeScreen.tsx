@@ -40,18 +40,19 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
   const { venues, loading, error, retry } = useVenues();
   const { favs, toggleFav } = useFavorites();
   const { profile } = useProfile();
-  const { guides, loading: guidesLoading } = useGuides();
+  const { guides, loading: guidesLoading, error: guidesError, retry: retryGuides } = useGuides();
   const [refreshing, setRefreshing] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
 
-  // Stop the pull-to-refresh spinner once the fetch completes
+  // Stop the pull-to-refresh spinner once both fetches complete
   useEffect(() => {
-    if (!loading) setRefreshing(false);
-  }, [loading]);
+    if (!loading && !guidesLoading) setRefreshing(false);
+  }, [loading, guidesLoading]);
 
   function onRefresh() {
     setRefreshing(true);
     retry();
+    retryGuides();
   }
 
   const tonightVenues = venues.filter((v) => v.heat === 'high').slice(0, 6);
@@ -200,7 +201,7 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
         )}
 
         {/* Guides */}
-        {!guidesLoading && guides.length > 0 && (
+        {!guidesLoading && (guides.length > 0 || guidesError) && (
           <View style={{ marginTop: 28 }}>
             <SectionHeader
               title={tr('guides_title')}
@@ -208,15 +209,22 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
               t={t}
               onAction={() => {}}
             />
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
-            >
-              {guides.map((g) => (
-                <GuideCard key={g.id} guide={g} t={t} onOpen={() => navigation.navigate('Search')} />
-              ))}
-            </ScrollView>
+            {guidesError ? (
+              <Pressable onPress={retryGuides} style={{ paddingHorizontal: 20, paddingTop: 8, gap: 4 }}>
+                <Text style={{ color: t.textMute, fontSize: 13 }}>{tr('err_sub')}</Text>
+                <Text style={{ color: t.primary, fontSize: 13 }}>{tr('err_retry')}</Text>
+              </Pressable>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
+              >
+                {guides.map((g) => (
+                  <GuideCard key={g.id} guide={g} t={t} onOpen={() => navigation.navigate('Search')} />
+                ))}
+              </ScrollView>
+            )}
           </View>
         )}
 

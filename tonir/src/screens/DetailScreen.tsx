@@ -51,10 +51,15 @@ export function DetailScreen({ navigation, route }: Props) {
   const { venue, loading, error, retry } = useVenue(venueId);
 
   useEffect(() => {
-    fetchTodayReservationCount(venueId)
-      .then(setBookedToday)
-      .catch(() => {}); // falls back to venue.booked_today below
-  }, [venueId]);
+    const refresh = () => {
+      fetchTodayReservationCount(venueId)
+        .then(setBookedToday)
+        .catch(() => {});
+    };
+    refresh();
+    const unsub = navigation.addListener('focus', refresh);
+    return unsub;
+  }, [venueId, navigation]);
 
   useEffect(() => {
     if (activeTab !== 2) return;

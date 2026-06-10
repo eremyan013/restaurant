@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Platform } from 'react-native';
+import { Platform, Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { fetchFavorites, addFavorite, removeFavorite } from '../lib/api';
 import { useStore } from '../store';
+import { useTranslation } from './useTranslation';
 
 export function useFavorites() {
   const { favs, setFavs, userId } = useStore();
+  const { tr } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
@@ -42,8 +44,8 @@ export function useFavorites() {
           await addFavorite(userId, venueId);
         }
       } catch {
-        // Restore previous state
         setFavs(new Set(favs));
+        Alert.alert(tr('err_title'), tr('err_sub'));
       }
     },
     [userId, favs, setFavs]

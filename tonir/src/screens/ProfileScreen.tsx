@@ -82,8 +82,8 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
     });
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
-      const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
-      if (asset.fileSize && asset.fileSize > MAX_BYTES) {
+      const MAX_BYTES = 5 * 1024 * 1024;
+      if (asset.fileSize !== undefined && asset.fileSize > MAX_BYTES) {
         setEditError(tr('prof_edit_photo_too_large'));
         return;
       }

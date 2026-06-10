@@ -23,10 +23,11 @@ export function formatDistance(km: number): string {
  * Parse a display distance string back to kilometres for sorting.
  * Handles all stored formats: "350 մ", "0.35 կմ", "1.2 km", "800 м".
  */
-export function parseDistanceToKm(s: string): number {
-  const n = parseFloat(s);
+export function parseDistanceToKm(s: string | number): number {
+  const normalised = String(s).replace(',', '.');
+  const n = parseFloat(normalised);
   if (isNaN(n)) return Infinity;
   // Metre suffixes: Armenian "մ" (without "կ"), Cyrillic "м", Latin "m" alone
-  if (/^\d[\d\s]*\s*[մмm](?!.*[կk])/u.test(s.trim())) return n / 1000;
+  if (/^\d[\d\s]*\s*[մмm](?!.*[կk])/u.test(normalised.trim())) return n / 1000;
   return n;
 }
