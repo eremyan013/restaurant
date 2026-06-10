@@ -107,9 +107,9 @@ async function getSuperAdminStats() {
       pendingReviewsCount, pendingReviewsList,
       resWeek, resMonth, usersWeek, usersMonth,
       claimedWeek, claimedMonth, redeemedWeek, redeemedMonth,
-      activePrizes, totalPrizes,
+      activePrizes, totalPrizes, monthVenueRows,
     ] = await Promise.all([
-      supabase.from('venues').select('id, is_active'),
+      supabase.from('venues').select('id, name, is_active'),
       supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('date_iso', today),
       supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
@@ -141,11 +141,25 @@ async function getSuperAdminStats() {
       (supabase as any).from('user_prizes').select('*', { count: 'exact', head: true }).eq('status', 'used').gte('used_at', monthStartTs),
       supabase.from('prizes').select('*', { count: 'exact', head: true }).eq('is_active', true),
       supabase.from('prizes').select('*', { count: 'exact', head: true }),
+      (supabase as any).from('reservations').select('venue_id').gte('date_iso', monthStart).neq('status', 'cancelled').limit(2000),
     ])
+
+    const venueNameMap: Record<string, string> = Object.fromEntries(
+      (venues.data ?? []).map((v: { id: string; name: string }) => [v.id, v.name])
+    )
+    const venueCounts: Record<string, number> = {}
+    for (const r of (monthVenueRows.data ?? [])) {
+      venueCounts[r.venue_id] = (venueCounts[r.venue_id] ?? 0) + 1
+    }
+    const topVenues = Object.entries(venueCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([id, count]) => ({ id, name: venueNameMap[id] ?? '—', count }))
+    const monthResTotal = Object.values(venueCounts).reduce((s, n) => s + n, 0)
 
     return {
       ok: true as const,
-      activeVenues: venues.data?.filter(v => v.is_active).length ?? 0,
+      activeVenues: venues.data?.filter((v: { is_active: boolean }) => v.is_active).length ?? 0,
       totalVenues: venues.data?.length ?? 0,
       todayReservations: todayRes.count ?? 0,
       pendingReservations: pendingRes.count ?? 0,
@@ -165,6 +179,8 @@ async function getSuperAdminStats() {
       redeemedMonth: redeemedMonth.count ?? 0,
       activePrizes:  activePrizes.count  ?? 0,
       totalPrizes:   totalPrizes.count   ?? 0,
+      topVenues,
+      monthResTotal,
     }
   } catch {
     return { ok: false as const }
@@ -224,6 +240,40 @@ async function getAdminStats(adminId: string, venueIds: string[]) {
   } catch {
     return { ok: false as const }
   }
+}
+
+function TopVenues({ venues, total }: { venues: { id: string; name: string; count: number }[]; total: number }) {
+  if (venues.length === 0) {
+    return <p className="text-sm text-zinc-400 py-6 text-center">No reservations this month.</p>
+  }
+
+  const max = venues[0].count
+
+  return (
+    <ul className="divide-y divide-zinc-100">
+      {venues.map((v, i) => {
+        const pct = max > 0 ? Math.round((v.count / max) * 100) : 0
+        const share = total > 0 ? Math.round((v.count / total) * 100) : 0
+        return (
+          <li key={v.id} className="flex items-center gap-4 px-5 py-3">
+            <span className="text-xs font-semibold text-zinc-400 w-4 shrink-0">{i + 1}</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-sm font-medium text-zinc-900 truncate">{v.name}</p>
+                <span className="text-sm tabular-nums font-semibold text-zinc-700 ml-2 shrink-0">{v.count}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-zinc-100 rounded-full h-1.5">
+                  <div className="bg-zinc-800 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
+                </div>
+                <span className="text-xs text-zinc-400 shrink-0 w-8 text-right">{share}%</span>
+              </div>
+            </div>
+          </li>
+        )
+      })}
+    </ul>
+  )
 }
 
 function TrendStrip({ stats }: { stats: { label: string; week: number; month: number }[] }) {
@@ -502,11 +552,23 @@ export default async function DashboardPage() {
           <TodayReservationsList reservations={stats.todayList} showVenueCol={stats.showVenueCol} />
         </div>
 
-        <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-zinc-100">
-            <h2 className="text-sm font-semibold text-zinc-900">Recent Activity</h2>
+        <div className="flex flex-col gap-6">
+          <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
+              <h2 className="text-sm font-semibold text-zinc-900">Top Venues This Month</h2>
+              <Link href="/dashboard/venues" className="text-xs text-zinc-400 hover:text-zinc-700 transition-colors">
+                All venues →
+              </Link>
+            </div>
+            <TopVenues venues={stats.topVenues} total={stats.monthResTotal} />
           </div>
-          <ActivityFeed entries={stats.activity} />
+
+          <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-zinc-100">
+              <h2 className="text-sm font-semibold text-zinc-900">Recent Activity</h2>
+            </div>
+            <ActivityFeed entries={stats.activity} />
+          </div>
         </div>
       </div>
 
