@@ -14,7 +14,7 @@ import { useVenues, useVenue } from '../hooks/useVenues';
 import { useMenu } from '../hooks/useMenu';
 import { useFavorites } from '../hooks/useFavorites';
 import { useTranslation } from '../hooks/useTranslation';
-import { fetchTodayReservationCount } from '../lib/api';
+import { fetchTodayReservationCount, fetchVenueReviews, VenueReview } from '../lib/api';
 import { Icon } from '../components/Icon';
 import { Stars } from '../components/Stars';
 import { TimePill } from '../components/TimePill';
@@ -43,6 +43,8 @@ export function DetailScreen({ navigation, route }: Props) {
   const [showAllTimes, setShowAllTimes] = useState(false);
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
   const [bookedToday, setBookedToday] = useState<number | null>(null);
+  const [reviews, setReviews] = useState<VenueReview[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   const TABS = tra('det_tabs');
 
@@ -53,6 +55,15 @@ export function DetailScreen({ navigation, route }: Props) {
       .then(setBookedToday)
       .catch(() => {}); // falls back to venue.booked_today below
   }, [venueId]);
+
+  useEffect(() => {
+    if (activeTab !== 2) return;
+    setReviewsLoading(true);
+    fetchVenueReviews(venueId)
+      .then(setReviews)
+      .catch(() => {})
+      .finally(() => setReviewsLoading(false));
+  }, [activeTab, venueId]);
   const { venues: allVenues } = useVenues();
   const { categories: menuCats, items: menuItems, loading: menuLoading } = useMenu(venueId);
   const similar = allVenues.filter((v) => v.id !== venueId && venue && v.kind === venue.kind).slice(0, 4);
@@ -340,16 +351,45 @@ export function DetailScreen({ navigation, route }: Props) {
             </View>
           )}
           {activeTab === 2 && (
-            <View style={{ gap: 16 }}>
+            <View style={{ gap: 12 }}>
               <View style={[styles.reviewSummary, { backgroundColor: t.bgAlt, borderColor: t.border }]}>
                 <Text style={[styles.reviewRatingBig, { color: t.text }]}>{venue.rating.toFixed(1)}</Text>
                 <Stars rating={venue.rating} t={t} size={18} compact />
                 <Text style={[styles.reviewCountText, { color: t.textMute }]}>{venue.reviews_count.toLocaleString()} {tr('det_reviews_suffix')}</Text>
               </View>
-              <View style={[styles.comingSoonCard, { backgroundColor: t.bgAlt, borderColor: t.border }]}>
-                <Icon name="chat" size={28} color={t.textFaint} strokeWidth={1.5} />
-                <Text style={[styles.comingSoonSub, { color: t.textMute }]}>{tr('det_reviews_soon')}</Text>
-              </View>
+
+              {reviewsLoading ? (
+                <ActivityIndicator color={t.primary} style={{ marginTop: 16 }} />
+              ) : reviews.length === 0 ? (
+                <View style={[styles.comingSoonCard, { backgroundColor: t.bgAlt, borderColor: t.border }]}>
+                  <Icon name="chat" size={28} color={t.textFaint} strokeWidth={1.5} />
+                  <Text style={[styles.comingSoonSub, { color: t.textMute }]}>No reviews yet</Text>
+                </View>
+              ) : (
+                reviews.map(r => (
+                  <View key={r.id} style={[styles.reviewCard, { backgroundColor: t.bgAlt, borderColor: t.border }]}>
+                    <View style={styles.reviewCardHeader}>
+                      <View style={[styles.reviewAvatar, { backgroundColor: t.primary + '22' }]}>
+                        <Text style={[styles.reviewAvatarText, { color: t.primary }]}>
+                          {(r.author_name ?? '?')[0].toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.reviewAuthor, { color: t.text }]}>{r.author_name ?? 'Anonymous'}</Text>
+                        <Text style={[styles.reviewDate, { color: t.textMute }]}>
+                          {new Date(r.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </Text>
+                      </View>
+                      <Text style={[styles.reviewStars, { color: t.accent }]}>
+                        {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                      </Text>
+                    </View>
+                    {r.comment ? (
+                      <Text style={[styles.reviewComment, { color: t.textMute }]}>{r.comment}</Text>
+                    ) : null}
+                  </View>
+                ))
+              )}
             </View>
           )}
           {activeTab === 3 && (
@@ -649,6 +689,29 @@ const styles = StyleSheet.create({
   },
   reviewRatingBig: { fontSize: 48, fontFamily: FONTS.extraBold, fontWeight: '800', letterSpacing: -2 },
   reviewCountText: { fontSize: 13 },
+  reviewCard: {
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 10,
+  },
+  reviewCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  reviewAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewAvatarText: { fontSize: 16, fontFamily: FONTS.bold, fontWeight: '700' },
+  reviewAuthor: { fontSize: 14, fontFamily: FONTS.semiBold, fontWeight: '600' },
+  reviewDate: { fontSize: 12, marginTop: 1 },
+  reviewStars: { fontSize: 14, letterSpacing: 1 },
+  reviewComment: { fontSize: 13, lineHeight: 19 },
   similarTitle: { fontSize: 18, fontFamily: FONTS.bold, fontWeight: '700', letterSpacing: -0.3 },
   stickyBook: {
     paddingHorizontal: 20,

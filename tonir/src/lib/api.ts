@@ -146,6 +146,44 @@ export async function fetchMyReviews(userId: string): Promise<string[]> {
   return ((data ?? []) as Array<{ reservation_id: string }>).map((r) => r.reservation_id);
 }
 
+export type VenueReview = {
+  id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  author_name: string | null;
+};
+
+export async function fetchVenueReviews(venueId: string): Promise<VenueReview[]> {
+  const { data: reviews } = await sb
+    .from('reviews')
+    .select('id, user_id, rating, comment, created_at')
+    .eq('venue_id', venueId)
+    .eq('status', 'approved')
+    .order('created_at', { ascending: false })
+    .limit(30);
+
+  if (!reviews || reviews.length === 0) return [];
+
+  const userIds = [...new Set((reviews as any[]).map((r: any) => r.user_id))];
+  const { data: profiles } = await sb
+    .from('profiles')
+    .select('id, name')
+    .in('id', userIds as any);
+
+  const profileMap: Record<string, string> = Object.fromEntries(
+    ((profiles ?? []) as any[]).map((p: any) => [p.id, p.name])
+  );
+
+  return (reviews as any[]).map((r: any) => ({
+    id: r.id,
+    rating: r.rating,
+    comment: r.comment ?? null,
+    created_at: r.created_at,
+    author_name: profileMap[r.user_id] ?? null,
+  }));
+}
+
 // ─────────────────────────────────────────────
 // ADMIN NOTIFICATIONS
 // ─────────────────────────────────────────────
