@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { rateLimit, RATE_CRITICAL } from '@/lib/rate-limit'
 
 function generateCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000))
@@ -35,6 +36,9 @@ async function sendSms(to: string, body: string): Promise<void> {
 }
 
 export async function POST(req: NextRequest) {
+  const rl = await rateLimit(req, RATE_CRITICAL)
+  if (rl.limited) return rl.toResponse!()
+
   try {
     const { user_id, phone } = await req.json()
     if (!user_id || !phone) {

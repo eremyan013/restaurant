@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { rateLimit, RATE_UPLOAD } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
+  const rl = await rateLimit(request, RATE_UPLOAD)
+  if (rl.limited) return rl.toResponse!()
   const formData = await request.formData()
   const file = formData.get('file') as File | null
 

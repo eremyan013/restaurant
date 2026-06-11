@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { zGuideSchema } from '@/lib/schemas'
+import { rateLimit, RATE_WRITE } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
+  const rl = await rateLimit(request, RATE_WRITE)
+  if (rl.limited) return rl.toResponse!()
   const body = await request.json()
 
   const result = zGuideSchema.safeParse(body)

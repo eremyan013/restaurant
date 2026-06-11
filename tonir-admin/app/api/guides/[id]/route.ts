@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { rateLimit, RATE_WRITE } from '@/lib/rate-limit'
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const rl = await rateLimit(request, RATE_WRITE)
+  if (rl.limited) return rl.toResponse!()
+
   const { id } = await params
   const body = await request.json()
   const supabase = createSupabaseAdminClient()
@@ -39,6 +43,9 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const rl = await rateLimit(_request, RATE_WRITE)
+  if (rl.limited) return rl.toResponse!()
+
   const { id } = await params
   const supabase = createSupabaseAdminClient()
 

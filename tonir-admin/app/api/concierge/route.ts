@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { rateLimit, RATE_CRITICAL } from '@/lib/rate-limit'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -86,6 +87,9 @@ async function persistMessages(
 }
 
 export async function POST(request: NextRequest) {
+  const rl = await rateLimit(request, RATE_CRITICAL)
+  if (rl.limited) return NextResponse.json({ error: 'Too many requests', retryAfter: rl.resetAt - Math.ceil(Date.now() / 1000) }, { status: 429, headers: CORS })
+
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
     return NextResponse.json({ error: 'Not configured' }, { status: 503, headers: CORS })

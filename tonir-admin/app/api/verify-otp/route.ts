@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
+  const rl = await rateLimit(req, { limit: 5, windowSecs: 60 })
+  if (rl.limited) return rl.toResponse!()
+
   try {
     const { user_id, phone, code } = await req.json()
     if (!user_id || !phone || !code) {

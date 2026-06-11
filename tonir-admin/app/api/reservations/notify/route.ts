@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import webpush from 'web-push'
+import { rateLimit, RATE_NOTIFY } from '@/lib/rate-limit'
 
 webpush.setVapidDetails(
   'mailto:admin@tonir.am',
@@ -19,6 +20,9 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: NextRequest) {
+  const rl = await rateLimit(request, RATE_NOTIFY)
+  if (rl.limited) return NextResponse.json({ ok: false }, { status: 429, headers: CORS })
+
   const { venue_name, date, time, people } = await request.json() as {
     venue_name: string
     date: string

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { rateLimit, RATE_CRITICAL } from '@/lib/rate-limit'
 
 type Target =
   | { type: 'all' }
@@ -30,6 +31,9 @@ async function sendBatch(messages: object[]): Promise<{ ok: number; fail: number
 }
 
 export async function POST(request: NextRequest) {
+  const rl = await rateLimit(request, RATE_CRITICAL)
+  if (rl.limited) return rl.toResponse!()
+
   const admin = await getCurrentAdmin()
   if (!admin || admin.role !== 'super_admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

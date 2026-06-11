@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { rateLimit, RATE_READ } from '@/lib/rate-limit'
 
 export async function GET(request: NextRequest) {
+  const rl = await rateLimit(request, RATE_READ)
+  if (rl.limited) return rl.toResponse!()
+
   const admin = await getCurrentAdmin()
   if (!admin || admin.role !== 'super_admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

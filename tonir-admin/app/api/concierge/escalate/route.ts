@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { rateLimit, RATE_WRITE } from '@/lib/rate-limit'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -13,6 +14,9 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: NextRequest) {
+  const rl = await rateLimit(request, RATE_WRITE)
+  if (rl.limited) return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: CORS })
+
   const admin = await getCurrentAdmin()
   if (!admin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: CORS })
