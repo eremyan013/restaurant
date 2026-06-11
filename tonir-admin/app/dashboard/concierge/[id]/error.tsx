@@ -2,7 +2,7 @@
 
 import { ErrorFallback } from '@/components/error-fallback'
 
-export default function VenueDetailError({
+export default function ConciergeSessionError({
   error,
   reset,
 }: {
@@ -11,11 +11,11 @@ export default function VenueDetailError({
 }) {
   return (
     <ErrorFallback
-      section="venue details"
+      section="concierge session"
       error={error}
       reset={reset}
-      backHref="/dashboard/venues"
-      backLabel="Back to venues"
+      backHref="/dashboard/concierge"
+      backLabel="Back to inbox"
     />
   )
 }
