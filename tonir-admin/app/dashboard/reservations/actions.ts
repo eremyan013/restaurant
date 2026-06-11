@@ -3,6 +3,11 @@
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { validateAction } from '@/lib/validate-action'
+import {
+  zNewReservationSchema, parseNewReservationFormData,
+  zEditReservationSchema, parseEditReservationFormData,
+} from '@/lib/schemas'
 
 export type ActionState = { ok: false; error?: string } | { ok: true }
 
@@ -22,16 +27,10 @@ export async function editReservation(
   const admin = await getCurrentAdmin()
   if (!admin) return { ok: false, error: 'Unauthorized' }
 
-  const id       = (formData.get('id')       as string)?.trim()
-  const dateIso  = (formData.get('date_iso') as string)?.trim()
-  const time     = (formData.get('time')     as string)?.trim()
-  const people   = parseInt(formData.get('people') as string, 10)
-  const occasion = (formData.get('occasion') as string)?.trim() || null
-  const note     = (formData.get('note')     as string)?.trim() || null
+  const parsed = validateAction(zEditReservationSchema, parseEditReservationFormData(formData))
+  if (!parsed.success) return parsed.state
 
-  if (!id || !dateIso || !time || isNaN(people) || people < 1) {
-    return { ok: false, error: 'Date, time and number of guests are required.' }
-  }
+  const { id, date_iso: dateIso, time, people, occasion, note } = parsed.data
 
   const supabase = createSupabaseAdminClient()
 
@@ -59,18 +58,10 @@ export async function createReservationAdmin(
   const admin = await getCurrentAdmin()
   if (!admin) return { ok: false, error: 'Unauthorized' }
 
-  const venueId  = (formData.get('venue_id')  as string)?.trim()
-  const userId   = (formData.get('user_id')   as string)?.trim()
-  const dateIso  = (formData.get('date_iso')  as string)?.trim()
-  const time     = (formData.get('time')      as string)?.trim()
-  const people   = parseInt(formData.get('people') as string, 10)
-  const occasion = (formData.get('occasion')  as string)?.trim() || null
-  const note     = (formData.get('note')      as string)?.trim() || null
-  const status   = (formData.get('status')    as string)?.trim() || 'confirmed'
+  const parsed = validateAction(zNewReservationSchema, parseNewReservationFormData(formData))
+  if (!parsed.success) return parsed.state
 
-  if (!venueId || !userId || !dateIso || !time || isNaN(people) || people < 1) {
-    return { ok: false, error: 'Venue, user, date, time and guests are required.' }
-  }
+  const { venue_id: venueId, user_id: userId, date_iso: dateIso, time, people, occasion, note, status } = parsed.data
 
   if (admin.role === 'admin' && !admin.managed_venue_ids.includes(venueId)) {
     return { ok: false, error: 'You can only create reservations for your venue.' }

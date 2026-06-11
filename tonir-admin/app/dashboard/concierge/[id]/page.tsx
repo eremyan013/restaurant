@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import ConciergeReplyForm from './reply-form'
 
 async function setSessionStatus(id: string, status: 'escalated' | 'resolved' | 'active') {
   'use server'
@@ -11,6 +12,26 @@ async function setSessionStatus(id: string, status: 'escalated' | 'resolved' | '
   const supabase = createSupabaseAdminClient()
   await (supabase as any).from('concierge_sessions').update({ status }).eq('id', id)
   revalidatePath(`/dashboard/concierge/${id}`)
+  revalidatePath('/dashboard/concierge')
+}
+
+async function sendAdminReply(sessionId: string, text: string) {
+  'use server'
+  const actor = await getCurrentAdmin()
+  if (!actor || actor.role !== 'super_admin') return
+  const trimmed = text.trim()
+  if (!trimmed) return
+  const supabase = createSupabaseAdminClient()
+  await (supabase as any).from('concierge_messages').insert({
+    session_id: sessionId,
+    role: 'admin',
+    text: trimmed,
+  })
+  await (supabase as any)
+    .from('concierge_sessions')
+    .update({ last_message_at: new Date().toISOString() })
+    .eq('id', sessionId)
+  revalidatePath(`/dashboard/concierge/${sessionId}`)
   revalidatePath('/dashboard/concierge')
 }
 
@@ -105,29 +126,39 @@ export default async function ConciergeSessionPage({
         {messages.length === 0 ? (
           <p className="text-sm text-zinc-400 text-center py-8">No messages in this session.</p>
         ) : (
-          messages.map((msg: any) => (
-            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-sm rounded-2xl px-4 py-3 ${
-                msg.role === 'user'
-                  ? 'bg-zinc-900 text-white rounded-tr-sm'
-                  : 'bg-white border border-zinc-200 text-zinc-800 rounded-tl-sm'
-              }`}>
-                <p className="text-sm leading-relaxed">{msg.text}</p>
-                {msg.suggestions && msg.suggestions.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {msg.suggestions.map((s: string) => (
-                      <span key={s} className="px-2 py-0.5 rounded-full text-xs bg-zinc-100 text-zinc-500">
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <p className={`text-xs mt-1 ${msg.role === 'user' ? 'text-zinc-400' : 'text-zinc-400'}`}>
-                  {new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                </p>
+          messages.map((msg: any) => {
+            const isUser  = msg.role === 'user'
+            const isAdmin = msg.role === 'admin'
+
+            return (
+              <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-sm rounded-2xl px-4 py-3 ${
+                  isUser
+                    ? 'bg-zinc-900 text-white rounded-tr-sm'
+                    : isAdmin
+                      ? 'bg-blue-600 text-white rounded-tl-sm'
+                      : 'bg-white border border-zinc-200 text-zinc-800 rounded-tl-sm'
+                }`}>
+                  {isAdmin && (
+                    <p className="text-xs font-medium text-blue-200 mb-1">Staff</p>
+                  )}
+                  <p className="text-sm leading-relaxed">{msg.text}</p>
+                  {msg.suggestions && msg.suggestions.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {msg.suggestions.map((s: string) => (
+                        <span key={s} className="px-2 py-0.5 rounded-full text-xs bg-zinc-100 text-zinc-500">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs mt-1 text-white/50">
+                    {new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
 
@@ -135,6 +166,9 @@ export default async function ConciergeSessionPage({
         Session started {new Date(session.started_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
         {' · '}{messages.length} messages
       </p>
+
+      {/* Admin reply */}
+      <ConciergeReplyForm onSend={sendAdminReply.bind(null, id)} />
     </div>
   )
 }

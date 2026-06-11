@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { logActivity } from '@/lib/log-activity'
 import { ConfirmButton } from '@/components/confirm-button'
+import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'hidden'
 
@@ -72,36 +73,53 @@ async function deleteReview(formData: FormData) {
 export default async function ReviewsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>
+  searchParams: Promise<{ status?: string; page?: string }>
 }) {
   const admin = await getCurrentAdmin()
   if (admin?.role !== 'super_admin') redirect('/dashboard')
 
-  const { status: rawStatus } = await searchParams
+  const { status: rawStatus, page: rawPage } = await searchParams
   const filter: StatusFilter =
     rawStatus === 'pending' || rawStatus === 'approved' || rawStatus === 'hidden'
       ? rawStatus
       : 'all'
+  const page = Math.max(1, parseInt(rawPage ?? '1', 10) || 1)
+  const from = (page - 1) * PAGINATION_SIZE
+  const to   = from + PAGINATION_SIZE - 1
 
   const supabase = createSupabaseAdminClient()
 
-  const [reviewsRes, countsRes] = await Promise.all([
-    (supabase as any)
-      .from('reviews')
-      .select('id, rating, comment, status, created_at, venue_id, user_id')
-      .order('created_at', { ascending: false })
-      .limit(200),
-    (supabase as any)
-      .from('reviews')
-      .select('status'),
+  // Count per status tab (4 fast head queries)
+  const [totalRes, pendingRes, approvedRes, hiddenRes] = await Promise.all([
+    (supabase as any).from('reviews').select('*', { count: 'exact', head: true }),
+    (supabase as any).from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    (supabase as any).from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+    (supabase as any).from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'hidden'),
   ])
 
-  const rawReviews: any[] = reviewsRes.data ?? []
-  const allCounts: any[]  = countsRes.data ?? []
+  const counts = {
+    all:      totalRes.count   ?? 0,
+    pending:  pendingRes.count  ?? 0,
+    approved: approvedRes.count ?? 0,
+    hidden:   hiddenRes.count   ?? 0,
+  }
 
-  // Fetch profiles and venues separately to avoid relying on PostgREST FK joins
-  const userIds  = [...new Set(rawReviews.map((r: any) => r.user_id).filter(Boolean))]
-  const venueIds = [...new Set(rawReviews.map((r: any) => r.venue_id).filter(Boolean))]
+  // Paginated reviews for the current tab
+  let reviewsQuery = (supabase as any)
+    .from('reviews')
+    .select('id, rating, comment, status, created_at, venue_id, user_id', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(from, to)
+
+  if (filter !== 'all') reviewsQuery = reviewsQuery.eq('status', filter)
+
+  const { data: rawReviews, count: tabCount } = await reviewsQuery
+  const reviews: any[] = rawReviews ?? []
+  const totalForTab = tabCount ?? 0
+
+  // Fetch profiles and venues for this page only
+  const userIds  = [...new Set(reviews.map((r: any) => r.user_id).filter(Boolean))]
+  const venueIds = [...new Set(reviews.map((r: any) => r.venue_id).filter(Boolean))]
 
   const [profilesRes, venuesRes] = await Promise.all([
     userIds.length > 0
@@ -117,20 +135,19 @@ export default async function ReviewsPage({
   const venueMap: Record<string, { name: string }> =
     Object.fromEntries((venuesRes.data ?? []).map((v: any) => [v.id, v]))
 
-  const allReviews = rawReviews.map((r: any) => ({
+  const enrichedReviews = reviews.map((r: any) => ({
     ...r,
     profiles: profileMap[r.user_id] ?? null,
     venues:   venueMap[r.venue_id]  ?? null,
   }))
 
-  const counts = {
-    all:      allCounts.length,
-    pending:  allCounts.filter((r: any) => r.status === 'pending').length,
-    approved: allCounts.filter((r: any) => r.status === 'approved').length,
-    hidden:   allCounts.filter((r: any) => r.status === 'hidden').length,
+  function tabHref(key: StatusFilter, p = 1) {
+    const params = new URLSearchParams()
+    if (key !== 'all') params.set('status', key)
+    if (p > 1) params.set('page', String(p))
+    const qs = params.toString()
+    return `/dashboard/reviews${qs ? '?' + qs : ''}`
   }
-
-  const reviews = filter === 'all' ? allReviews : allReviews.filter(r => r.status === filter)
 
   const tabs: { key: StatusFilter; label: string }[] = [
     { key: 'all',      label: `All (${counts.all})` },
@@ -155,7 +172,7 @@ export default async function ReviewsPage({
         {tabs.map(({ key, label }) => (
           <a
             key={key}
-            href={key === 'all' ? '/dashboard/reviews' : `/dashboard/reviews?status=${key}`}
+            href={tabHref(key)}
             className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               filter === key
                 ? 'bg-white text-zinc-900 shadow-sm'
@@ -167,91 +184,99 @@ export default async function ReviewsPage({
         ))}
       </div>
 
-      {reviews.length === 0 ? (
+      {enrichedReviews.length === 0 ? (
         <div className="bg-white rounded-xl border border-zinc-200 py-16 text-center">
           <p className="text-zinc-400 text-sm">No reviews in this category.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-zinc-50 border-b border-zinc-100 text-left">
-                <th className="px-4 py-3 font-medium text-zinc-500">User</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Venue</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Rating</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Comment</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Date</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Status</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {reviews.map((r: any) => (
-                <tr key={r.id} className="border-b border-zinc-100 last:border-0 odd:bg-white even:bg-zinc-50/50">
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-zinc-900">{r.profiles?.name ?? '—'}</p>
-                    {r.profiles?.player_id && (
-                      <p className="text-xs text-zinc-400">ID {r.profiles.player_id}</p>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-zinc-700">{r.venues?.name ?? '—'}</td>
-                  <td className="px-4 py-3">
-                    <span className="text-base tracking-tight">
-                      {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-zinc-600 max-w-xs">
-                    {r.comment ? (
-                      <p className="line-clamp-2">{r.comment}</p>
-                    ) : (
-                      <span className="text-zinc-300 italic">No comment</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-zinc-400 tabular-nums text-xs whitespace-nowrap">
-                    {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[r.status] ?? ''}`}>
-                      {r.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3 justify-end">
-                      {r.status !== 'approved' && (
-                        <form action={approveReview}>
-                          <input type="hidden" name="id" value={r.id} />
-                          <input type="hidden" name="venue_id" value={r.venue_id} />
-                          <button type="submit" className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors">
-                            Approve
-                          </button>
-                        </form>
-                      )}
-                      {r.status !== 'hidden' && (
-                        <form action={hideReview}>
-                          <input type="hidden" name="id" value={r.id} />
-                          <input type="hidden" name="venue_id" value={r.venue_id} />
-                          <button type="submit" className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors">
-                            Hide
-                          </button>
-                        </form>
-                      )}
-                      <form action={deleteReview}>
-                        <input type="hidden" name="id" value={r.id} />
-                        <input type="hidden" name="venue_id" value={r.venue_id} />
-                        <ConfirmButton
-                          message="Delete this review permanently?"
-                          className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
-                        >
-                          Delete
-                        </ConfirmButton>
-                      </form>
-                    </div>
-                  </td>
+        <>
+          <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-zinc-50 border-b border-zinc-100 text-left">
+                  <th className="px-4 py-3 font-medium text-zinc-500">User</th>
+                  <th className="px-4 py-3 font-medium text-zinc-500">Venue</th>
+                  <th className="px-4 py-3 font-medium text-zinc-500">Rating</th>
+                  <th className="px-4 py-3 font-medium text-zinc-500">Comment</th>
+                  <th className="px-4 py-3 font-medium text-zinc-500">Date</th>
+                  <th className="px-4 py-3 font-medium text-zinc-500">Status</th>
+                  <th className="px-4 py-3" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {enrichedReviews.map((r: any) => (
+                  <tr key={r.id} className="border-b border-zinc-100 last:border-0 odd:bg-white even:bg-zinc-50/50">
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-zinc-900">{r.profiles?.name ?? '—'}</p>
+                      {r.profiles?.player_id && (
+                        <p className="text-xs text-zinc-400">ID {r.profiles.player_id}</p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-zinc-700">{r.venues?.name ?? '—'}</td>
+                    <td className="px-4 py-3">
+                      <span className="text-base tracking-tight">
+                        {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-zinc-600 max-w-xs">
+                      {r.comment ? (
+                        <p className="line-clamp-2">{r.comment}</p>
+                      ) : (
+                        <span className="text-zinc-300 italic">No comment</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-zinc-400 tabular-nums text-xs whitespace-nowrap">
+                      {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[r.status] ?? ''}`}>
+                        {r.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3 justify-end">
+                        {r.status !== 'approved' && (
+                          <form action={approveReview}>
+                            <input type="hidden" name="id" value={r.id} />
+                            <input type="hidden" name="venue_id" value={r.venue_id} />
+                            <button type="submit" className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors">
+                              Approve
+                            </button>
+                          </form>
+                        )}
+                        {r.status !== 'hidden' && (
+                          <form action={hideReview}>
+                            <input type="hidden" name="id" value={r.id} />
+                            <input type="hidden" name="venue_id" value={r.venue_id} />
+                            <button type="submit" className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors">
+                              Hide
+                            </button>
+                          </form>
+                        )}
+                        <form action={deleteReview}>
+                          <input type="hidden" name="id" value={r.id} />
+                          <input type="hidden" name="venue_id" value={r.venue_id} />
+                          <ConfirmButton
+                            message="Delete this review permanently?"
+                            className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
+                          >
+                            Delete
+                          </ConfirmButton>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pagination
+            page={page}
+            total={totalForTab}
+            prevHref={page > 1 ? tabHref(filter, page - 1) : null}
+            nextHref={page * PAGINATION_SIZE < totalForTab ? tabHref(filter, page + 1) : null}
+          />
+        </>
       )}
     </div>
   )

@@ -13,6 +13,7 @@ export default async function UsersPage() {
     .select('id, player_id, name, email, phone, tier, yel_points, total_visits, created_at')
     .eq('role', 'user')
     .order('created_at', { ascending: false })
+    .limit(500)
 
   if (error) throw error
 

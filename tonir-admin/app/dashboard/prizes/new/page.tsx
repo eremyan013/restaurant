@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { PrizeForm } from '@/components/prize-form'
+import { validateAction } from '@/lib/validate-action'
+import { zPrizeSchema, parsePrizeFormData } from '@/lib/schemas'
 
 export default async function NewPrizePage() {
   const admin = await getCurrentAdmin()
@@ -24,23 +26,15 @@ export default async function NewPrizePage() {
     const actor = await getCurrentAdmin()
     if (actor?.role !== 'super_admin') return
 
-    const unlockType = formData.get('unlock_type') as string
-    const unlimitedStock = formData.get('unlimited_stock') === 'on'
-    const stockRaw = formData.get('stock') as string
+    const parsed = validateAction(zPrizeSchema, parsePrizeFormData(formData))
+    if (!parsed.success) return
+
+    const { name, description, type, unlock_type, points_cost, min_tier_level, venue_id, image_url, stock, sort_order, is_active } = parsed.data
 
     const supabase = createSupabaseAdminClient()
     await (supabase as any).from('prizes').insert({
-      name:          (formData.get('name') as string).trim(),
-      description:   (formData.get('description') as string)?.trim() || null,
-      type:          formData.get('type') as string,
-      unlock_type:   unlockType,
-      points_cost:   unlockType === 'points' ? parseInt(formData.get('points_cost') as string) : null,
-      min_tier_level: unlockType === 'tier'  ? parseInt(formData.get('min_tier_level') as string) : null,
-      venue_id:      (formData.get('venue_id') as string) || null,
-      image_url:     (formData.get('image_url') as string)?.trim() || null,
-      stock:         (!unlimitedStock && stockRaw) ? parseInt(stockRaw) : null,
-      sort_order:    parseInt(formData.get('sort_order') as string) || 0,
-      is_active:     formData.get('is_active') === 'true',
+      name, description, type, unlock_type, points_cost, min_tier_level,
+      venue_id, image_url, stock, sort_order, is_active,
     })
     redirect('/dashboard/prizes')
   }

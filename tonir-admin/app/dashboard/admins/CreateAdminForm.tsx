@@ -1,14 +1,29 @@
 'use client'
 
 import { useActionState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { createAdmin } from './actions'
+import { zCreateAdminSchema, type CreateAdminInput } from '@/lib/schemas'
+import { FieldError } from '@/components/field-error'
 
-export function CreateAdminForm({
-  venues,
-}: {
-  venues: { id: string; name: string }[]
-}) {
+export function CreateAdminForm({ venues }: { venues: { id: string; name: string }[] }) {
   const [state, action, pending] = useActionState(createAdmin, { ok: false })
+
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateAdminInput>({
+    resolver: zodResolver(zCreateAdminSchema),
+    defaultValues: { name: '', email: '', password: '', managed_venue_ids: [] },
+  })
+
+  function onValid(data: CreateAdminInput) {
+    const fd = new FormData()
+    fd.set('name',     data.name)
+    fd.set('email',    data.email)
+    fd.set('password', data.password)
+    for (const id of data.managed_venue_ids) fd.append('venue_id', id)
+    ;(action as unknown as (fd: FormData) => void)(fd)
+    reset()
+  }
 
   return (
     <div className="bg-white rounded-xl border border-zinc-200 p-5 h-fit">
@@ -25,58 +40,65 @@ export function CreateAdminForm({
         </div>
       )}
 
-      <form action={action} className="flex flex-col gap-3">
+      <form onSubmit={handleSubmit(onValid)} className="flex flex-col gap-3" noValidate>
         <div>
           <label className="text-xs font-medium text-zinc-500 mb-1 block">Name</label>
           <input
-            name="name"
-            required
+            {...register('name')}
             placeholder="Restaurant name or manager"
             className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-300"
           />
+          <FieldError message={errors.name?.message} />
+          {!state.ok && state.fieldErrors?.name && <FieldError message={state.fieldErrors.name} />}
         </div>
+
         <div>
           <label className="text-xs font-medium text-zinc-500 mb-1 block">Email</label>
           <input
-            name="email"
+            {...register('email')}
             type="email"
-            required
             placeholder="admin@restaurant.am"
             className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-300"
           />
+          <FieldError message={errors.email?.message} />
+          {!state.ok && state.fieldErrors?.email && <FieldError message={state.fieldErrors.email} />}
         </div>
+
         <div>
           <label className="text-xs font-medium text-zinc-500 mb-1 block">Password</label>
           <input
-            name="password"
+            {...register('password')}
             type="password"
-            required
-            minLength={8}
             placeholder="Min 8 characters"
             className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-300"
           />
+          <FieldError message={errors.password?.message} />
+          {!state.ok && state.fieldErrors?.password && <FieldError message={state.fieldErrors.password} />}
         </div>
+
         <div>
           <label className="text-xs font-medium text-zinc-500 mb-1 block">
             Venues <span className="text-zinc-400 font-normal">(select one or more)</span>
           </label>
           <div className="rounded-lg border border-zinc-200 divide-y divide-zinc-100 max-h-48 overflow-y-auto">
-            {venues.map((v) => (
-              <label
-                key={v.id}
-                className="flex items-center gap-2.5 px-3 py-2 hover:bg-zinc-50 cursor-pointer"
-              >
+            {venues.map(v => (
+              <label key={v.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-zinc-50 cursor-pointer">
                 <input
                   type="checkbox"
-                  name="venue_id"
                   value={v.id}
+                  {...register('managed_venue_ids')}
                   className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-300"
                 />
                 <span className="text-sm text-zinc-800">{v.name}</span>
               </label>
             ))}
           </div>
+          <FieldError message={errors.managed_venue_ids?.message as string | undefined} />
+          {!state.ok && state.fieldErrors?.managed_venue_ids && (
+            <FieldError message={state.fieldErrors.managed_venue_ids as string} />
+          )}
         </div>
+
         <button
           type="submit"
           disabled={pending}

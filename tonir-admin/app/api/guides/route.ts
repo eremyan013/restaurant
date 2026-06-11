@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { zGuideSchema } from '@/lib/schemas'
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
+
+  const result = zGuideSchema.safeParse(body)
+  if (!result.success) {
+    const fieldErrors: Record<string, string> = {}
+    for (const issue of result.error.issues) {
+      const key = issue.path[0] as string
+      if (key && !fieldErrors[key]) fieldErrors[key] = issue.message
+    }
+    return NextResponse.json({ error: 'Validation failed', fieldErrors }, { status: 400 })
+  }
+
   const supabase = createSupabaseAdminClient()
 
   const { error } = await (supabase as any).from('guides').insert({

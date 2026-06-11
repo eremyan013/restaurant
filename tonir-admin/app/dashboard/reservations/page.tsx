@@ -5,6 +5,7 @@ import { getCurrentAdmin } from '@/lib/current-admin'
 import { logActivity } from '@/lib/log-activity'
 import type { ReservationRow } from '@/lib/database.types'
 import { ReservationFilters } from '@/components/reservation-filters'
+import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
 import { ReservationEditModal } from './reservation-edit-modal'
 import { NewReservationModal } from './new-reservation-modal'
 
@@ -91,6 +92,7 @@ type FilterParams = {
   people_min?: string
   people_max?: string
   note?:       string
+  page?:       string
 }
 
 export default async function ReservationsPage({
@@ -103,6 +105,7 @@ export default async function ReservationsPage({
 
   const sp = await searchParams
   const activeTab: Tab = (TABS.includes(sp.status as Tab) ? sp.status : 'all') as Tab
+  const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)
 
   const supabase = createSupabaseAdminClient()
 
@@ -154,19 +157,23 @@ export default async function ReservationsPage({
   }
 
   // ── Main query ────────────────────────────────────────────────────────────────
+  const from = (page - 1) * PAGINATION_SIZE
+  const to   = from + PAGINATION_SIZE - 1
+
   let query = (supabase as any)
     .from('reservations')
-    .select('id, date, time, people, status, occasion, note, admin_note, created_at, venue_id, user_id, venues(name), profiles(name, email)')
+    .select('id, date, time, people, status, occasion, note, admin_note, created_at, venue_id, user_id, venues(name), profiles(name, email)', { count: 'exact' })
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
-    .limit(300)
+    .range(from, to)
 
   query = applyFilters(query)
   if (activeTab !== 'all') query = query.eq('status', activeTab)
 
-  const { data, error } = await query
+  const { data, error, count: filteredCount } = await query
   if (error) throw error
   const reservations: ReservationWithJoins[] = data ?? []
+  const totalFiltered = filteredCount ?? 0
 
   // ── Status counts (filtered, without status restriction) ─────────────────────
   let countsQuery = applyFilters(
@@ -178,8 +185,8 @@ export default async function ReservationsPage({
   for (const r of (counts ?? [])) countMap[r.status] = (countMap[r.status] ?? 0) + 1
   const total = Object.values(countMap).reduce((a, b) => a + b, 0)
 
-  // ── Tab URL builder: preserves all active filters, changes only status ────────
-  function tabHref(tab: Tab) {
+  // ── URL builders ──────────────────────────────────────────────────────────────
+  function baseParams(overrides: Record<string, string | undefined> = {}) {
     const p = new URLSearchParams()
     if (sp.from)       p.set('from',       sp.from)
     if (sp.to)         p.set('to',         sp.to)
@@ -188,8 +195,24 @@ export default async function ReservationsPage({
     if (sp.people_min) p.set('people_min', sp.people_min)
     if (sp.people_max) p.set('people_max', sp.people_max)
     if (sp.note)       p.set('note',       sp.note)
-    if (tab !== 'all') p.set('status',     tab)
+    for (const [k, v] of Object.entries(overrides)) {
+      if (v !== undefined) p.set(k, v); else p.delete(k)
+    }
+    return p
+  }
+
+  function tabHref(tab: Tab) {
+    const p = baseParams({ status: tab !== 'all' ? tab : undefined, page: undefined })
     const qs = p.toString()
+    return `/dashboard/reservations${qs ? '?' + qs : ''}`
+  }
+
+  function pageHref(p: number) {
+    const params = baseParams({
+      status: activeTab !== 'all' ? activeTab : undefined,
+      page: p > 1 ? String(p) : undefined,
+    })
+    const qs = params.toString()
     return `/dashboard/reservations${qs ? '?' + qs : ''}`
   }
 
@@ -238,6 +261,7 @@ export default async function ReservationsPage({
           No reservations match the current filters.
         </div>
       ) : (
+        <>
         <div className="bg-white rounded-xl border border-zinc-200 overflow-x-auto">
           <table className="w-full text-sm min-w-[860px]">
             <thead>
@@ -336,6 +360,13 @@ export default async function ReservationsPage({
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={page}
+          total={totalFiltered}
+          prevHref={page > 1 ? pageHref(page - 1) : null}
+          nextHref={page * PAGINATION_SIZE < totalFiltered ? pageHref(page + 1) : null}
+        />
+        </>
       )}
     </div>
   )

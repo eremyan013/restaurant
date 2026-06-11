@@ -60,9 +60,14 @@ async function adjustPoints(formData: FormData) {
   const actor = await getCurrentAdmin()
   if (actor?.role !== 'super_admin') return
 
-  const userId = formData.get('user_id') as string
-  const amount = parseInt(formData.get('amount') as string, 10)
-  if (!userId || isNaN(amount)) return
+  const { zYelAdjustSchema, parseYelFormData } = await import('@/lib/schemas')
+  const { validateAction } = await import('@/lib/validate-action')
+
+  const parsed = validateAction(zYelAdjustSchema, parseYelFormData(formData))
+  if (!parsed.success) return
+
+  const userId = parsed.data.user_id
+  const amount = parsed.data.amount
 
   const supabase = createSupabaseAdminClient()
   const [profileRes, settingsRes] = await Promise.all([
