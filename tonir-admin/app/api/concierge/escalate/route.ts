@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { getCurrentAdmin } from '@/lib/current-admin'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +13,11 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: NextRequest) {
+  const admin = await getCurrentAdmin()
+  if (!admin) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: CORS })
+  }
+
   const { session_id } = await request.json() as { session_id?: string }
   if (!session_id) {
     return NextResponse.json({ error: 'session_id required' }, { status: 400, headers: CORS })
