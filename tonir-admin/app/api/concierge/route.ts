@@ -60,14 +60,14 @@ async function persistMessages(
     let sid = sessionId
 
     if (!sid) {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('concierge_sessions')
         .insert({ user_id: userId, status: 'active' })
         .select('id')
         .single()
       sid = data?.id
     } else {
-      await (supabase as any)
+      await supabase
         .from('concierge_sessions')
         .update({ last_message_at: new Date().toISOString() })
         .eq('id', sid)
@@ -75,7 +75,7 @@ async function persistMessages(
 
     if (!sid) return undefined
 
-    await (supabase as any).from('concierge_messages').insert([
+    await supabase.from('concierge_messages').insert([
       { session_id: sid, role: 'user',      text: userText },
       { session_id: sid, role: 'assistant', text: assistantText, suggestions },
     ])

@@ -34,7 +34,7 @@ async function markUsed(formData: FormData) {
   if (!id) return
 
   const supabase = createSupabaseAdminClient()
-  await (supabase as any)
+  await supabase
     .from('user_prizes')
     .update({ status: 'used', used_at: new Date().toISOString() })
     .eq('id', id)
@@ -62,7 +62,7 @@ export default async function RedemptionPage({
   let notFound = false
 
   if (code) {
-    const { data: raw } = await (supabase as any)
+    const { data: raw } = await supabase
       .from('user_prizes')
       .select('id, code, status, claimed_at, used_at, expires_at, user_id, prize_id')
       .eq('code', code)
@@ -71,16 +71,16 @@ export default async function RedemptionPage({
     if (raw) {
       const [profileRes, prizeRes] = await Promise.all([
         raw.user_id
-          ? (supabase as any).from('profiles').select('name, email, player_id, tier, tier_level, yel_points, avatar_url').eq('id', raw.user_id).single()
+          ? supabase.from('profiles').select('name, email, player_id, tier, tier_level, yel_points, avatar_url').eq('id', raw.user_id).single()
           : Promise.resolve({ data: null }),
         raw.prize_id
-          ? (supabase as any).from('prizes').select('name, description, type, unlock_type, points_cost, venue_id').eq('id', raw.prize_id).single()
+          ? supabase.from('prizes').select('name, description, type, unlock_type, points_cost, venue_id').eq('id', raw.prize_id).single()
           : Promise.resolve({ data: null }),
       ])
 
       let prizeWithVenue = prizeRes.data ?? null
       if (prizeWithVenue?.venue_id) {
-        const { data: venueData } = await (supabase as any).from('venues').select('name').eq('id', prizeWithVenue.venue_id).single()
+        const { data: venueData } = await supabase.from('venues').select('name').eq('id', prizeWithVenue.venue_id).single()
         prizeWithVenue = { ...prizeWithVenue, venues: venueData ?? null }
       }
 

@@ -20,10 +20,10 @@ export default async function EditPrizePage({ params }: { params: Promise<{ id: 
   const supabase = createSupabaseAdminClient()
 
   const [prizeRes, venuesRes, settingsRes, claimsRes] = await Promise.all([
-    (supabase as any).from('prizes').select('*').eq('id', id).single(),
-    (supabase as any).from('venues').select('id, name').order('name'),
-    (supabase as any).from('settings').select('key, value').in('key', ['tier_1_name','tier_2_name','tier_3_name','tier_4_name']),
-    (supabase as any)
+    supabase.from('prizes').select('*').eq('id', id).single(),
+    supabase.from('venues').select('id, name').order('name'),
+    supabase.from('settings').select('key, value').in('key', ['tier_1_name','tier_2_name','tier_3_name','tier_4_name']),
+    supabase
       .from('user_prizes')
       .select('id, status, code, claimed_at, used_at, user_id')
       .eq('prize_id', id)
@@ -39,7 +39,7 @@ export default async function EditPrizePage({ params }: { params: Promise<{ id: 
 
   const claimUserIds = [...new Set(rawClaims.map((c: any) => c.user_id).filter(Boolean))]
   const claimProfilesRes = claimUserIds.length > 0
-    ? await (supabase as any).from('profiles').select('id, name, player_id, email').in('id', claimUserIds)
+    ? await supabase.from('profiles').select('id, name, player_id, email').in('id', claimUserIds)
     : { data: [] }
   const claimProfileMap: Record<string, any> = Object.fromEntries(
     (claimProfilesRes.data ?? []).map((p: any) => [p.id, p])
@@ -67,7 +67,7 @@ export default async function EditPrizePage({ params }: { params: Promise<{ id: 
     const stockRaw       = formData.get('stock') as string
 
     const supabase = createSupabaseAdminClient()
-    await (supabase as any).from('prizes').update({
+    await supabase.from('prizes').update({
       name:          (formData.get('name') as string).trim(),
       description:   (formData.get('description') as string)?.trim() || null,
       type:          formData.get('type') as string,
@@ -91,7 +91,7 @@ export default async function EditPrizePage({ params }: { params: Promise<{ id: 
     if (actor?.role !== 'super_admin') return
     const claimId = formData.get('claim_id') as string
     const supabase = createSupabaseAdminClient()
-    await (supabase as any).from('user_prizes').update({ status: 'used', used_at: new Date().toISOString() }).eq('id', claimId)
+    await supabase.from('user_prizes').update({ status: 'used', used_at: new Date().toISOString() }).eq('id', claimId)
     revalidatePath(`/dashboard/prizes/${id}`)
   }
 

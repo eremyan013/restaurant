@@ -113,19 +113,19 @@ async function getSuperAdminStats() {
       supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('date_iso', today),
       supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
-      (supabase as any)
+      supabase
         .from('reservations')
         .select('id, time, people, status, occasion, venues(name), profiles(name)')
         .eq('date_iso', today)
         .order('time', { ascending: true })
         .limit(20),
-      (supabase as any)
+      supabase
         .from('admin_activity_log')
         .select('id, admin_name, action, entity_name, created_at')
         .order('created_at', { ascending: false })
         .limit(15),
       supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-      (supabase as any)
+      supabase
         .from('reviews')
         .select('id, rating, comment, created_at, user_id, venue_id')
         .eq('status', 'pending')
@@ -135,13 +135,13 @@ async function getSuperAdminStats() {
       supabase.from('reservations').select('*', { count: 'exact', head: true }).gte('date_iso', monthStart),
       supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', weekAgoTs),
       supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', monthStartTs),
-      (supabase as any).from('user_prizes').select('*', { count: 'exact', head: true }).gte('created_at', weekAgoTs),
-      (supabase as any).from('user_prizes').select('*', { count: 'exact', head: true }).gte('created_at', monthStartTs),
-      (supabase as any).from('user_prizes').select('*', { count: 'exact', head: true }).eq('status', 'used').gte('used_at', weekAgoTs),
-      (supabase as any).from('user_prizes').select('*', { count: 'exact', head: true }).eq('status', 'used').gte('used_at', monthStartTs),
+      supabase.from('user_prizes').select('*', { count: 'exact', head: true }).gte('created_at', weekAgoTs),
+      supabase.from('user_prizes').select('*', { count: 'exact', head: true }).gte('created_at', monthStartTs),
+      supabase.from('user_prizes').select('*', { count: 'exact', head: true }).eq('status', 'used').gte('used_at', weekAgoTs),
+      supabase.from('user_prizes').select('*', { count: 'exact', head: true }).eq('status', 'used').gte('used_at', monthStartTs),
       supabase.from('prizes').select('*', { count: 'exact', head: true }).eq('is_active', true),
       supabase.from('prizes').select('*', { count: 'exact', head: true }),
-      (supabase as any).from('reservations').select('venue_id').gte('date_iso', monthStart).neq('status', 'cancelled').limit(2000),
+      supabase.from('reservations').select('venue_id').gte('date_iso', monthStart).neq('status', 'cancelled').limit(2000),
     ])
 
     // Resolve profiles/venues for pending reviews separately (no FK join available)
@@ -150,10 +150,10 @@ async function getSuperAdminStats() {
     const prVenueIds = [...new Set(rawPending.map(r => r.venue_id).filter(Boolean))]
     const [prProfilesRes, prVenuesRes] = await Promise.all([
       prUserIds.length > 0
-        ? (supabase as any).from('profiles').select('id, name').in('id', prUserIds)
+        ? supabase.from('profiles').select('id, name').in('id', prUserIds)
         : Promise.resolve({ data: [] }),
       prVenueIds.length > 0
-        ? (supabase as any).from('venues').select('id, name').in('id', prVenueIds)
+        ? supabase.from('venues').select('id, name').in('id', prVenueIds)
         : Promise.resolve({ data: [] }),
     ])
     const prProfileMap: Record<string, string> = Object.fromEntries(
@@ -221,27 +221,27 @@ async function getAdminStats(adminId: string, venueIds: string[]) {
     const monthStart  = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
 
     const [venues, todayRes, pendingRes, totalRes, todayList, activityRes, resWeek, resMonth, visitsWeek, visitsMonth] = await Promise.all([
-      (supabase as any).from('venues').select('name').in('id', venueIds),
-      (supabase as any).from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).eq('date_iso', today),
-      (supabase as any).from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).eq('status', 'pending'),
-      (supabase as any).from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds),
-      (supabase as any)
+      supabase.from('venues').select('name').in('id', venueIds),
+      supabase.from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).eq('date_iso', today),
+      supabase.from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).eq('status', 'pending'),
+      supabase.from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds),
+      supabase
         .from('reservations')
         .select('id, time, people, status, occasion, venues(name), profiles(name)')
         .in('venue_id', venueIds)
         .eq('date_iso', today)
         .order('time', { ascending: true })
         .limit(20),
-      (supabase as any)
+      supabase
         .from('admin_activity_log')
         .select('id, admin_name, action, entity_name, created_at')
         .eq('admin_id', adminId)
         .order('created_at', { ascending: false })
         .limit(15),
-      (supabase as any).from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).gte('date_iso', weekAgoIso),
-      (supabase as any).from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).gte('date_iso', monthStart),
-      (supabase as any).from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).eq('status', 'visited').gte('date_iso', weekAgoIso),
-      (supabase as any).from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).eq('status', 'visited').gte('date_iso', monthStart),
+      supabase.from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).gte('date_iso', weekAgoIso),
+      supabase.from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).gte('date_iso', monthStart),
+      supabase.from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).eq('status', 'visited').gte('date_iso', weekAgoIso),
+      supabase.from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).eq('status', 'visited').gte('date_iso', monthStart),
     ])
 
     const venueNames: string[] = (venues.data ?? []).map((v: { name: string }) => v.name)

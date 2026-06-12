@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
+import type { ConciergeSessionRow, ConciergeMessageRow } from '@/lib/database.types'
 
 type StatusFilter = 'all' | 'escalated' | 'active' | 'resolved'
 
@@ -33,10 +34,10 @@ export default async function ConciergePage({
 
   // Counts per tab (fast head queries)
   const [totalRes, activeRes, escalatedRes, resolvedRes] = await Promise.all([
-    (supabase as any).from('concierge_sessions').select('*', { count: 'exact', head: true }),
-    (supabase as any).from('concierge_sessions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-    (supabase as any).from('concierge_sessions').select('*', { count: 'exact', head: true }).eq('status', 'escalated'),
-    (supabase as any).from('concierge_sessions').select('*', { count: 'exact', head: true }).eq('status', 'resolved'),
+    supabase.from('concierge_sessions').select('*', { count: 'exact', head: true }),
+    supabase.from('concierge_sessions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('concierge_sessions').select('*', { count: 'exact', head: true }).eq('status', 'escalated'),
+    supabase.from('concierge_sessions').select('*', { count: 'exact', head: true }).eq('status', 'resolved'),
   ])
 
   const counts = {
@@ -47,7 +48,7 @@ export default async function ConciergePage({
   }
 
   // Paginated sessions for the current tab
-  let sessionsQuery = (supabase as any)
+  let sessionsQuery = supabase
     .from('concierge_sessions')
     .select(`
       id, status, started_at, last_message_at,
@@ -60,7 +61,11 @@ export default async function ConciergePage({
   if (filter !== 'all') sessionsQuery = sessionsQuery.eq('status', filter)
 
   const { data: sessionsData, count: tabCount } = await sessionsQuery
-  const sessions: any[] = sessionsData ?? []
+  type SessionWithJoins = ConciergeSessionRow & {
+    profiles: { name: string; player_id: number } | null
+    concierge_messages: ConciergeMessageRow[]
+  }
+  const sessions: SessionWithJoins[] = sessionsData ?? []
   const totalForTab = tabCount ?? 0
 
   function tabHref(key: StatusFilter, p = 1) {
@@ -125,9 +130,9 @@ export default async function ConciergePage({
                 </tr>
               </thead>
               <tbody>
-                {sessions.map((s: any) => {
-                  const msgs: any[] = s.concierge_messages ?? []
-                  const lastUserMsg = [...msgs].reverse().find((m: any) => m.role === 'user')
+                {sessions.map((s) => {
+                  const msgs = s.concierge_messages ?? []
+                  const lastUserMsg = [...msgs].reverse().find((m) => m.role === 'user')
                   return (
                     <tr
                       key={s.id}

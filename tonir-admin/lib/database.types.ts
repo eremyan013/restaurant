@@ -439,7 +439,7 @@ export interface Database {
         Row: {
           id: string;
           session_id: string;
-          role: 'user' | 'assistant';
+          role: 'user' | 'assistant' | 'admin';
           text: string;
           suggestions: string[] | null;
           created_at: string;
@@ -447,7 +447,7 @@ export interface Database {
         Insert: {
           id?: string;
           session_id: string;
-          role: 'user' | 'assistant';
+          role: 'user' | 'assistant' | 'admin';
           text: string;
           suggestions?: string[] | null;
           created_at?: string;
@@ -548,6 +548,132 @@ export interface Database {
         Relationships: [];
       };
 
+      settings: {
+        Row: {
+          key: string;
+          value: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          value: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          key?: string;
+          value?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      prizes: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          type: 'discount' | 'free_item' | 'experience' | 'voucher';
+          unlock_type: 'points' | 'tier';
+          points_cost: number | null;
+          min_tier_level: number | null;
+          venue_id: string | null;
+          image_url: string | null;
+          stock: number | null;
+          sort_order: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          type: 'discount' | 'free_item' | 'experience' | 'voucher';
+          unlock_type: 'points' | 'tier';
+          points_cost?: number | null;
+          min_tier_level?: number | null;
+          venue_id?: string | null;
+          image_url?: string | null;
+          stock?: number | null;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          type?: 'discount' | 'free_item' | 'experience' | 'voucher';
+          unlock_type?: 'points' | 'tier';
+          points_cost?: number | null;
+          min_tier_level?: number | null;
+          venue_id?: string | null;
+          image_url?: string | null;
+          stock?: number | null;
+          sort_order?: number;
+          is_active?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      user_prizes: {
+        Row: {
+          id: string;
+          user_id: string;
+          prize_id: string;
+          code: string;
+          status: 'active' | 'used' | 'expired';
+          claimed_at: string;
+          used_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          prize_id: string;
+          code: string;
+          status?: 'active' | 'used' | 'expired';
+          claimed_at?: string;
+          used_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          status?: 'active' | 'used' | 'expired';
+          used_at?: string | null;
+        };
+        Relationships: [];
+      };
+
+      admin_activity_log: {
+        Row: {
+          id: string;
+          admin_id: string;
+          admin_name: string;
+          action: string;
+          entity_type: string;
+          entity_id: string;
+          entity_name: string;
+          meta: Record<string, unknown> | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          admin_id: string;
+          admin_name: string;
+          action: string;
+          entity_type: string;
+          entity_id: string;
+          entity_name: string;
+          meta?: Record<string, unknown> | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['admin_activity_log']['Insert']>;
+        Relationships: [];
+      };
+
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -568,3 +694,7 @@ export type ConciergeMessageRow   = Database['public']['Tables']['concierge_mess
 export type ReviewRow             = Database['public']['Tables']['reviews']['Row'];
 export type VenueHoursRow         = Database['public']['Tables']['venue_hours']['Row'];
 export type VenueBlockedDateRow   = Database['public']['Tables']['venue_blocked_dates']['Row'];
+export type PrizeRow              = Database['public']['Tables']['prizes']['Row'];
+export type UserPrizeRow          = Database['public']['Tables']['user_prizes']['Row'];
+export type SettingRow            = Database['public']['Tables']['settings']['Row'];
+export type AdminActivityRow      = Database['public']['Tables']['admin_activity_log']['Row'];

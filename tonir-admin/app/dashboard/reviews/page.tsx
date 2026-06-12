@@ -1,10 +1,12 @@
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { type SupabaseClient } from '@supabase/supabase-js'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { logActivity } from '@/lib/log-activity'
 import { ConfirmButton } from '@/components/confirm-button'
 import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
+import type { Database, ReviewRow } from '@/lib/database.types'
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'hidden'
 
@@ -14,7 +16,7 @@ const STATUS_STYLES: Record<string, string> = {
   hidden:   'bg-zinc-100 text-zinc-500',
 }
 
-async function recalcVenueRating(supabase: any, venueId: string) {
+async function recalcVenueRating(supabase: SupabaseClient<Database>, venueId: string) {
   const { data } = await supabase
     .from('reviews')
     .select('rating')
@@ -38,8 +40,8 @@ async function approveReview(formData: FormData) {
   const id       = formData.get('id') as string
   const venueId  = formData.get('venue_id') as string
   const supabase = createSupabaseAdminClient()
-  await (supabase as any).from('reviews').update({ status: 'approved' }).eq('id', id)
-  await recalcVenueRating(supabase as any, venueId)
+  await supabase.from('reviews').update({ status: 'approved' }).eq('id', id)
+  await recalcVenueRating(supabase, venueId)
   await logActivity(actor, 'approve_review', 'review', id, venueId)
   revalidatePath('/dashboard/reviews')
 }
@@ -51,8 +53,8 @@ async function hideReview(formData: FormData) {
   const id       = formData.get('id') as string
   const venueId  = formData.get('venue_id') as string
   const supabase = createSupabaseAdminClient()
-  await (supabase as any).from('reviews').update({ status: 'hidden' }).eq('id', id)
-  await recalcVenueRating(supabase as any, venueId)
+  await supabase.from('reviews').update({ status: 'hidden' }).eq('id', id)
+  await recalcVenueRating(supabase, venueId)
   await logActivity(actor, 'hide_review', 'review', id, venueId)
   revalidatePath('/dashboard/reviews')
 }
@@ -64,8 +66,8 @@ async function deleteReview(formData: FormData) {
   const id       = formData.get('id') as string
   const venueId  = formData.get('venue_id') as string
   const supabase = createSupabaseAdminClient()
-  await (supabase as any).from('reviews').delete().eq('id', id)
-  await recalcVenueRating(supabase as any, venueId)
+  await supabase.from('reviews').delete().eq('id', id)
+  await recalcVenueRating(supabase, venueId)
   await logActivity(actor, 'delete_review', 'review', id, venueId)
   revalidatePath('/dashboard/reviews')
 }
@@ -91,10 +93,10 @@ export default async function ReviewsPage({
 
   // Count per status tab (4 fast head queries)
   const [totalRes, pendingRes, approvedRes, hiddenRes] = await Promise.all([
-    (supabase as any).from('reviews').select('*', { count: 'exact', head: true }),
-    (supabase as any).from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-    (supabase as any).from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
-    (supabase as any).from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'hidden'),
+    supabase.from('reviews').select('*', { count: 'exact', head: true }),
+    supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+    supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'hidden'),
   ])
 
   const counts = {
@@ -105,7 +107,7 @@ export default async function ReviewsPage({
   }
 
   // Paginated reviews for the current tab
-  let reviewsQuery = (supabase as any)
+  let reviewsQuery = supabase
     .from('reviews')
     .select('id, rating, comment, status, created_at, venue_id, user_id', { count: 'exact' })
     .order('created_at', { ascending: false })
@@ -114,28 +116,32 @@ export default async function ReviewsPage({
   if (filter !== 'all') reviewsQuery = reviewsQuery.eq('status', filter)
 
   const { data: rawReviews, count: tabCount } = await reviewsQuery
-  const reviews: any[] = rawReviews ?? []
+  const reviews: ReviewRow[] = rawReviews ?? []
   const totalForTab = tabCount ?? 0
 
   // Fetch profiles and venues for this page only
-  const userIds  = [...new Set(reviews.map((r: any) => r.user_id).filter(Boolean))]
-  const venueIds = [...new Set(reviews.map((r: any) => r.venue_id).filter(Boolean))]
+  const userIds  = [...new Set(reviews.map((r) => r.user_id).filter(Boolean))]
+  const venueIds = [...new Set(reviews.map((r) => r.venue_id).filter(Boolean))]
 
   const [profilesRes, venuesRes] = await Promise.all([
     userIds.length > 0
-      ? (supabase as any).from('profiles').select('id, name, player_id').in('id', userIds)
+      ? supabase.from('profiles').select('id, name, player_id').in('id', userIds)
       : Promise.resolve({ data: [] }),
     venueIds.length > 0
-      ? (supabase as any).from('venues').select('id, name').in('id', venueIds)
+      ? supabase.from('venues').select('id, name').in('id', venueIds)
       : Promise.resolve({ data: [] }),
   ])
 
   const profileMap: Record<string, { name: string; player_id: number }> =
-    Object.fromEntries((profilesRes.data ?? []).map((p: any) => [p.id, p]))
+    Object.fromEntries((profilesRes.data ?? []).map((p) => [p.id, p]))
   const venueMap: Record<string, { name: string }> =
-    Object.fromEntries((venuesRes.data ?? []).map((v: any) => [v.id, v]))
+    Object.fromEntries((venuesRes.data ?? []).map((v) => [v.id, v]))
 
-  const enrichedReviews = reviews.map((r: any) => ({
+  type EnrichedReview = ReviewRow & {
+    profiles: { name: string; player_id: number } | null
+    venues: { name: string } | null
+  }
+  const enrichedReviews: EnrichedReview[] = reviews.map((r) => ({
     ...r,
     profiles: profileMap[r.user_id] ?? null,
     venues:   venueMap[r.venue_id]  ?? null,
@@ -204,7 +210,7 @@ export default async function ReviewsPage({
                 </tr>
               </thead>
               <tbody>
-                {enrichedReviews.map((r: any) => (
+                {enrichedReviews.map((r) => (
                   <tr key={r.id} className="border-b border-zinc-100 last:border-0 odd:bg-white even:bg-zinc-50/50">
                     <td className="px-4 py-3">
                       <p className="font-medium text-zinc-900">{r.profiles?.name ?? '—'}</p>

@@ -4,13 +4,14 @@ import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import ConciergeReplyForm from './reply-form'
+import type { ConciergeMessageRow, ConciergeSessionRow } from '@/lib/database.types'
 
 async function setSessionStatus(id: string, status: 'escalated' | 'resolved' | 'active') {
   'use server'
   const actor = await getCurrentAdmin()
   if (actor?.role !== 'super_admin') return
   const supabase = createSupabaseAdminClient()
-  await (supabase as any).from('concierge_sessions').update({ status }).eq('id', id)
+  await supabase.from('concierge_sessions').update({ status }).eq('id', id)
   revalidatePath(`/dashboard/concierge/${id}`)
   revalidatePath('/dashboard/concierge')
 }
@@ -22,12 +23,12 @@ async function sendAdminReply(sessionId: string, text: string) {
   const trimmed = text.trim()
   if (!trimmed) return
   const supabase = createSupabaseAdminClient()
-  await (supabase as any).from('concierge_messages').insert({
+  await supabase.from('concierge_messages').insert({
     session_id: sessionId,
     role: 'admin',
     text: trimmed,
   })
-  await (supabase as any)
+  await supabase
     .from('concierge_sessions')
     .update({ last_message_at: new Date().toISOString() })
     .eq('id', sessionId)
@@ -46,7 +47,7 @@ export default async function ConciergeSessionPage({
   const { id } = await params
   const supabase = createSupabaseAdminClient()
 
-  const { data: rawSession, error } = await (supabase as any)
+  const { data: rawSession, error } = await supabase
     .from('concierge_sessions')
     .select('*')
     .eq('id', id)
@@ -55,18 +56,21 @@ export default async function ConciergeSessionPage({
   if (error || !rawSession) notFound()
 
   const { data: profileData } = rawSession.user_id
-    ? await (supabase as any).from('profiles').select('name, email, player_id, tier, yel_points').eq('id', rawSession.user_id).single()
+    ? await supabase.from('profiles').select('name, email, player_id, tier, yel_points').eq('id', rawSession.user_id).single()
     : { data: null }
 
-  const session = { ...rawSession, profiles: profileData ?? null }
+  type SessionWithProfile = ConciergeSessionRow & {
+    profiles: { name: string; email: string; player_id: number; tier: string; yel_points: number } | null
+  }
+  const session: SessionWithProfile = { ...rawSession, profiles: profileData ?? null }
 
-  const { data: messagesRaw } = await (supabase as any)
+  const { data: messagesRaw } = await supabase
     .from('concierge_messages')
     .select('*')
     .eq('session_id', id)
     .order('created_at', { ascending: true })
 
-  const messages: any[] = messagesRaw ?? []
+  const messages: ConciergeMessageRow[] = messagesRaw ?? []
 
   const STATUS_STYLES: Record<string, string> = {
     active:    'bg-zinc-100 text-zinc-600',
@@ -126,7 +130,7 @@ export default async function ConciergeSessionPage({
         {messages.length === 0 ? (
           <p className="text-sm text-zinc-400 text-center py-8">No messages in this session.</p>
         ) : (
-          messages.map((msg: any) => {
+          messages.map((msg) => {
             const isUser  = msg.role === 'user'
             const isAdmin = msg.role === 'admin'
 

@@ -15,7 +15,7 @@ async function addCategory(venueId: string, formData: FormData) {
   const supabase = createSupabaseAdminClient()
   const g = (k: string) => (formData.get(k) as string) || ''
   const name_hy = g('name_hy')
-  await (supabase as any).from('menu_categories').insert({
+  await supabase.from('menu_categories').insert({
     venue_id:  venueId,
     name:      name_hy || g('name_ru') || g('name_en'),
     name_hy:   name_hy   || null,
@@ -86,9 +86,9 @@ export default async function MenuPage({
                 {/* Category header */}
                 <div className="flex items-center justify-between px-4 py-3 bg-zinc-50 border-b border-zinc-100">
                   <div>
-                    <span className="font-medium text-zinc-900">{(cat as any).name_hy ?? cat.name}</span>
-                    {(cat as any).name_ru && <span className="ml-2 text-xs text-zinc-400">· {(cat as any).name_ru}</span>}
-                    {(cat as any).name_en && <span className="ml-1 text-xs text-zinc-400">· {(cat as any).name_en}</span>}
+                    <span className="font-medium text-zinc-900">{cat.name_hy ?? cat.name}</span>
+                    {cat.name_ru && <span className="ml-2 text-xs text-zinc-400">· {cat.name_ru}</span>}
+                    {cat.name_en && <span className="ml-1 text-xs text-zinc-400">· {cat.name_en}</span>}
                     <span className="ml-2 text-xs text-zinc-400">order {cat.sort_order}</span>
                   </div>
                   <form action={deleteCategory.bind(null, venueId, cat.id)}>

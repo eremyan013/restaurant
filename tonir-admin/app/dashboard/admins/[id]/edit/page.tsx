@@ -17,13 +17,13 @@ export default async function EditAdminPage({
   const supabase = createSupabaseAdminClient()
 
   const [{ data: profile }, { data: venues }] = await Promise.all([
-    (supabase as any)
+    supabase
       .from('profiles')
       .select('id, name, email, managed_venue_ids')
       .eq('id', id)
       .eq('role', 'admin')
       .single(),
-    (supabase as any)
+    supabase
       .from('venues')
       .select('id, name')
       .order('name'),

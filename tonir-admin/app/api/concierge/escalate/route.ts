@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createSupabaseAdminClient()
-  await (supabase as any)
+  await supabase
     .from('concierge_sessions')
     .update({ status: 'escalated' })
     .eq('id', session_id)

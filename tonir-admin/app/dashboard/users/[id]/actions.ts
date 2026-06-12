@@ -29,11 +29,11 @@ export async function updateUser(
   const supabase = createSupabaseAdminClient()
 
   // Update auth email
-  const { error: authError } = await (supabase as any).auth.admin.updateUserById(id, { email })
+  const { error: authError } = await supabase.auth.admin.updateUserById(id, { email })
   if (authError) return { ok: false, error: authError.message }
 
   // Update profile
-  const { error: profileError } = await (supabase as any)
+  const { error: profileError } = await supabase
     .from('profiles')
     .update({ name, email, phone, tier_level: tierLevel })
     .eq('id', id)

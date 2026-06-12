@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createSupabaseAdminClient()
-  await (admin as any).from('profiles').update({ web_push_sub: subscription }).eq('id', user.id)
+  await admin.from('profiles').update({ web_push_sub: subscription }).eq('id', user.id)
 
   return NextResponse.json({ ok: true })
 }
@@ -24,7 +24,7 @@ export async function DELETE() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = createSupabaseAdminClient()
-  await (admin as any).from('profiles').update({ web_push_sub: null }).eq('id', user.id)
+  await admin.from('profiles').update({ web_push_sub: null }).eq('id', user.id)
 
   return NextResponse.json({ ok: true })
 }

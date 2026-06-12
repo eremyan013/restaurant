@@ -19,7 +19,7 @@ async function saveVenueHours(venueId: string, formData: FormData) {
     open_time:   (formData.get(`open_time_${day}`) as string) || null,
     close_time:  (formData.get(`close_time_${day}`) as string) || null,
   }))
-  await (supabase as any)
+  await supabase
     .from('venue_hours')
     .upsert(upserts, { onConflict: 'venue_id,day_of_week' })
   revalidatePath(`/dashboard/venues/${venueId}`)
@@ -31,7 +31,7 @@ async function addBlockedDate(venueId: string, formData: FormData) {
   const reason = (formData.get('reason') as string)?.trim() || null
   if (!date) return
   const supabase = createSupabaseAdminClient()
-  await (supabase as any)
+  await supabase
     .from('venue_blocked_dates')
     .upsert({ venue_id: venueId, date, reason }, { onConflict: 'venue_id,date' })
   revalidatePath(`/dashboard/venues/${venueId}`)
@@ -40,7 +40,7 @@ async function addBlockedDate(venueId: string, formData: FormData) {
 async function removeBlockedDate(venueId: string, dateId: string) {
   'use server'
   const supabase = createSupabaseAdminClient()
-  await (supabase as any).from('venue_blocked_dates').delete().eq('id', dateId)
+  await supabase.from('venue_blocked_dates').delete().eq('id', dateId)
   revalidatePath(`/dashboard/venues/${venueId}`)
 }
 
@@ -53,7 +53,7 @@ async function updateVenue(id: string, formData: FormData) {
 
   const name_hy = g('name_hy')
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('venues')
     .update({
       name:           name_hy || g('name_ru') || g('name_en'),
@@ -118,9 +118,9 @@ export default async function EditVenuePage({
   const supabase = createSupabaseAdminClient()
 
   const [venueRes, hoursRes, blockedRes] = await Promise.all([
-    (supabase as any).from('venues').select('*').eq('id', id).single(),
-    (supabase as any).from('venue_hours').select('*').eq('venue_id', id).order('day_of_week'),
-    (supabase as any).from('venue_blocked_dates').select('*').eq('venue_id', id).order('date'),
+    supabase.from('venues').select('*').eq('id', id).single(),
+    supabase.from('venue_hours').select('*').eq('venue_id', id).order('day_of_week'),
+    supabase.from('venue_blocked_dates').select('*').eq('venue_id', id).order('date'),
   ])
 
   if (venueRes.error || !venueRes.data) notFound()
@@ -295,9 +295,9 @@ async function renderPage(id: string) {
   const supabase = createSupabaseAdminClient()
 
   const [venueRes, hoursRes, blockedRes] = await Promise.all([
-    (supabase as any).from('venues').select('*').eq('id', id).single(),
-    (supabase as any).from('venue_hours').select('*').eq('venue_id', id).order('day_of_week'),
-    (supabase as any).from('venue_blocked_dates').select('*').eq('venue_id', id).order('date'),
+    supabase.from('venues').select('*').eq('id', id).single(),
+    supabase.from('venue_hours').select('*').eq('venue_id', id).order('day_of_week'),
+    supabase.from('venue_blocked_dates').select('*').eq('venue_id', id).order('date'),
   ])
 
   if (venueRes.error || !venueRes.data) {

@@ -17,7 +17,7 @@ async function createVenue(formData: FormData) {
 
   const name_hy = g('name_hy')
 
-  const { error } = await (supabase as any).from('venues').insert({
+  const { error } = await supabase.from('venues').insert({
     id,
     name:           name_hy || g('name_ru') || g('name_en'),
     name_hy:        name_hy        || null,

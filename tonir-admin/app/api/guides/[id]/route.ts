@@ -14,7 +14,7 @@ export async function PATCH(
   const body = await request.json()
   const supabase = createSupabaseAdminClient()
 
-  const { error } = await (supabase as any).from('guides').update({
+  const { error } = await supabase.from('guides').update({
     title:       body.title,
     title_hy:    body.title_hy    ?? null,
     title_ru:    body.title_ru    ?? null,
@@ -49,7 +49,7 @@ export async function DELETE(
   const { id } = await params
   const supabase = createSupabaseAdminClient()
 
-  const { error } = await (supabase as any).from('guides').delete().eq('id', id)
+  const { error } = await supabase.from('guides').delete().eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

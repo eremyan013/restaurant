@@ -51,7 +51,7 @@ export default async function ActivityPage({
 
   const supabase = createSupabaseAdminClient()
 
-  let query = (supabase as any)
+  let query = supabase
     .from('admin_activity_log')
     .select('*')
     .order('created_at', { ascending: false })
@@ -64,7 +64,7 @@ export default async function ActivityPage({
   const entries: any[] = logs ?? []
 
   // Unique admins for filter dropdown
-  const { data: adminsData } = await (supabase as any)
+  const { data: adminsData } = await supabase
     .from('admin_activity_log')
     .select('admin_id, admin_name')
     .limit(500)

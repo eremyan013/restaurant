@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const supabase = createSupabaseAdminClient()
 
-  const { error } = await (supabase as any).from('menu_items').insert({
+  const { error } = await supabase.from('menu_items').insert({
     venue_id:       body.venue_id,
     category_id:    body.category_id,
     name:           body.name,

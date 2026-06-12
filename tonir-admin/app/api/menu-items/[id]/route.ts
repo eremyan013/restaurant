@@ -34,7 +34,7 @@ export async function PATCH(
   if ('is_available'   in body) update.is_available   = body.is_available
   if ('is_popular'     in body) update.is_popular     = body.is_popular
 
-  const { error } = await (supabase as any).from('menu_items').update(update).eq('id', id)
+  const { error } = await supabase.from('menu_items').update(update).eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (body.venue_id) revalidatePath(`/dashboard/menus/${body.venue_id}`)

@@ -53,15 +53,16 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
   const user = profileResult.data as ProfileRow
   const reservations = (reservationsResult.data ?? []) as unknown as ReservationWithVenue[]
 
-  const rawFavorites: any[] = favoritesResult.data ?? []
-  const favVenueIds = [...new Set(rawFavorites.map((f: any) => f.venue_id).filter(Boolean))]
+  const rawFavorites = favoritesResult.data ?? []
+  const favVenueIds = [...new Set(rawFavorites.map((f) => f.venue_id).filter(Boolean))]
   const favVenuesRes = favVenueIds.length > 0
-    ? await supabase.from('venues').select('id, name, cuisine, photo_url').in('id', favVenueIds as any)
+    ? await supabase.from('venues').select('id, name, cuisine, photo_url').in('id', favVenueIds)
     : { data: [] }
-  const favVenueMap: Record<string, any> = Object.fromEntries(
-    ((favVenuesRes.data ?? []) as any[]).map((v: any) => [v.id, v])
+  type VenueCard = { id: string; name: string; cuisine: string; photo_url: string }
+  const favVenueMap: Record<string, VenueCard> = Object.fromEntries(
+    (favVenuesRes.data ?? []).map((v) => [v.id, v])
   )
-  const favorites = rawFavorites.map((f: any) => ({
+  const favorites = rawFavorites.map((f) => ({
     ...f,
     venues: favVenueMap[f.venue_id] ?? null,
   })) as FavoriteWithVenue[]
@@ -118,7 +119,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
               id: user.id,
               name: user.name,
               email: user.email,
-              phone: (user as any).phone ?? null,
+              phone: user.phone ?? null,
               tier_level: user.tier_level,
             }} />
           </div>
@@ -140,7 +141,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
             <h2 className="text-sm font-medium text-zinc-900 mb-4">Account Details</h2>
             <dl className="space-y-3 text-sm">
               <DetailRow label="Player ID" value={<span className="font-mono font-semibold text-zinc-900">{user.player_id}</span>} />
-              <DetailRow label="Phone" value={<span className="tabular-nums">{(user as any).phone ?? '—'}</span>} />
+              <DetailRow label="Phone" value={<span className="tabular-nums">{user.phone ?? '—'}</span>} />
               <DetailRow label="User ID" value={<span className="font-mono text-xs break-all">{user.id}</span>} />
               <DetailRow label="Role" value={user.role} />
               <DetailRow label="Last updated" value={new Date(user.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} />

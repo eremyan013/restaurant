@@ -35,11 +35,11 @@ export async function editReservation(
   const supabase = createSupabaseAdminClient()
 
   if (admin.role === 'admin') {
-    const { data: res } = await (supabase as any).from('reservations').select('venue_id').eq('id', id).single()
+    const { data: res } = await supabase.from('reservations').select('venue_id').eq('id', id).single()
     if (!admin.managed_venue_ids.includes(res?.venue_id)) return { ok: false, error: 'Unauthorized' }
   }
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('reservations')
     .update({ date: isoToDisplay(dateIso), date_iso: dateIso, time, people, occasion, note })
     .eq('id', id)
@@ -69,7 +69,7 @@ export async function createReservationAdmin(
 
   const supabase = createSupabaseAdminClient()
 
-  const { error } = await (supabase as any).from('reservations').insert({
+  const { error } = await supabase.from('reservations').insert({
     venue_id:   venueId,
     user_id:    userId,
     date:       isoToDisplay(dateIso),
@@ -100,7 +100,7 @@ export async function searchUsersAction(
   if (!admin) return { results: [] }
 
   const supabase = createSupabaseAdminClient()
-  const { data } = await (supabase as any)
+  const { data } = await supabase
     .from('profiles')
     .select('id, name, email, player_id')
     .eq('role', 'user')

@@ -28,7 +28,7 @@ async function setStatus(id: string, status: ReservationRow['status']) {
 
   const supabase = createSupabaseAdminClient()
 
-  const { data: res } = await (supabase as any)
+  const { data: res } = await supabase
     .from('reservations')
     .select('user_id, venue_id, date, time, venues(name), profiles(push_token)')
     .eq('id', id)
@@ -37,7 +37,7 @@ async function setStatus(id: string, status: ReservationRow['status']) {
   if (!res) return
   if (admin.role === 'admin' && !admin.managed_venue_ids.includes(res.venue_id)) return
 
-  await (supabase as any).from('reservations').update({ status }).eq('id', id)
+  await supabase.from('reservations').update({ status }).eq('id', id)
   await logActivity(admin, status === 'confirmed' ? 'confirm_reservation' : status === 'cancelled' ? 'cancel_reservation' : status === 'visited' ? 'mark_visited' : 'confirm_reservation',
     'reservation', id, `${res.venues?.name ?? ''} – ${res.date} ${res.time}`)
 
@@ -66,11 +66,11 @@ async function saveNote(id: string, formData: FormData) {
   const supabase = createSupabaseAdminClient()
 
   if (admin.role === 'admin') {
-    const { data: res } = await (supabase as any).from('reservations').select('venue_id').eq('id', id).single()
+    const { data: res } = await supabase.from('reservations').select('venue_id').eq('id', id).single()
     if (!admin.managed_venue_ids.includes(res?.venue_id)) return
   }
 
-  await (supabase as any)
+  await supabase
     .from('reservations')
     .update({
       status:     formData.get('status') as ReservationRow['status'],
@@ -115,7 +115,7 @@ export default async function ReservationsPage({
     const { data } = await supabase.from('venues').select('id, name').order('name')
     venuesList = data ?? []
   } else if (admin.managed_venue_ids.length) {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from('venues').select('id, name').in('id', admin.managed_venue_ids).order('name')
     venuesList = data ?? []
   }
@@ -123,7 +123,7 @@ export default async function ReservationsPage({
   // ── Guest pre-filter (resolve matching user IDs) ──────────────────────────────
   let guestUserIds: string[] | null = null
   if (sp.guest?.trim()) {
-    const { data: matched } = await (supabase as any)
+    const { data: matched } = await supabase
       .from('profiles')
       .select('id')
       .or(`name.ilike.%${sp.guest.trim()}%,email.ilike.%${sp.guest.trim()}%`)
@@ -160,7 +160,7 @@ export default async function ReservationsPage({
   const from = (page - 1) * PAGINATION_SIZE
   const to   = from + PAGINATION_SIZE - 1
 
-  let query = (supabase as any)
+  let query = supabase
     .from('reservations')
     .select('id, date, time, people, status, occasion, note, admin_note, created_at, venue_id, user_id, venues(name), profiles(name, email)', { count: 'exact' })
     .order('date', { ascending: false })
@@ -177,7 +177,7 @@ export default async function ReservationsPage({
 
   // ── Status counts (filtered, without status restriction) ─────────────────────
   let countsQuery = applyFilters(
-    (supabase as any).from('reservations').select('status').limit(2000)
+    supabase.from('reservations').select('status').limit(2000)
   )
   const { data: counts } = await countsQuery
 

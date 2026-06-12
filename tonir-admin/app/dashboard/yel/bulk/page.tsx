@@ -22,7 +22,7 @@ function calcTierLevel(points: number, mins: Record<number, number>): number {
 
 async function loadTierConfig(): Promise<{ names: Record<number,string>; mins: Record<number,number> }> {
   const supabase = createSupabaseAdminClient()
-  const { data } = await (supabase as any).from('settings').select('key, value').in('key', ALL_SETTING_KEYS)
+  const { data } = await supabase.from('settings').select('key, value').in('key', ALL_SETTING_KEYS)
   const names: Record<number,string> = { 1:'Tonir', 2:'Pandok', 3:'Areni', 4:'Master' }
   const mins:  Record<number,number> = { 1:0, 2:1000, 3:2000, 4:3000 }
   for (const row of (data ?? [])) {
@@ -42,7 +42,7 @@ async function fetchMatchingUsers(
 
   if (filterType === 'visited') {
     if (!fromDate || !toDate) return []
-    const { data: resvData } = await (supabase as any)
+    const { data: resvData } = await supabase
       .from('reservations')
       .select('user_id')
       .eq('status', 'visited')
@@ -50,7 +50,7 @@ async function fetchMatchingUsers(
       .lte('date_iso', toDate)
     const ids = [...new Set((resvData ?? []).map((r: any) => r.user_id as string))]
     if (!ids.length) return []
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from('profiles')
       .select('id, name, player_id, yel_points, tier, tier_level')
       .in('id', ids)
@@ -60,7 +60,7 @@ async function fetchMatchingUsers(
   if (filterType === 'tier') {
     const lvl = parseInt(tierLevel)
     if (!lvl) return []
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from('profiles')
       .select('id, name, player_id, yel_points, tier, tier_level')
       .eq('role', 'user')
@@ -69,7 +69,7 @@ async function fetchMatchingUsers(
   }
 
   // all
-  const { data } = await (supabase as any)
+  const { data } = await supabase
     .from('profiles')
     .select('id, name, player_id, yel_points, tier, tier_level')
     .eq('role', 'user')
@@ -99,7 +99,7 @@ async function applyBulk(formData: FormData) {
     const oldLevel  = u.tier_level ?? 1
     const newLevel  = calcTierLevel(newPoints, mins)
 
-    await (supabase as any).from('profiles').update({
+    await supabase.from('profiles').update({
       yel_points: newPoints,
       tier_level: newLevel,
       tier:       names[newLevel],
@@ -107,15 +107,15 @@ async function applyBulk(formData: FormData) {
 
     if (newLevel > oldLevel) {
       for (let lvl = oldLevel + 1; lvl <= newLevel; lvl++) {
-        const { data: tierPrizes } = await (supabase as any)
+        const { data: tierPrizes } = await supabase
           .from('prizes').select('id, stock').eq('unlock_type','tier').eq('min_tier_level',lvl).eq('is_active',true)
         for (const prize of (tierPrizes ?? [])) {
           if (prize.stock != null) {
-            const { count } = await (supabase as any)
+            const { count } = await supabase
               .from('user_prizes').select('id',{count:'exact',head:true}).eq('prize_id',prize.id)
             if ((count??0) >= prize.stock) continue
           }
-          await (supabase as any).from('user_prizes').insert({
+          await supabase.from('user_prizes').insert({
             user_id: u.id, prize_id: prize.id,
             code: 'YEL-' + Math.random().toString(36).substring(2,8).toUpperCase(),
             status: 'active',

@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = createSupabaseAdminClient()
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('profiles')
     .select('id, name, email, push_token')
     .or(`name.ilike.%${q}%,email.ilike.%${q}%`)

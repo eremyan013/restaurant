@@ -28,7 +28,7 @@ export async function createAdmin(
 
   const supabase = createSupabaseAdminClient()
 
-  const { data: created, error: authError } = await (supabase as any).auth.admin.createUser({
+  const { data: created, error: authError } = await supabase.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
@@ -37,7 +37,7 @@ export async function createAdmin(
   if (authError) return { ok: false, error: authError.message }
   if (!created?.user) return { ok: false, error: 'Failed to create user — try again.' }
 
-  const { error: profileError } = await (supabase as any).from('profiles').upsert({
+  const { error: profileError } = await supabase.from('profiles').upsert({
     id:               created.user.id,
     name,
     email,
@@ -52,7 +52,7 @@ export async function createAdmin(
   })
 
   if (profileError) {
-    await (supabase as any).auth.admin.deleteUser(created.user.id).catch(() => {})
+    await supabase.auth.admin.deleteUser(created.user.id).catch(() => {})
     return { ok: false, error: profileError.message }
   }
 
@@ -81,10 +81,10 @@ export async function updateAdmin(
   const authUpdate: Record<string, string> = { email }
   if (password) authUpdate.password = password
 
-  const { error: authError } = await (supabase as any).auth.admin.updateUserById(id, authUpdate)
+  const { error: authError } = await supabase.auth.admin.updateUserById(id, authUpdate)
   if (authError) return { ok: false, error: authError.message }
 
-  const { error: profileError } = await (supabase as any)
+  const { error: profileError } = await supabase
     .from('profiles')
     .update({ name, email, managed_venue_ids, managed_venue_id: managed_venue_ids[0] ?? null })
     .eq('id', id)
@@ -103,7 +103,7 @@ export async function deleteAdmin(_prev: unknown, formData: FormData): Promise<v
   if (!id) return
 
   const supabase = createSupabaseAdminClient()
-  await (supabase as any)
+  await supabase
     .from('profiles')
     .update({ role: 'user', managed_venue_ids: [], managed_venue_id: null, is_admin: false })
     .eq('id', id)

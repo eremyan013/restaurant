@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createSupabaseAdminClient()
-  const { data: admins } = await (supabase as any)
+  const { data: admins } = await supabase
     .from('profiles')
     .select('push_token, web_push_sub')
     .eq('is_admin', true)

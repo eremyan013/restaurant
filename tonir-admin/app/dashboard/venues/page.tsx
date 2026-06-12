@@ -17,7 +17,7 @@ export default async function VenuesPage() {
   if (!admin) redirect('/login')
 
   const supabase = createSupabaseAdminClient()
-  let venuesQuery = (supabase as any)
+  let venuesQuery = supabase
     .from('venues')
     .select('id, name, name_hy, name_ru, name_en, cuisine, area, kind, rating, is_active')
     .order('name')

@@ -26,7 +26,7 @@ type TierSettings = {
 
 async function loadTierSettings(): Promise<TierSettings> {
   const supabase = createSupabaseAdminClient()
-  const { data } = await (supabase as any)
+  const { data } = await supabase
     .from('settings').select('key, value').in('key', ALL_SETTING_KEYS)
 
   const names: Record<number, string> = { 1: 'Tonir', 2: 'Pandok', 3: 'Areni', 4: 'Master' }
@@ -71,8 +71,8 @@ async function adjustPoints(formData: FormData) {
 
   const supabase = createSupabaseAdminClient()
   const [profileRes, settingsRes] = await Promise.all([
-    (supabase as any).from('profiles').select('yel_points, tier_level').eq('id', userId).single(),
-    (supabase as any).from('settings').select('key, value').in('key', ALL_SETTING_KEYS),
+    supabase.from('profiles').select('yel_points, tier_level').eq('id', userId).single(),
+    supabase.from('settings').select('key, value').in('key', ALL_SETTING_KEYS),
   ])
   if (!profileRes.data) return
 
@@ -87,7 +87,7 @@ async function adjustPoints(formData: FormData) {
   const newPoints = Math.max(0, (profileRes.data.yel_points ?? 0) + amount)
   const newLevel  = calcTierLevel(newPoints, mins)
 
-  await (supabase as any).from('profiles').update({
+  await supabase.from('profiles').update({
     yel_points: newPoints,
     tier_level: newLevel,
     tier: names[newLevel],
@@ -96,7 +96,7 @@ async function adjustPoints(formData: FormData) {
   // Auto-assign tier prizes for every newly unlocked level
   if (newLevel > oldLevel) {
     for (let lvl = oldLevel + 1; lvl <= newLevel; lvl++) {
-      const { data: tierPrizes } = await (supabase as any)
+      const { data: tierPrizes } = await supabase
         .from('prizes')
         .select('id, stock')
         .eq('unlock_type', 'tier')
@@ -106,11 +106,11 @@ async function adjustPoints(formData: FormData) {
       for (const prize of (tierPrizes ?? [])) {
         // Check stock
         if (prize.stock != null) {
-          const { count } = await (supabase as any)
+          const { count } = await supabase
             .from('user_prizes').select('id', { count: 'exact', head: true }).eq('prize_id', prize.id)
           if ((count ?? 0) >= prize.stock) continue
         }
-        await (supabase as any).from('user_prizes').insert({
+        await supabase.from('user_prizes').insert({
           user_id:  userId,
           prize_id: prize.id,
           code:     genCode(),
@@ -120,7 +120,7 @@ async function adjustPoints(formData: FormData) {
     }
   }
 
-  const { data: profile } = await (supabase as any).from('profiles').select('name').eq('id', userId).single()
+  const { data: profile } = await supabase.from('profiles').select('name').eq('id', userId).single()
   await logActivity(actor, 'adjust_yel', 'profile', userId, profile?.name ?? userId, { amount })
   revalidatePath('/dashboard/yel')
 }
@@ -142,7 +142,7 @@ async function saveTierSettings(formData: FormData) {
     { key: 'tier_4_min',  value: formData.get('tier_4_min') as string || '3000' },
   ]
 
-  await (supabase as any).from('settings').upsert(upserts, { onConflict: 'key' })
+  await supabase.from('settings').upsert(upserts, { onConflict: 'key' })
 
   const names = Object.fromEntries(upserts.filter(u => u.key.endsWith('_name')).map(u => [
     parseInt(u.key[5]), u.value,
@@ -153,12 +153,12 @@ async function saveTierSettings(formData: FormData) {
   mins[1] = 0
 
   // Re-assign tier + tier_level for all users based on new thresholds
-  const { data: users } = await (supabase as any)
+  const { data: users } = await supabase
     .from('profiles').select('id, yel_points').eq('role', 'user')
 
   for (const u of (users ?? [])) {
     const level = calcTierLevel(u.yel_points ?? 0, mins)
-    await (supabase as any).from('profiles')
+    await supabase.from('profiles')
       .update({ tier_level: level, tier: names[level] })
       .eq('id', u.id)
   }
@@ -173,12 +173,12 @@ export default async function YelPage() {
   const supabase = createSupabaseAdminClient()
 
   const [profilesRes, recentRes, { names: tierNames, mins: tierMins }] = await Promise.all([
-    (supabase as any)
+    supabase
       .from('profiles')
       .select('id, player_id, name, email, yel_points, tier, tier_level, total_visits')
       .eq('role', 'user')
       .order('yel_points', { ascending: false }),
-    (supabase as any)
+    supabase
       .from('reservations')
       .select('id, date, yel_earned, profiles(name, player_id), venues(name)')
       .eq('status', 'visited')

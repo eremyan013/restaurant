@@ -14,7 +14,7 @@ async function removeAdmin(formData: FormData) {
   if (!id) return
 
   const supabase = createSupabaseAdminClient()
-  await (supabase as any)
+  await supabase
     .from('profiles')
     .update({ role: 'user', managed_venue_ids: [], managed_venue_id: null, is_admin: false })
     .eq('id', id)
@@ -29,12 +29,12 @@ export default async function AdminsPage() {
   const supabase = createSupabaseAdminClient()
 
   const [{ data: admins }, { data: venues }] = await Promise.all([
-    (supabase as any)
+    supabase
       .from('profiles')
       .select('id, name, email, managed_venue_ids, created_at')
       .eq('role', 'admin')
       .order('created_at', { ascending: false }),
-    (supabase as any)
+    supabase
       .from('venues')
       .select('id, name')
       .order('name'),

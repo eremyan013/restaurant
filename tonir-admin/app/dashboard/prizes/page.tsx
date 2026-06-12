@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import type { PrizeRow, UserPrizeRow, VenueRow, SettingRow } from '@/lib/database.types'
 
 const TYPE_LABELS: Record<string, string> = {
   discount:   'Discount',
@@ -24,7 +25,7 @@ async function toggleActive(id: string, current: boolean) {
   const actor = await getCurrentAdmin()
   if (actor?.role !== 'super_admin') return
   const supabase = createSupabaseAdminClient()
-  await (supabase as any).from('prizes').update({ is_active: !current }).eq('id', id)
+  await supabase.from('prizes').update({ is_active: !current }).eq('id', id)
   revalidatePath('/dashboard/prizes')
 }
 
@@ -35,7 +36,7 @@ async function deletePrize(formData: FormData) {
   const id = formData.get('id') as string
   if (!id) return
   const supabase = createSupabaseAdminClient()
-  await (supabase as any).from('prizes').delete().eq('id', id)
+  await supabase.from('prizes').delete().eq('id', id)
   revalidatePath('/dashboard/prizes')
 }
 
@@ -46,22 +47,22 @@ export default async function PrizesPage() {
   const supabase = createSupabaseAdminClient()
 
   const [prizesRes, claimsRes, venuesRes, settingsRes] = await Promise.all([
-    (supabase as any).from('prizes').select('*').order('sort_order').order('created_at', { ascending: false }),
-    (supabase as any).from('user_prizes').select('prize_id, status'),
-    (supabase as any).from('venues').select('id, name').order('name'),
-    (supabase as any).from('settings').select('key, value').in('key', ['tier_1_name','tier_2_name','tier_3_name','tier_4_name']),
+    supabase.from('prizes').select('*').order('sort_order').order('created_at', { ascending: false }),
+    supabase.from('user_prizes').select('prize_id, status'),
+    supabase.from('venues').select('id, name').order('name'),
+    supabase.from('settings').select('key, value').in('key', ['tier_1_name','tier_2_name','tier_3_name','tier_4_name']),
   ])
 
-  const prizes:  any[] = prizesRes.data  ?? []
-  const claims:  any[] = claimsRes.data  ?? []
-  const venues:  any[] = venuesRes.data  ?? []
-  const settings: any[] = settingsRes.data ?? []
+  const prizes:   PrizeRow[]                                = prizesRes.data   ?? []
+  const claims:   Pick<UserPrizeRow, 'prize_id'|'status'>[] = claimsRes.data   ?? []
+  const venues:   Pick<VenueRow, 'id'|'name'>[]             = venuesRes.data   ?? []
+  const settings: SettingRow[]                              = settingsRes.data ?? []
 
   const tierNames: Record<number, string> = { 1: 'Tonir', 2: 'Pandok', 3: 'Areni', 4: 'Master' }
   for (const s of settings) {
     const l = parseInt(s.key[5]); if (l >= 1 && l <= 4) tierNames[l] = s.value
   }
-  const venueMap: Record<string, string> = Object.fromEntries(venues.map((v: any) => [v.id, v.name]))
+  const venueMap: Record<string, string> = Object.fromEntries(venues.map((v) => [v.id, v.name]))
 
   const claimCountMap: Record<string, number> = {}
   for (const c of claims) claimCountMap[c.prize_id] = (claimCountMap[c.prize_id] ?? 0) + 1
@@ -120,7 +121,7 @@ export default async function PrizesPage() {
               </tr>
             </thead>
             <tbody>
-              {prizes.map((p: any) => (
+              {prizes.map((p) => (
                 <tr key={p.id} className="odd:bg-white even:bg-zinc-100 hover:bg-zinc-200 transition-colors border-b border-zinc-100 last:border-0">
                   <td className="px-4 py-3">
                     <p className="font-medium text-zinc-900">{p.name}</p>

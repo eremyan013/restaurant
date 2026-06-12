@@ -17,7 +17,7 @@ export async function getCurrentAdmin(): Promise<CurrentAdmin | null> {
     if (!user) return null
 
     const db = createSupabaseAdminClient()
-    const { data } = await (db as any)
+    const { data } = await db
       .from('profiles')
       .select('id, name, role, managed_venue_ids')
       .eq('id', user.id)

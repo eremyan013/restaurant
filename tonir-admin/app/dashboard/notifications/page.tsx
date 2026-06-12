@@ -11,16 +11,16 @@ export default async function NotificationsPage() {
   const supabase = createSupabaseAdminClient()
 
   const [usersWithToken, totalUsers, venues] = await Promise.all([
-    (supabase as any)
+    supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true })
       .not('push_token', 'is', null)
       .then(({ count }: { count: number | null }) => count ?? 0),
-    (supabase as any)
+    supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true })
       .then(({ count }: { count: number | null }) => count ?? 0),
-    (supabase as any)
+    supabase
       .from('venues')
       .select('id, name')
       .eq('is_active', true)

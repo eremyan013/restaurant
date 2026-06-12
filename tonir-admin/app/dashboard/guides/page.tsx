@@ -8,7 +8,7 @@ import { getCurrentAdmin } from '@/lib/current-admin'
 async function toggleActive(id: string, current: boolean) {
   'use server'
   const supabase = createSupabaseAdminClient()
-  await (supabase as any).from('guides').update({ is_active: !current }).eq('id', id)
+  await supabase.from('guides').update({ is_active: !current }).eq('id', id)
   revalidatePath('/dashboard/guides')
 }
 
@@ -18,8 +18,8 @@ export default async function GuidesPage() {
 
   const supabase = createSupabaseAdminClient()
   const [{ data: guides, error }, { data: venues }] = await Promise.all([
-    (supabase as any).from('guides').select('*').order('sort_order'),
-    (supabase as any).from('venues').select('id, name').eq('is_active', true).order('name'),
+    supabase.from('guides').select('*').order('sort_order'),
+    supabase.from('venues').select('id, name').eq('is_active', true).order('name'),
   ])
 
   if (error) throw error

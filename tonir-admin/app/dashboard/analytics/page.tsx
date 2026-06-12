@@ -39,7 +39,7 @@ export default async function AnalyticsPage({
   const startISO = startDate.toISOString().split('T')[0]
 
   // Reservations in the selected range
-  const { data: rawRes } = await (supabase as any)
+  const { data: rawRes } = await supabase
     .from('reservations')
     .select('date_iso, time, people, status, venue_id, venues(name, price)')
     .gte('date_iso', startISO)
@@ -49,8 +49,8 @@ export default async function AnalyticsPage({
 
   // All-time KPI totals
   const [allResResult, allUsersResult] = await Promise.all([
-    (supabase as any).from('reservations').select('*', { count: 'exact', head: true }),
-    (supabase as any)
+    supabase.from('reservations').select('*', { count: 'exact', head: true }),
+    supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true })
       .not('role', 'in', '("admin","super_admin")'),
@@ -59,7 +59,7 @@ export default async function AnalyticsPage({
   // User sign-ups (last 90 days)
   const growthStart = new Date()
   growthStart.setDate(growthStart.getDate() - 89)
-  const { data: rawProfiles } = await (supabase as any)
+  const { data: rawProfiles } = await supabase
     .from('profiles')
     .select('created_at')
     .not('role', 'in', '("admin","super_admin")')

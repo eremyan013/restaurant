@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
   const supabase = createSupabaseAdminClient()
 
   // Fetch target push tokens
-  let query = (supabase as any)
+  let query = supabase
     .from('profiles')
     .select('id, push_token')
     .not('push_token', 'is', null)
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   const tokens: string[] = (profiles ?? [])
-    .map((p: { push_token: string }) => p.push_token)
+    .map((p: { id: string; push_token: string | null }) => p.push_token)
     .filter(Boolean)
 
   if (tokens.length === 0) {
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
 
   const supabase = createSupabaseAdminClient()
 
-  let query = (supabase as any)
+  let query = supabase
     .from('profiles')
     .select('*', { count: 'exact', head: true })
     .not('push_token', 'is', null)

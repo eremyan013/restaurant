@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
   const supabase = createSupabaseAdminClient()
 
-  const { error } = await (supabase as any).from('guides').insert({
+  const { error } = await supabase.from('guides').insert({
     id:          crypto.randomUUID(),
     title:       body.title,
     title_hy:    body.title_hy    ?? null,

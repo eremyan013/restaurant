@@ -4,6 +4,7 @@ import { getCurrentAdmin } from '@/lib/current-admin'
 import { PrizeForm } from '@/components/prize-form'
 import { validateAction } from '@/lib/validate-action'
 import { zPrizeSchema, parsePrizeFormData } from '@/lib/schemas'
+import type { VenueRow, SettingRow } from '@/lib/database.types'
 
 export default async function NewPrizePage() {
   const admin = await getCurrentAdmin()
@@ -11,13 +12,13 @@ export default async function NewPrizePage() {
 
   const supabase = createSupabaseAdminClient()
   const [venuesRes, settingsRes] = await Promise.all([
-    (supabase as any).from('venues').select('id, name').order('name'),
-    (supabase as any).from('settings').select('key, value').in('key', ['tier_1_name','tier_2_name','tier_3_name','tier_4_name']),
+    supabase.from('venues').select('id, name').order('name'),
+    supabase.from('settings').select('key, value').in('key', ['tier_1_name','tier_2_name','tier_3_name','tier_4_name']),
   ])
 
-  const venues: any[] = venuesRes.data ?? []
+  const venues: Pick<VenueRow, 'id'|'name'>[] = venuesRes.data ?? []
   const tierNames: Record<number, string> = { 1: 'Tonir', 2: 'Pandok', 3: 'Areni', 4: 'Master' }
-  for (const s of (settingsRes.data ?? [])) {
+  for (const s of ((settingsRes.data ?? []) as SettingRow[])) {
     const l = parseInt(s.key[5]); if (l >= 1 && l <= 4) tierNames[l] = s.value
   }
 
@@ -32,7 +33,7 @@ export default async function NewPrizePage() {
     const { name, description, type, unlock_type, points_cost, min_tier_level, venue_id, image_url, stock, sort_order, is_active } = parsed.data
 
     const supabase = createSupabaseAdminClient()
-    await (supabase as any).from('prizes').insert({
+    await supabase.from('prizes').insert({
       name, description, type, unlock_type, points_cost, min_tier_level,
       venue_id, image_url, stock, sort_order, is_active,
     })
