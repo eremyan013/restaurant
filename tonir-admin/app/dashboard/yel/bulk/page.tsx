@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { logActivity } from '@/lib/log-activity'
+import { calcTierLevel, genYelCode } from '@/lib/yel-logic'
 
 type FilterType = 'all' | 'visited' | 'tier'
 
@@ -12,13 +13,6 @@ const ALL_SETTING_KEYS = [
   'tier_1_name','tier_2_name','tier_3_name','tier_4_name',
   'tier_2_min', 'tier_3_min', 'tier_4_min',
 ]
-
-function calcTierLevel(points: number, mins: Record<number, number>): number {
-  if (points >= mins[4]) return 4
-  if (points >= mins[3]) return 3
-  if (points >= mins[2]) return 2
-  return 1
-}
 
 async function loadTierConfig(): Promise<{ names: Record<number,string>; mins: Record<number,number> }> {
   const supabase = createSupabaseAdminClient()
@@ -32,12 +26,21 @@ async function loadTierConfig(): Promise<{ names: Record<number,string>; mins: R
   return { names, mins }
 }
 
+type BulkUserRow = {
+  id:         string
+  name:       string
+  player_id:  number
+  yel_points: number
+  tier:       string
+  tier_level: number
+}
+
 async function fetchMatchingUsers(
   filterType: FilterType,
   fromDate: string,
   toDate: string,
   tierLevel: string,
-): Promise<Array<{ id:string; name:string; player_id:number; yel_points:number; tier:string; tier_level:number }>> {
+): Promise<BulkUserRow[]> {
   const supabase = createSupabaseAdminClient()
 
   if (filterType === 'visited') {
@@ -117,7 +120,7 @@ async function applyBulk(formData: FormData) {
           }
           await supabase.from('user_prizes').insert({
             user_id: u.id, prize_id: prize.id,
-            code: 'YEL-' + Math.random().toString(36).substring(2,8).toUpperCase(),
+            code: genYelCode(),
             status: 'active',
           })
         }
@@ -271,7 +274,7 @@ export default async function BulkYelPage({
                     </tr>
                   </thead>
                   <tbody>
-                    {matchingUsers.slice(0, 50).map((u: any) => {
+                    {matchingUsers.slice(0, 50).map((u) => {
                       const after = Math.max(0, (u.yel_points ?? 0) + amountNum)
                       const newLevel = calcTierLevel(after, tierMins)
                       const tierChanged = newLevel !== (u.tier_level ?? 1)

@@ -3,10 +3,13 @@ import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { zGuideSchema } from '@/lib/schemas'
 import { rateLimit, RATE_WRITE } from '@/lib/rate-limit'
+import { getCurrentAdmin } from '@/lib/current-admin'
 
 export async function POST(request: NextRequest) {
   const rl = await rateLimit(request, RATE_WRITE)
   if (rl.limited) return rl.toResponse!()
+  const admin = await getCurrentAdmin()
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await request.json()
 
   const result = zGuideSchema.safeParse(body)

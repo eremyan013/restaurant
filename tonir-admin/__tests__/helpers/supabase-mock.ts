@@ -36,6 +36,7 @@ export function makeChain(result: QueryResult = { data: null, error: null }) {
     gte:         vi.fn().mockReturnThis(),
     lte:         vi.fn().mockReturnThis(),
     limit:       vi.fn().mockReturnThis(),
+    range:       vi.fn().mockReturnThis(),
     order:       vi.fn().mockReturnThis(),
     is:          vi.fn().mockReturnThis(),
     single:      vi.fn().mockResolvedValue(result),

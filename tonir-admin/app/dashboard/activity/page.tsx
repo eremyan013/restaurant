@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
+import type { AdminActivityRow } from '@/lib/database.types'
+import { ActivityFilters } from './activity-filters'
 
 const ACTION_LABELS: Record<string, string> = {
   confirm_reservation:     'Confirmed reservation',
@@ -40,127 +43,128 @@ const ACTION_COLORS: Record<string, string> = {
 export default async function ActivityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ admin?: string; action?: string }>
+  searchParams: Promise<{ admin?: string; action?: string; page?: string }>
 }) {
   const admin = await getCurrentAdmin()
   if (admin?.role !== 'super_admin') redirect('/dashboard')
 
-  const params     = await searchParams
-  const filterAdmin  = params.admin  ?? ''
-  const filterAction = params.action ?? ''
+  const params        = await searchParams
+  const filterAdmin   = params.admin  ?? ''
+  const filterAction  = params.action ?? ''
+
+  const page = Math.max(1, parseInt(params.page ?? '1', 10) || 1)
+  const from = (page - 1) * PAGINATION_SIZE
+  const to   = from + PAGINATION_SIZE - 1
 
   const supabase = createSupabaseAdminClient()
 
   let query = supabase
     .from('admin_activity_log')
-    .select('*')
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
-    .limit(200)
+    .range(from, to)
 
   if (filterAdmin)  query = query.eq('admin_id', filterAdmin)
-  if (filterAction) query = query.eq('action', filterAction)
+  if (filterAction) query = query.eq('action',   filterAction)
 
-  const { data: logs } = await query
-  const entries: any[] = logs ?? []
+  const { data: logs, count: totalCount } = await query
+  const entries: AdminActivityRow[] = logs ?? []
+  const total = totalCount ?? 0
 
-  // Unique admins for filter dropdown
+  // Load admin options from profiles instead of activity log
+  type AdminOption = { id: string; name: string | null }
   const { data: adminsData } = await supabase
-    .from('admin_activity_log')
-    .select('admin_id, admin_name')
-    .limit(500)
+    .from('profiles')
+    .select('id, name')
+    .in('role', ['admin', 'super_admin'])
+    .order('name', { ascending: true })
+  const adminOptions: AdminOption[] = adminsData ?? []
 
-  const adminSet = new Map<string, string>()
-  for (const r of (adminsData ?? [])) {
-    if (r.admin_id) adminSet.set(r.admin_id, r.admin_name ?? r.admin_id)
+  // Build a URL for a given page number, preserving current filters
+  function pageHref(p: number): string {
+    const ps = new URLSearchParams()
+    if (filterAdmin)  ps.set('admin',  filterAdmin)
+    if (filterAction) ps.set('action', filterAction)
+    if (p > 1)        ps.set('page',   String(p))
+    const qs = ps.toString()
+    return `/dashboard/activity${qs ? '?' + qs : ''}`
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-zinc-900">Activity Log</h1>
-        <span className="text-sm text-zinc-400">{entries.length} entries</span>
+        <span className="text-sm text-zinc-400">{total.toLocaleString()} entries</span>
       </div>
 
-      {/* Filters */}
-      <form method="GET" className="flex gap-3 mb-6 flex-wrap">
-        <select name="admin" defaultValue={filterAdmin}
-          className="border border-zinc-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900">
-          <option value="">All admins</option>
-          {Array.from(adminSet.entries()).map(([id, name]) => (
-            <option key={id} value={id}>{name}</option>
-          ))}
-        </select>
-        <select name="action" defaultValue={filterAction}
-          className="border border-zinc-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900">
-          <option value="">All actions</option>
-          {Object.entries(ACTION_LABELS).map(([key, label]) => (
-            <option key={key} value={key}>{label}</option>
-          ))}
-        </select>
-        <button type="submit"
-          className="px-4 py-2 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors">
-          Filter
-        </button>
-        {(filterAdmin || filterAction) && (
-          <a href="/dashboard/activity"
-            className="px-4 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-500 hover:bg-zinc-50 transition-colors">
-            Clear
-          </a>
-        )}
-      </form>
+      <ActivityFilters
+        defaultAdmin={filterAdmin}
+        defaultAction={filterAction}
+        adminOptions={adminOptions}
+        actionOptions={Object.entries(ACTION_LABELS).map(([key, label]) => ({ key, label }))}
+        hasActiveFilters={!!(filterAdmin || filterAction)}
+      />
 
       {entries.length === 0 ? (
         <div className="bg-white rounded-xl border border-zinc-200 py-16 text-center">
           <p className="text-zinc-400 text-sm">No activity recorded yet.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-zinc-50 border-b border-zinc-100 text-left">
-                <th className="px-4 py-3 font-medium text-zinc-500">When</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Admin</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Action</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Subject</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((e: any) => (
-                <tr key={e.id} className="border-b border-zinc-100 last:border-0 odd:bg-white even:bg-zinc-50/50">
-                  <td className="px-4 py-3 text-zinc-400 text-xs whitespace-nowrap tabular-nums">
-                    {new Date(e.created_at).toLocaleDateString('en-GB', {
-                      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-                    })}
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-zinc-900">{e.admin_name ?? '—'}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${ACTION_COLORS[e.action] ?? 'bg-zinc-100 text-zinc-600'}`}>
-                      {ACTION_LABELS[e.action] ?? e.action}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-zinc-700 max-w-xs">
-                    <p className="truncate">{e.entity_name ?? e.entity_id ?? '—'}</p>
-                    {e.entity_type && (
-                      <p className="text-xs text-zinc-400">{e.entity_type}</p>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-zinc-500 text-xs max-w-xs">
-                    {e.details && Object.keys(e.details).length > 0 ? (
-                      <span className="font-mono">
-                        {Object.entries(e.details)
-                          .map(([k, v]) => `${k}: ${v}`)
-                          .join(' · ')}
-                      </span>
-                    ) : '—'}
-                  </td>
+        <>
+          <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-zinc-50 border-b border-zinc-100 text-left">
+                  <th className="px-4 py-3 font-medium text-zinc-500">When</th>
+                  <th className="px-4 py-3 font-medium text-zinc-500">Admin</th>
+                  <th className="px-4 py-3 font-medium text-zinc-500">Action</th>
+                  <th className="px-4 py-3 font-medium text-zinc-500">Subject</th>
+                  <th className="px-4 py-3 font-medium text-zinc-500">Details</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {entries.map((e) => (
+                  <tr key={e.id} className="border-b border-zinc-100 last:border-0 odd:bg-white even:bg-zinc-50/50">
+                    <td className="px-4 py-3 text-zinc-400 text-xs whitespace-nowrap tabular-nums">
+                      {new Date(e.created_at).toLocaleDateString('en-GB', {
+                        day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+                      })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-zinc-900">{e.admin_name ?? '—'}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${ACTION_COLORS[e.action] ?? 'bg-zinc-100 text-zinc-600'}`}>
+                        {ACTION_LABELS[e.action] ?? e.action}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-zinc-700 max-w-xs">
+                      <p className="truncate">{e.entity_name ?? e.entity_id ?? '—'}</p>
+                      {e.entity_type && (
+                        <p className="text-xs text-zinc-400">{e.entity_type}</p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-zinc-500 text-xs max-w-xs">
+                      {e.meta && Object.keys(e.meta).length > 0 ? (
+                        <span className="font-mono">
+                          {Object.entries(e.meta)
+                            .map(([k, v]) => `${k}: ${String(v)}`)
+                            .join(' · ')}
+                        </span>
+                      ) : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pagination
+            page={page}
+            total={total}
+            prevHref={page > 1 ? pageHref(page - 1) : null}
+            nextHref={page * PAGINATION_SIZE < total ? pageHref(page + 1) : null}
+          />
+        </>
       )}
     </div>
   )

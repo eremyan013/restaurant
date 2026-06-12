@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useMemo } from 'react'
+import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 
 type User = {
   id: string
@@ -15,6 +16,15 @@ type User = {
   created_at: string | null
 }
 
+type Props = {
+  users: User[]
+  totalCount: number
+  currentPage: number
+  defaultQ: string
+  defaultTier: string
+  defaultSort: string
+}
+
 const TIER_COLORS: Record<string, string> = {
   '1': 'bg-zinc-100 text-zinc-600',
   '2': 'bg-blue-50 text-blue-700',
@@ -25,79 +35,61 @@ const TIER_LABELS: Record<string, string> = {
   '1': 'Tonir', '2': 'Pandok', '3': 'Areni', '4': 'Master',
 }
 
-type SortKey = 'created_at' | 'yel_points' | 'total_visits' | 'name'
+export default function UsersClient({
+  users,
+  totalCount,
+  defaultQ,
+  defaultTier,
+  defaultSort,
+}: Props) {
+  const router = useRouter()
+  const [inputValue, setInputValue] = useState(defaultQ)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-export default function UsersClient({ users }: { users: User[] }) {
-  const [query, setQuery] = useState('')
-  const [tierFilter, setTierFilter] = useState<string | 'all'>('all')
-  const [sortKey, setSortKey] = useState<SortKey>('created_at')
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  const q = defaultQ
+  const tier = defaultTier
+  const sort = defaultSort || 'created_at:desc'
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-
-    let result = users.filter(u => {
-      if (tierFilter !== 'all' && u.tier !== tierFilter) return false
-      if (!q) return true
-      return (
-        String(u.player_id ?? '').includes(q) ||
-        (u.name ?? '').toLowerCase().includes(q) ||
-        (u.email ?? '').toLowerCase().includes(q) ||
-        (u.phone ?? '').toLowerCase().includes(q) ||
-        u.id.toLowerCase().includes(q)
-      )
-    })
-
-    result = [...result].sort((a, b) => {
-      let av: string | number, bv: string | number
-      if (sortKey === 'name') {
-        av = (a.name ?? '').toLowerCase()
-        bv = (b.name ?? '').toLowerCase()
-      } else if (sortKey === 'created_at') {
-        av = a.created_at ?? ''
-        bv = b.created_at ?? ''
-      } else {
-        av = a[sortKey] ?? 0
-        bv = b[sortKey] ?? 0
-      }
-      if (av < bv) return sortDir === 'asc' ? -1 : 1
-      if (av > bv) return sortDir === 'asc' ? 1 : -1
-      return 0
-    })
-
-    return result
-  }, [users, query, tierFilter, sortKey, sortDir])
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
-    else { setSortKey(key); setSortDir('desc') }
+  function navigate(overrides: { q?: string; tier?: string; sort?: string }) {
+    const params = new URLSearchParams()
+    const newQ    = overrides.q    !== undefined ? overrides.q    : q
+    const newTier = overrides.tier !== undefined ? overrides.tier : tier
+    const newSort = overrides.sort !== undefined ? overrides.sort : sort
+    if (newQ)    params.set('q', newQ)
+    if (newTier) params.set('tier', newTier)
+    if (newSort !== 'created_at:desc') params.set('sort', newSort)
+    router.push(`/dashboard/users${params.toString() ? '?' + params.toString() : ''}`)
   }
 
-  function SortIcon({ col }: { col: SortKey }) {
-    if (sortKey !== col) return <span className="ml-1 text-zinc-300">↕</span>
-    return <span className="ml-1 text-zinc-600">{sortDir === 'asc' ? '↑' : '↓'}</span>
+  function handleSearchChange(value: string) {
+    setInputValue(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      navigate({ q: value })
+    }, 200)
   }
+
+  const hasActiveFilters = q !== '' || tier !== ''
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-zinc-900">Users</h1>
-        <span className="text-sm text-zinc-400">{filtered.length} of {users.length}</span>
+        <span className="text-sm text-zinc-400">{totalCount} users</span>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
         <input
           type="text"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
+          value={inputValue}
+          onChange={e => handleSearchChange(e.target.value)}
           placeholder="Search by ID, name, email or phone…"
           className="flex-1 min-w-[240px] px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-300"
         />
 
         <select
-          value={tierFilter}
-          onChange={e => setTierFilter(e.target.value === 'all' ? 'all' : e.target.value)}
+          value={tier || 'all'}
+          onChange={e => navigate({ tier: e.target.value === 'all' ? '' : e.target.value })}
           className="px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-white text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-300"
         >
           <option value="all">All tiers</option>
@@ -107,11 +99,8 @@ export default function UsersClient({ users }: { users: User[] }) {
         </select>
 
         <select
-          value={`${sortKey}:${sortDir}`}
-          onChange={e => {
-            const [k, d] = e.target.value.split(':') as [SortKey, 'asc' | 'desc']
-            setSortKey(k); setSortDir(d)
-          }}
+          value={sort}
+          onChange={e => navigate({ sort: e.target.value })}
           className="px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-white text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-300"
         >
           <option value="created_at:desc">Newest first</option>
@@ -122,9 +111,12 @@ export default function UsersClient({ users }: { users: User[] }) {
           <option value="name:desc">Name Z–A</option>
         </select>
 
-        {(query || tierFilter !== 'all') && (
+        {hasActiveFilters && (
           <button
-            onClick={() => { setQuery(''); setTierFilter('all') }}
+            onClick={() => {
+              setInputValue('')
+              router.push('/dashboard/users')
+            }}
             className="px-3 py-2 text-sm text-zinc-500 hover:text-zinc-800 border border-zinc-200 rounded-lg bg-white"
           >
             Clear
@@ -136,45 +128,25 @@ export default function UsersClient({ users }: { users: User[] }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
-              <th className="px-4 py-3 font-medium text-zinc-500">
-                <button onClick={() => toggleSort('name')} className="flex items-center hover:text-zinc-800">
-                  Player ID
-                </button>
-              </th>
-              <th className="px-4 py-3 font-medium text-zinc-500">
-                <button onClick={() => toggleSort('name')} className="flex items-center hover:text-zinc-800">
-                  Name <SortIcon col="name" />
-                </button>
-              </th>
+              <th className="px-4 py-3 font-medium text-zinc-500">Player ID</th>
+              <th className="px-4 py-3 font-medium text-zinc-500">Name</th>
               <th className="px-4 py-3 font-medium text-zinc-500">Email</th>
               <th className="px-4 py-3 font-medium text-zinc-500">Phone</th>
               <th className="px-4 py-3 font-medium text-zinc-500">Tier</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">
-                <button onClick={() => toggleSort('yel_points')} className="flex items-center hover:text-zinc-800">
-                  YEL <SortIcon col="yel_points" />
-                </button>
-              </th>
-              <th className="px-4 py-3 font-medium text-zinc-500">
-                <button onClick={() => toggleSort('total_visits')} className="flex items-center hover:text-zinc-800">
-                  Visits <SortIcon col="total_visits" />
-                </button>
-              </th>
-              <th className="px-4 py-3 font-medium text-zinc-500">
-                <button onClick={() => toggleSort('created_at')} className="flex items-center hover:text-zinc-800">
-                  Joined <SortIcon col="created_at" />
-                </button>
-              </th>
+              <th className="px-4 py-3 font-medium text-zinc-500">YEL</th>
+              <th className="px-4 py-3 font-medium text-zinc-500">Visits</th>
+              <th className="px-4 py-3 font-medium text-zinc-500">Joined</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {users.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-4 py-10 text-center text-zinc-400">
                   No users match your search.
                 </td>
               </tr>
             ) : (
-              filtered.map(user => (
+              users.map(user => (
                 <tr
                   key={user.id}
                   className="relative odd:bg-white even:bg-zinc-50 hover:bg-zinc-100 transition-colors cursor-pointer"

@@ -6,6 +6,7 @@ import { getCurrentAdmin } from '@/lib/current-admin'
 import { YelAdjustForm } from '@/components/yel-adjust-form'
 import { TierSettingsForm } from '@/components/tier-settings-form'
 import { logActivity } from '@/lib/log-activity'
+import { calcTierLevel, genYelCode } from '@/lib/yel-logic'
 
 const TIER_COLORS: Record<number, string> = {
   1: 'bg-zinc-100 text-zinc-600',
@@ -42,17 +43,6 @@ async function loadTierSettings(): Promise<TierSettings> {
     }
   }
   return { names, mins }
-}
-
-function calcTierLevel(points: number, mins: Record<number, number>): number {
-  if (points >= mins[4]) return 4
-  if (points >= mins[3]) return 3
-  if (points >= mins[2]) return 2
-  return 1
-}
-
-function genCode() {
-  return 'YEL-' + Math.random().toString(36).substring(2, 8).toUpperCase()
 }
 
 async function adjustPoints(formData: FormData) {
@@ -113,7 +103,7 @@ async function adjustPoints(formData: FormData) {
         await supabase.from('user_prizes').insert({
           user_id:  userId,
           prize_id: prize.id,
-          code:     genCode(),
+          code:     genYelCode(),
           status:   'active',
         })
       }
@@ -172,12 +162,21 @@ export default async function YelPage() {
 
   const supabase = createSupabaseAdminClient()
 
-  const [profilesRes, recentRes, { names: tierNames, mins: tierMins }] = await Promise.all([
+  type StatsRow  = { yel_points: number; total_visits: number; tier_level: number }
+  type EarnerRow = { id: string; player_id: number; name: string; email: string; yel_points: number; tier: string; tier_level: number; total_visits: number }
+  type RecentRow = { id: string; date: string; yel_earned: string; profiles: { name: string; player_id: number } | null; venues: { name: string } | null }
+
+  const [statsRes, earnersRes, recentRes, { names: tierNames, mins: tierMins }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('yel_points, total_visits, tier_level')
+      .eq('role', 'user'),
     supabase
       .from('profiles')
       .select('id, player_id, name, email, yel_points, tier, tier_level, total_visits')
       .eq('role', 'user')
-      .order('yel_points', { ascending: false }),
+      .order('yel_points', { ascending: false })
+      .limit(20),
     supabase
       .from('reservations')
       .select('id, date, yel_earned, profiles(name, player_id), venues(name)')
@@ -187,16 +186,17 @@ export default async function YelPage() {
     loadTierSettings(),
   ])
 
-  const users: any[]  = profilesRes.data ?? []
-  const recent: any[] = recentRes.data ?? []
+  const statsUsers: StatsRow[]  = statsRes.data  ?? []
+  const earners:    EarnerRow[] = earnersRes.data ?? []
+  const recent:     RecentRow[] = recentRes.data  ?? []
 
-  const totalPoints     = users.reduce((s, u) => s + (u.yel_points ?? 0), 0)
-  const usersWithPoints = users.filter(u => u.yel_points > 0).length
+  const totalPoints     = statsUsers.reduce((s, u) => s + (u.yel_points ?? 0), 0)
+  const usersWithPoints = statsUsers.filter(u => u.yel_points > 0).length
   const avgPoints       = usersWithPoints > 0 ? Math.round(totalPoints / usersWithPoints) : 0
-  const totalVisits     = users.reduce((s, u) => s + (u.total_visits ?? 0), 0)
+  const totalVisits     = statsUsers.reduce((s, u) => s + (u.total_visits ?? 0), 0)
 
   const tierCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 }
-  for (const u of users) tierCounts[u.tier_level ?? 1] = (tierCounts[u.tier_level ?? 1] ?? 0) + 1
+  for (const u of statsUsers) tierCounts[u.tier_level ?? 1] = (tierCounts[u.tier_level ?? 1] ?? 0) + 1
 
   function tierRange(level: number) {
     const from = tierMins[level]
@@ -228,7 +228,7 @@ export default async function YelPage() {
           <div className="space-y-3">
             {([4, 3, 2, 1] as const).map(level => {
               const count = tierCounts[level] ?? 0
-              const pct = users.length > 0 ? Math.round((count / users.length) * 100) : 0
+              const pct = statsUsers.length > 0 ? Math.round((count / statsUsers.length) * 100) : 0
               return (
                 <div key={level}>
                   <div className="flex items-center justify-between mb-1">
@@ -257,7 +257,7 @@ export default async function YelPage() {
 
         {/* Manual adjustment */}
         <div className="lg:col-span-2">
-          <YelAdjustForm users={users} adjustPoints={adjustPoints} />
+          <YelAdjustForm adjustPoints={adjustPoints} />
         </div>
       </div>
 
@@ -268,7 +268,7 @@ export default async function YelPage() {
       <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
           <h2 className="text-sm font-medium text-zinc-900">Top Earners</h2>
-          <span className="text-xs text-zinc-400">Top {Math.min(users.length, 20)} users</span>
+          <span className="text-xs text-zinc-400">Top {earners.length} users</span>
         </div>
         <table className="w-full text-sm">
           <thead>
@@ -281,7 +281,7 @@ export default async function YelPage() {
             </tr>
           </thead>
           <tbody>
-            {users.slice(0, 20).map((u, i) => (
+            {earners.map((u, i) => (
               <tr key={u.id} className="odd:bg-white even:bg-zinc-100 hover:bg-zinc-200 transition-colors">
                 <td className="px-4 py-3 text-zinc-400 tabular-nums">{i + 1}</td>
                 <td className="px-4 py-3">
@@ -324,7 +324,7 @@ export default async function YelPage() {
               </tr>
             </thead>
             <tbody>
-              {recent.map((r: any) => (
+              {recent.map((r) => (
                 <tr key={r.id} className="odd:bg-white even:bg-zinc-100 hover:bg-zinc-200 transition-colors">
                   <td className="px-4 py-3">
                     <p className="font-medium text-zinc-900">{r.profiles?.name ?? '—'}</p>

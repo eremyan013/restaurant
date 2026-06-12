@@ -12,7 +12,7 @@ webpush.setVapidDetails(
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Notify-Secret',
 }
 
 export async function OPTIONS() {
@@ -20,6 +20,12 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: NextRequest) {
+  const notifySecret = process.env.NOTIFY_SECRET
+  const headerSecret = request.headers.get('X-Notify-Secret')
+  if (!notifySecret || !headerSecret || headerSecret !== notifySecret) {
+    return NextResponse.json({ ok: false }, { status: 401, headers: CORS })
+  }
+
   const rl = await rateLimit(request, RATE_NOTIFY)
   if (rl.limited) return NextResponse.json({ ok: false }, { status: 429, headers: CORS })
 
