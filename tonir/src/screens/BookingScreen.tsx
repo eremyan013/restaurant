@@ -45,11 +45,11 @@ function generateDates(
 }
 
 export function BookingScreen({ navigation, route }: Props) {
-  const { venueId, time: initialTime, people: initialPeople } = route.params;
+  const { venueId, time: initialTime, people: initialPeople, modifyReservationId, modifyDateIso } = route.params;
   const { theme: t, setBooking } = useStore();
   const insets = useSafeAreaInsets();
   const { venue } = useVenue(venueId);
-  const { book } = useReservations();
+  const { book, cancel } = useReservations();
   const { tr, tra, language } = useTranslation();
   const { hoursMap, blockedDates } = useVenueAvailability(venueId);
 
@@ -89,6 +89,23 @@ export function BookingScreen({ navigation, route }: Props) {
 
   async function confirm() {
     if (submitting) return;
+
+    if (modifyReservationId && modifyDateIso) {
+      const [hourStr, minuteStr] = (initialTime ?? '').split(':');
+      if (hourStr && minuteStr) {
+        const resDate = new Date(modifyDateIso);
+        resDate.setHours(parseInt(hourStr, 10), parseInt(minuteStr, 10), 0, 0);
+        if (Date.now() >= resDate.getTime() - 60 * 60 * 1000) {
+          Alert.alert(
+            tr('book_error_title'),
+            tr('res_cancel_deadline_passed'),
+            [{ text: tr('book_error_back'), style: 'cancel' }]
+          );
+          return;
+        }
+      }
+    }
+
     setSubmitting(true);
     try {
       const d = DATES[dateIndex];
@@ -96,17 +113,46 @@ export function BookingScreen({ navigation, route }: Props) {
       const isoDateObj = new Date();
       isoDateObj.setDate(isoDateObj.getDate() + dateIndex);
       const dateIso = isoDateObj.toISOString().split('T')[0];
-      await book({
-        venue_id: venueId,
-        people,
-        date: dateStr,
-        date_iso: dateIso,
-        time,
-        occasion,
-        note,
-        status: 'pending',
-        yel_earned: venue!.perk,
-      });
+
+      if (modifyReservationId) {
+        await cancel(modifyReservationId);
+        try {
+          await book({
+            venue_id: venueId,
+            people,
+            date: dateStr,
+            date_iso: dateIso,
+            time,
+            occasion,
+            note,
+            status: 'pending',
+            yel_earned: venue!.perk,
+          });
+        } catch (bookErr: unknown) {
+          if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          const message = bookErr instanceof Error ? bookErr.message : tr('book_error_sub');
+          Alert.alert(
+            tr('book_modify_partial_error_title'),
+            `${tr('book_modify_partial_error_body')} ${message}`,
+            [{ text: tr('book_error_back'), style: 'cancel' }]
+          );
+          setSubmitting(false);
+          return;
+        }
+      } else {
+        await book({
+          venue_id: venueId,
+          people,
+          date: dateStr,
+          date_iso: dateIso,
+          time,
+          occasion,
+          note,
+          status: 'pending',
+          yel_earned: venue!.perk,
+        });
+      }
+
       notifyAdminsNewReservation(venue!.name, dateStr, time, people).catch(() => {});
       setBooking({
         venueId,
@@ -122,8 +168,7 @@ export function BookingScreen({ navigation, route }: Props) {
       navigation.navigate('Confirmation');
     } catch (err: unknown) {
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      const message =
-        err instanceof Error ? err.message : tr('book_error_sub');
+      const message = err instanceof Error ? err.message : tr('book_error_sub');
       Alert.alert(
         tr('book_error_title'),
         message,
@@ -144,7 +189,9 @@ export function BookingScreen({ navigation, route }: Props) {
           <Icon name="chevL" size={22} color={t.text} />
         </Pressable>
         <View style={styles.headerCenter}>
-          <Text style={[styles.eyebrow, { color: t.primary }]}>{tr('book_eyebrow')}</Text>
+          <Text style={[styles.eyebrow, { color: t.primary }]}>
+            {modifyReservationId ? tr('book_eyebrow_modify') : tr('book_eyebrow')}
+          </Text>
           <Text style={[styles.venueName, { color: t.text }]}>{venue.name}</Text>
         </View>
         <View style={{ width: 40 }} />

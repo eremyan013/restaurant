@@ -216,19 +216,37 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                             </Text>
                           </Pressable>
                         )
-                      ) : (
-                        <Pressable
-                          onPress={() => {
-                            if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            navigation.navigate('Detail', { venueId: venue.id });
-                          }}
-                          style={[styles.actionBtn, { borderColor: t.border }]}
-                        >
-                          <Text style={[styles.actionText, { color: t.text }]}>
-                            {tr('res_action_modify')}
-                          </Text>
-                        </Pressable>
-                      )}
+                      ) : (() => {
+                        const pastModifyDeadline = isPastCancelDeadline(res);
+                        return pastModifyDeadline ? (
+                          <View style={[styles.actionBtn, styles.cancelDisabledBtn, { borderColor: t.border }]}>
+                            <Text style={[styles.actionText, { color: t.textFaint }]}>
+                              {tr('res_action_modify')}
+                            </Text>
+                            <Text style={[styles.cancelDeadlineLabel, { color: t.textFaint }]}>
+                              {tr('res_cancel_deadline_passed')}
+                            </Text>
+                          </View>
+                        ) : (
+                          <Pressable
+                            onPress={() => {
+                              if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                              navigation.navigate('Booking', {
+                                venueId: venue.id,
+                                time: res.time,
+                                people: res.people,
+                                modifyReservationId: res.id,
+                                modifyDateIso: res.date_iso ?? undefined,
+                              });
+                            }}
+                            style={[styles.actionBtn, { borderColor: t.border }]}
+                          >
+                            <Text style={[styles.actionText, { color: t.text }]}>
+                              {tr('res_action_modify')}
+                            </Text>
+                          </Pressable>
+                        );
+                      })()}
                       {tab === 'upcoming' && (() => {
                         const pastDeadline = isPastCancelDeadline(res);
                         return pastDeadline ? (

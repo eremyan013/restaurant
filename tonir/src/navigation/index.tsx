@@ -80,7 +80,13 @@ export type RootStackParamList = {
   PhoneVerify: { phone: string; userId: string };
   Tabs: undefined;
   Detail: { venueId: string };
-  Booking: { venueId: string; time?: string; people?: number };
+  Booking: {
+    venueId: string;
+    time?: string;
+    people?: number;
+    modifyReservationId?: string;
+    modifyDateIso?: string;
+  };
   Confirmation: undefined;
   Map: { focusVenueId?: string; fromDetail?: boolean };
   Concierge: undefined;
