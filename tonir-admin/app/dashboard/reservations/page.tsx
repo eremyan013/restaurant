@@ -28,11 +28,16 @@ async function setStatus(id: string, status: ReservationRow['status']) {
 
   const supabase = createSupabaseAdminClient()
 
+  type ResRow = {
+    user_id: string; venue_id: string; date: string; time: string
+    venues: { name: string } | null
+    profiles: { push_token: string | null } | null
+  }
   const { data: res } = await supabase
     .from('reservations')
     .select('user_id, venue_id, date, time, venues(name), profiles(push_token)')
     .eq('id', id)
-    .single()
+    .single() as unknown as { data: ResRow | null }
 
   if (!res) return
   if (admin.role === 'admin' && !admin.managed_venue_ids.includes(res.venue_id)) return
@@ -67,7 +72,7 @@ async function saveNote(id: string, formData: FormData) {
 
   if (admin.role === 'admin') {
     const { data: res } = await supabase.from('reservations').select('venue_id').eq('id', id).single()
-    if (!admin.managed_venue_ids.includes(res?.venue_id)) return
+    if (!admin.managed_venue_ids.includes(res?.venue_id ?? '')) return
   }
 
   await supabase

@@ -70,8 +70,8 @@ export default async function EditPrizePage({ params }: { params: Promise<{ id: 
     await supabase.from('prizes').update({
       name:          (formData.get('name') as string).trim(),
       description:   (formData.get('description') as string)?.trim() || null,
-      type:          formData.get('type') as string,
-      unlock_type:   unlockType,
+      type:          formData.get('type') as 'discount' | 'free_item' | 'experience' | 'voucher',
+      unlock_type:   unlockType as 'points' | 'tier',
       points_cost:   unlockType === 'points' ? parseInt(formData.get('points_cost') as string) : null,
       min_tier_level: unlockType === 'tier'  ? parseInt(formData.get('min_tier_level') as string) : null,
       venue_id:      (formData.get('venue_id') as string) || null,
@@ -116,13 +116,13 @@ export default async function EditPrizePage({ params }: { params: Promise<{ id: 
         tierNames={tierNames}
         defaults={{
           name:          prize.name,
-          description:   prize.description,
+          description:   prize.description ?? undefined,
           type:          prize.type,
           unlock_type:   prize.unlock_type,
           points_cost:   prize.points_cost?.toString(),
           min_tier_level: prize.min_tier_level?.toString(),
-          venue_id:      prize.venue_id,
-          image_url:     prize.image_url,
+          venue_id:      prize.venue_id ?? undefined,
+          image_url:     prize.image_url ?? undefined,
           stock:         prize.stock?.toString(),
           unlimited_stock: prize.stock == null,
           sort_order:    prize.sort_order?.toString(),

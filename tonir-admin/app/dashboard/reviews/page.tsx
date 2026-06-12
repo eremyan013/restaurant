@@ -109,7 +109,7 @@ export default async function ReviewsPage({
   // Paginated reviews for the current tab
   let reviewsQuery = supabase
     .from('reviews')
-    .select('id, rating, comment, status, created_at, venue_id, user_id', { count: 'exact' })
+    .select('id, rating, comment, status, created_at, venue_id, user_id, reservation_id', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to)
 

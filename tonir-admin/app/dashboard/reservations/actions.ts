@@ -36,7 +36,7 @@ export async function editReservation(
 
   if (admin.role === 'admin') {
     const { data: res } = await supabase.from('reservations').select('venue_id').eq('id', id).single()
-    if (!admin.managed_venue_ids.includes(res?.venue_id)) return { ok: false, error: 'Unauthorized' }
+    if (!admin.managed_venue_ids.includes(res?.venue_id ?? '')) return { ok: false, error: 'Unauthorized' }
   }
 
   const { error } = await supabase

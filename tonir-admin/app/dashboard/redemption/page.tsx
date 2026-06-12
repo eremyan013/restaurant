@@ -64,7 +64,7 @@ export default async function RedemptionPage({
   if (code) {
     const { data: raw } = await supabase
       .from('user_prizes')
-      .select('id, code, status, claimed_at, used_at, expires_at, user_id, prize_id')
+      .select('id, code, status, claimed_at, used_at, user_id, prize_id')
       .eq('code', code)
       .maybeSingle()
 
@@ -78,7 +78,8 @@ export default async function RedemptionPage({
           : Promise.resolve({ data: null }),
       ])
 
-      let prizeWithVenue = prizeRes.data ?? null
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let prizeWithVenue: any = prizeRes.data ?? null
       if (prizeWithVenue?.venue_id) {
         const { data: venueData } = await supabase.from('venues').select('name').eq('id', prizeWithVenue.venue_id).single()
         prizeWithVenue = { ...prizeWithVenue, venues: venueData ?? null }
@@ -94,8 +95,7 @@ export default async function RedemptionPage({
     }
   }
 
-  const isExpired  = result?.expires_at && new Date(result.expires_at) < new Date()
-  const effectiveStatus = isExpired && result?.status === 'active' ? 'expired' : result?.status
+  const effectiveStatus = result?.status
 
   return (
     <div className="max-w-lg">
@@ -210,17 +210,6 @@ export default async function RedemptionPage({
               </div>
             </div>
 
-            {/* Expiry */}
-            {result.expires_at && (
-              <>
-                <hr className="border-zinc-100" />
-                <p className="text-sm text-zinc-500">
-                  Expires: <span className={`font-medium ${isExpired ? 'text-red-600' : 'text-zinc-700'}`}>
-                    {new Date(result.expires_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </span>
-                </p>
-              </>
-            )}
 
             {/* Action */}
             {effectiveStatus === 'active' && (

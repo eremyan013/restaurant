@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { rateLimit, RATE_WRITE } from '@/lib/rate-limit'
+import type { MenuItemUpdate } from '@/lib/database.types'
 
 export async function PATCH(
   request: NextRequest,
@@ -14,8 +15,7 @@ export async function PATCH(
   const body = await request.json()
   const supabase = createSupabaseAdminClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const update: Record<string, any> = {}
+  const update: MenuItemUpdate = {}
   if ('name'           in body) update.name           = body.name
   if ('name_hy'        in body) update.name_hy        = body.name_hy
   if ('name_ru'        in body) update.name_ru        = body.name_ru

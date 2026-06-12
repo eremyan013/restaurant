@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     if (admin.web_push_sub?.endpoint) {
       notifications.push(
         webpush.sendNotification(
-          admin.web_push_sub,
+          admin.web_push_sub as unknown as Parameters<typeof webpush.sendNotification>[0],
           JSON.stringify({ title, body, url: '/dashboard/reservations' }),
         ).catch(() => {})
       )

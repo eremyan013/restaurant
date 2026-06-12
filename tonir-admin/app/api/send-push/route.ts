@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
   const tokens: string[] = (profiles ?? [])
     .map((p: { id: string; push_token: string | null }) => p.push_token)
-    .filter(Boolean)
+    .filter((t): t is string => !!t)
 
   if (tokens.length === 0) {
     return NextResponse.json({ sent: 0, failed: 0, total: 0 })

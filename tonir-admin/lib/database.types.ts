@@ -688,6 +688,7 @@ export type FavoriteRow     = Database['public']['Tables']['favorites']['Row'];
 export type ProfileRow      = Database['public']['Tables']['profiles']['Row'];
 export type MenuCategoryRow = Database['public']['Tables']['menu_categories']['Row'];
 export type MenuItemRow     = Database['public']['Tables']['menu_items']['Row'];
+export type MenuItemUpdate  = Database['public']['Tables']['menu_items']['Update'];
 export type GuideRow              = Database['public']['Tables']['guides']['Row'];
 export type ConciergeSessionRow   = Database['public']['Tables']['concierge_sessions']['Row'];
 export type ConciergeMessageRow   = Database['public']['Tables']['concierge_messages']['Row'];

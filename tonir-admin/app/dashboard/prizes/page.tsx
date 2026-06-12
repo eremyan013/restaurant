@@ -56,7 +56,7 @@ export default async function PrizesPage() {
   const prizes:   PrizeRow[]                                = prizesRes.data   ?? []
   const claims:   Pick<UserPrizeRow, 'prize_id'|'status'>[] = claimsRes.data   ?? []
   const venues:   Pick<VenueRow, 'id'|'name'>[]             = venuesRes.data   ?? []
-  const settings: SettingRow[]                              = settingsRes.data ?? []
+  const settings: Pick<SettingRow, 'key' | 'value'>[]       = settingsRes.data ?? []
 
   const tierNames: Record<number, string> = { 1: 'Tonir', 2: 'Pandok', 3: 'Areni', 4: 'Master' }
   for (const s of settings) {
@@ -136,7 +136,7 @@ export default async function PrizesPage() {
                     {p.unlock_type === 'points' ? (
                       <span className="text-zinc-700">{(p.points_cost ?? 0).toLocaleString()} pts</span>
                     ) : (
-                      <span className="text-zinc-700">Level {p.min_tier_level} — {tierNames[p.min_tier_level]}</span>
+                      <span className="text-zinc-700">Level {p.min_tier_level} — {tierNames[p.min_tier_level ?? 0]}</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-zinc-600">{p.venue_id ? (venueMap[p.venue_id] ?? '—') : 'All venues'}</td>
