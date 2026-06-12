@@ -11,6 +11,7 @@ import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation';
 import { useStore } from '../store';
 import { useVenues, useVenue } from '../hooks/useVenues';
+import { useVenueAvailability, filterAvailableTimes } from '../hooks/useVenueAvailability';
 import { useMenu } from '../hooks/useMenu';
 import { useFavorites } from '../hooks/useFavorites';
 import { useTranslation } from '../hooks/useTranslation';
@@ -72,6 +73,19 @@ export function DetailScreen({ navigation, route }: Props) {
   const { venues: allVenues } = useVenues();
   const { categories: menuCats, items: menuItems, loading: menuLoading } = useMenu(venueId);
   const similar = allVenues.filter((v) => v.id !== venueId && venue && v.kind === venue.kind).slice(0, 4);
+
+  const { hoursMap, loading: availabilityLoading } = useVenueAvailability(venueId);
+  const todayDow = new Date().getDay();
+  const availableTimes: string[] = venue
+    ? filterAvailableTimes(venue.times, todayDow, hoursMap, true)
+    : [];
+  const timesToShow = availabilityLoading ? (venue?.times ?? []) : availableTimes;
+
+  useEffect(() => {
+    if (selectedTime && !timesToShow.includes(selectedTime)) {
+      setSelectedTime(null);
+    }
+  }, [timesToShow]);
 
   async function shareVenue() {
     if (!venue) return;
@@ -197,23 +211,29 @@ export function DetailScreen({ navigation, route }: Props) {
             </View>
           </View>
           <View style={styles.timeGrid}>
-            {(showAllTimes ? venue.times : venue.times.slice(0, 4)).map((time, i) => (
-              <TimePill
-                key={time}
-                time={time}
-                t={t}
-                size="md"
-                dark
-                active={selectedTime === time}
-                perk={i < 2 ? venue.perk : undefined}
-                onPress={() => {
-                  if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setSelectedTime(time);
-                }}
-              />
+            {(showAllTimes ? timesToShow : timesToShow.slice(0, 4)).map((time, i) => (
+              <View key={time} style={availabilityLoading ? { opacity: 0.45 } : undefined}>
+                <TimePill
+                  time={time}
+                  t={t}
+                  size="md"
+                  dark
+                  active={selectedTime === time}
+                  perk={i < 2 ? venue.perk : undefined}
+                  onPress={() => {
+                    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setSelectedTime(time);
+                  }}
+                />
+              </View>
             ))}
+            {timesToShow.length === 0 && !availabilityLoading && (
+              <Text style={[styles.noTimesText, { color: 'rgba(251,245,232,0.5)' }]}>
+                {tr('det_no_times_today')}
+              </Text>
+            )}
           </View>
-          {venue.times.length > 4 && (
+          {timesToShow.length > 4 && (
             <Pressable onPress={() => setShowAllTimes((v) => !v)} style={styles.moreTimesBtn}>
               <Text style={styles.moreTimesText}>
                 {showAllTimes ? tr('det_show_less') : tr('det_show_more')}
@@ -575,6 +595,11 @@ const styles = StyleSheet.create({
     color: 'rgba(251,245,232,0.7)',
     fontSize: 13,
     fontFamily: FONTS.medium, fontWeight: '500',
+  },
+  noTimesText: {
+    fontSize: 13,
+    fontFamily: FONTS.medium,
+    fontWeight: '500',
   },
   splitCard: {
     flexDirection: 'row',

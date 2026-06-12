@@ -63,7 +63,7 @@ export function useReservations() {
   const upcoming = reservations.filter(
     (r) => r.status === 'confirmed' || r.status === 'pending'
   );
-  const past = reservations.filter((r) => r.status === 'visited' || r.status === 'cancelled');
+  const past = reservations.filter((r) => r.status === 'visited' || r.status === 'cancelled' || r.status === 'completed');
 
   // Keep the global badge count in sync
   useEffect(() => {

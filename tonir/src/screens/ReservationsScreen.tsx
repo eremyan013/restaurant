@@ -21,6 +21,16 @@ import { Icon } from '../components/Icon';
 import { ErrorState } from '../components/ErrorState';
 import { FONTS } from '../theme';
 
+function isPastCancelDeadline(r: ReservationRow): boolean {
+  if (!r.date_iso) return false;
+  const [hourStr, minuteStr] = r.time.split(':');
+  if (!hourStr || !minuteStr) return false;
+  const reservationDate = new Date(r.date_iso);
+  reservationDate.setHours(parseInt(hourStr, 10), parseInt(minuteStr, 10), 0, 0);
+  const deadlineMs = reservationDate.getTime() - 60 * 60 * 1000;
+  return Date.now() >= deadlineMs;
+}
+
 type Nav = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Reservations'>,
   NativeStackNavigationProp<RootStackParamList>
@@ -219,32 +229,42 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                           </Text>
                         </Pressable>
                       )}
-                      {tab === 'upcoming' && (
-                        <Pressable
-                          onPress={() =>
-                            Alert.alert(
-                              tr('res_cancel_title'),
-                              `${venue.name} · ${res.date} · ${res.time}`,
-                              [
-                                { text: tr('res_cancel_back'), style: 'cancel' },
-                                {
-                                  text: tr('res_action_cancel'),
-                                  style: 'destructive',
-                                  onPress: () => {
-                                    if (Platform.OS !== 'web') Haptics.notificationAsync(
-                                      Haptics.NotificationFeedbackType.Warning
-                                    );
-                                    cancel(res.id);
+                      {tab === 'upcoming' && (() => {
+                        const pastDeadline = isPastCancelDeadline(res);
+                        return pastDeadline ? (
+                          <View style={[styles.actionBtn, styles.cancelDisabledBtn, { borderColor: t.border }]}>
+                            <Text style={[styles.actionText, { color: t.textFaint }]}>{tr('res_action_cancel')}</Text>
+                            <Text style={[styles.cancelDeadlineLabel, { color: t.textFaint }]}>
+                              {tr('res_cancel_deadline_passed')}
+                            </Text>
+                          </View>
+                        ) : (
+                          <Pressable
+                            onPress={() =>
+                              Alert.alert(
+                                tr('res_cancel_title'),
+                                `${venue.name} · ${res.date} · ${res.time}`,
+                                [
+                                  { text: tr('res_cancel_back'), style: 'cancel' },
+                                  {
+                                    text: tr('res_action_cancel'),
+                                    style: 'destructive',
+                                    onPress: () => {
+                                      if (Platform.OS !== 'web') Haptics.notificationAsync(
+                                        Haptics.NotificationFeedbackType.Warning
+                                      );
+                                      cancel(res.id);
+                                    },
                                   },
-                                },
-                              ]
-                            )
-                          }
-                          style={[styles.actionBtn, { borderColor: '#9B233540' }]}
-                        >
-                          <Text style={[styles.actionText, { color: '#9B2335' }]}>{tr('res_action_cancel')}</Text>
-                        </Pressable>
-                      )}
+                                ]
+                              )
+                            }
+                            style={[styles.actionBtn, { borderColor: '#9B233540' }]}
+                          >
+                            <Text style={[styles.actionText, { color: '#9B2335' }]}>{tr('res_action_cancel')}</Text>
+                          </Pressable>
+                        );
+                      })()}
                     </View>
                   </View>
                 </Pressable>
@@ -400,6 +420,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   actionText: { fontSize: 13, fontFamily: FONTS.semiBold, fontWeight: '600' },
+  cancelDisabledBtn: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  cancelDeadlineLabel: { fontSize: 10, fontFamily: FONTS.medium, fontWeight: '500' },
   modalBackdrop: {
     flex: 1,
     justifyContent: 'flex-end',

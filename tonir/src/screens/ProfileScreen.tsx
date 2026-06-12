@@ -256,7 +256,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
               </Text>
             ))}
           </View>
-          <Pressable onPress={() => haptic()} style={[styles.redeemBtn, { backgroundColor: t.accent }]}>
+          <Pressable onPress={() => { haptic(); (navigation as any).navigate('Market'); }} style={[styles.redeemBtn, { backgroundColor: t.accent }]}>
             <Text style={[styles.redeemText, { color: t.primaryDeep }]}>{tr('prof_redeem')}</Text>
           </Pressable>
         </LinearGradient>
