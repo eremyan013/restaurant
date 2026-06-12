@@ -1,4 +1,4 @@
-export type Lang = 'hy' | 'ru' | 'en';
+﻿export type Lang = 'hy' | 'ru' | 'en';
 
 export const LANG_FLAGS: Record<Lang, string> = {
   hy: 'https://flagcdn.com/w40/am.png',
@@ -282,7 +282,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     tierup_close:           'Փակել',
     auth_err_id_not_found:  'Այս ID-ով օգտատեր չի գտնվել',
     auth_phone_placeholder: 'Հեռ. համար (8 նիշ)',
-    auth_err_phone:         'Մուտքագրեք 8-նիշ հեռախոսահամար',
+    auth_err_phone:         'Մուտքագրեք 8-նիշ հեռախոսահամար — 91234567',
     prof_player_id:         'Ձեր ID',
     prof_phone:             'Հեռ.',
     // DetailScreen
@@ -543,7 +543,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     otp_cancel:           'Отмена',
     auth_err_id_not_found:  'Пользователь с таким ID не найден',
     auth_phone_placeholder: 'Номер телефона (8 цифр)',
-    auth_err_phone:         'Введите 8-значный номер телефона',
+    auth_err_phone:         'Введите 8 цифр без +374 (напр. 91234567)',
     market_title:           'Yel Маркет',
     market_pts_balance:     'Ваш баланс',
     market_filter_all:      'Все',
@@ -844,7 +844,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     otp_cancel:           'Cancel',
     auth_err_id_not_found:  'No user found with this ID',
     auth_phone_placeholder: 'Phone number (8 digits)',
-    auth_err_phone:         'Enter an 8-digit phone number',
+    auth_err_phone:         'Enter 8 digits after +374 — e.g. 91234567',
     market_title:           'Yel Market',
     market_pts_balance:     'Your balance',
     market_filter_all:      'All',

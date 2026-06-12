@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View, Text, Pressable, StyleSheet, StatusBar, ScrollView, Linking, Platform, Share, Image, Alert,
 } from 'react-native';
@@ -14,6 +14,7 @@ import { useVenue } from '../hooks/useVenues';
 import { useTranslation } from '../hooks/useTranslation';
 import { Icon } from '../components/Icon';
 import { FONTS } from '../theme';
+import { registerPushToken } from '../lib/notifications';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Confirmation'>;
@@ -30,10 +31,15 @@ const CONFETTI = Array.from({ length: 18 }, (_, i) => ({
 }));
 
 export function ConfirmationScreen({ navigation }: Props) {
-  const { theme: t, booking } = useStore();
+  const { theme: t, booking, userId } = useStore();
   const insets = useSafeAreaInsets();
   const { venue } = useVenue(booking?.venueId ?? '');
   const { tr } = useTranslation();
+
+  // Ask for push permission after first successful booking rather than on sign-in
+  useEffect(() => {
+    if (userId) registerPushToken(userId);
+  }, []);
 
   function openDirections() {
     if (!venue) return;

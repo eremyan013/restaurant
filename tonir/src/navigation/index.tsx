@@ -7,8 +7,6 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
-import Constants from 'expo-constants';
 
 import { useStore } from '../store';
 import { Icon, IconName } from '../components/Icon';
@@ -23,36 +21,6 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
-
-async function registerPushToken(userId: string) {
-  if (Platform.OS === 'web' || !Device.isDevice) return;
-  try {
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-      });
-    }
-    const { status: existing } = await Notifications.getPermissionsAsync();
-    let finalStatus = existing;
-    if (existing !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-    if (finalStatus !== 'granted') return;
-
-    const projectId =
-      (Constants.easConfig as any)?.projectId ??
-      (Constants.expoConfig?.extra as any)?.eas?.projectId;
-    const { data: token } = await Notifications.getExpoPushTokenAsync(
-      projectId ? { projectId } : undefined
-    );
-    await (supabase as any).from('profiles').update({ push_token: token }).eq('id', userId);
-  } catch {
-    // Running in simulator or EAS project not yet configured — skip silently
-  }
-}
 
 export const ONBOARDING_KEY = 'tonir_onboarding_done';
 
@@ -210,7 +178,6 @@ export function AppNavigator() {
       const uid = data.session?.user?.id ?? null;
       setSession(!!data.session);
       useStore.getState().setUserId(uid);
-      if (uid) registerPushToken(uid);
     });
 
     // Check whether onboarding has already been completed
@@ -224,7 +191,6 @@ export function AppNavigator() {
         const uid = sess?.user?.id ?? null;
         setSession(!!sess);
         useStore.getState().setUserId(uid);
-        if (uid) registerPushToken(uid);
       }
     );
     return () => subscription.unsubscribe();

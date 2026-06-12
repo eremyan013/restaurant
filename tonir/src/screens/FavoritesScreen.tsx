@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, Pressable, Image, StyleSheet, StatusBar, RefreshControl, Platform,
 } from 'react-native';
@@ -27,15 +27,19 @@ type Nav = CompositeNavigationProp<
 const LIST_KEYS = ['all', 'try', 'romantic', 'group'] as const;
 type ListKey = typeof LIST_KEYS[number];
 
+// Tag strings stored in the DB — centralised so a rename is a one-line change.
+const ROMANTIC_TAGS = ['Ինտիմ', 'Բակ', 'Պատշգամբ'] as const;
+const GROUP_TAGS    = ['Խմբեր', 'Խմբերի համար', 'Ընտանեկան'] as const;
+
 const LIST_FILTER: Record<ListKey, (v: VenueRow) => boolean> = {
   all:      () => true,
   try:      (v) => v.kind === 'restaurant',
   romantic: (v) =>
     v.kind === 'lounge' ||
-    v.tags.some((tag) => ['Ինտիմ', 'Բակ', 'Պատշգամբ'].includes(tag)),
+    v.tags.some((tag) => (ROMANTIC_TAGS as readonly string[]).includes(tag)),
   group:    (v) =>
     v.kind === 'club' ||
-    v.tags.some((tag) => ['Խմբեր', 'Խմբերի համար', 'Ընտանեկան'].includes(tag)),
+    v.tags.some((tag) => (GROUP_TAGS as readonly string[]).includes(tag)),
 };
 
 export function FavoritesScreen({ navigation }: { navigation: Nav }) {

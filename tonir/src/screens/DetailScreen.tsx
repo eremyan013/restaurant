@@ -245,18 +245,6 @@ export function DetailScreen({ navigation, route }: Props) {
           )}
         </View>
 
-        {/* Group split CTA */}
-        <Pressable onPress={shareVenue} style={[styles.splitCard, { backgroundColor: t.surface, borderColor: t.border, marginHorizontal: 20, marginTop: 12 }]}>
-          <View style={[styles.splitIcon, { backgroundColor: t.bgAlt }]}>
-            <Icon name="split" size={20} color={t.primary} strokeWidth={2} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.splitTitle, { color: t.text }]}>{tr('det_group_title')}</Text>
-            <Text style={[styles.splitSub, { color: t.textMute }]}>{tr('det_group_sub')}</Text>
-          </View>
-          <Icon name="chevR" size={18} color={t.textFaint} />
-        </Pressable>
-
         {/* Sticky tabs */}
         <View style={[styles.tabsBar, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
           {TABS.map((tab, i) => (
@@ -601,23 +589,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     fontWeight: '500',
   },
-  splitCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  splitIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  splitTitle: { fontSize: 14, fontFamily: FONTS.bold, fontWeight: '700' },
-  splitSub: { fontSize: 12, marginTop: 2 },
   tabsBar: {
     flexDirection: 'row',
     borderBottomWidth: 1,

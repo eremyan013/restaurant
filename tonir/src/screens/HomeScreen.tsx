@@ -118,7 +118,6 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
               >
                 <Icon name="sparkle" size={18} color="#FBF5E8" strokeWidth={2} />
               </LinearGradient>
-              <View style={styles.notifDot} />
             </Pressable>
           </View>
         </View>
@@ -424,17 +423,6 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  notifDot: {
-    position: 'absolute',
-    top: 1,
-    right: 1,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#E8743B',
-    borderWidth: 1.5,
-    borderColor: '#F5EFE3',
   },
   section: {
     paddingHorizontal: 20,

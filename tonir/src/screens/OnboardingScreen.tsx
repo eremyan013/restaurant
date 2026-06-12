@@ -11,7 +11,7 @@ import { RootStackParamList, ONBOARDING_KEY } from '../navigation';
 import { useStore } from '../store';
 import { useTranslation } from '../hooks/useTranslation';
 import { Icon } from '../components/Icon';
-import { PHOTOS } from '../data';
+import { PHOTOS } from '../lib/photos';
 import { FONTS } from '../theme';
 
 type Props = { navigation: NativeStackNavigationProp<RootStackParamList, 'Onboarding'> };
