@@ -147,5 +147,5 @@ export const REGULAR_ADMIN = {
   id: 'admin-regular-1',
   name: 'Regular Admin',
   role: 'admin' as const,
-  managed_venue_ids: ['venue-managed-1'],
+  managed_venue_ids: ['b0000000-0000-4000-a000-000000000001'],
 }

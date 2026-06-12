@@ -35,7 +35,7 @@ describe('createAdmin()', () => {
       name:     'Jane Admin',
       email:    'jane@tonir.am',
       password: 'SecurePass123!',
-      venue_id: ['venue-uuid-1'],
+      venue_id: ['b0000000-0000-4000-a000-000000000001'],
       ...overrides,
     })
   }
@@ -87,14 +87,16 @@ describe('createAdmin()', () => {
     const client = { ...makeMockSupabaseClient(), from: vi.fn(() => chain) }
     vi.mocked(createSupabaseAdminClient).mockReturnValue(client as any)
 
-    await createAdmin(PREV, makeValidFormData({ venue_id: ['venue-A', 'venue-B'] }))
+    const VENUE_A = 'b0000000-0000-4000-a000-000000000001'
+    const VENUE_B = 'f0000000-0000-4000-a000-000000000002'
+    await createAdmin(PREV, makeValidFormData({ venue_id: [VENUE_A, VENUE_B] }))
 
     expect(chain.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         role:              'admin',
         is_admin:         true,
-        managed_venue_ids: ['venue-A', 'venue-B'],
-        managed_venue_id:  'venue-A',
+        managed_venue_ids: [VENUE_A, VENUE_B],
+        managed_venue_id:  VENUE_A,
       })
     )
   })
@@ -158,7 +160,9 @@ describe('createAdmin()', () => {
 
     const result = await createAdmin(PREV, makeValidFormData({ name: '' }))
 
-    expect(result).toMatchObject({ ok: false, error: 'All fields are required.' })
+    // validateAction returns { ok: false, fieldErrors } — not a top-level error string
+    expect(result.ok).toBe(false)
+    expect((result as any).fieldErrors?.name).toBeTruthy()
   })
 
   it('[FAILURE SCENARIO] missing email → validation error', async () => {
@@ -195,10 +199,10 @@ describe('updateAdmin()', () => {
 
   function makeValidFormData(overrides: Partial<Record<string, string | string[]>> = {}) {
     return makeFormData({
-      id:       'admin-uuid-1',
+      id:       'e0000000-0000-4000-8000-000000000001',
       name:     'Jane Admin',
       email:    'jane@tonir.am',
-      venue_id: ['venue-uuid-1'],
+      venue_id: ['b0000000-0000-4000-a000-000000000001'],
       ...overrides,
     })
   }
@@ -223,7 +227,7 @@ describe('updateAdmin()', () => {
     expect(result).toEqual({ ok: true })
     // Auth update should only include email (no password key)
     expect(client.auth.admin.updateUserById).toHaveBeenCalledWith(
-      'admin-uuid-1',
+      'e0000000-0000-4000-8000-000000000001',
       { email: 'jane@tonir.am' }
     )
     expect(client.auth.admin.updateUserById).not.toHaveBeenCalledWith(
@@ -242,7 +246,7 @@ describe('updateAdmin()', () => {
     await updateAdmin(PREV, makeValidFormData({ password: 'NewSecret456!' }))
 
     expect(client.auth.admin.updateUserById).toHaveBeenCalledWith(
-      'admin-uuid-1',
+      'e0000000-0000-4000-8000-000000000001',
       { email: 'jane@tonir.am', password: 'NewSecret456!' }
     )
   })
@@ -258,10 +262,12 @@ describe('updateAdmin()', () => {
   it('[FAILURE SCENARIO] no venue_ids → validation error', async () => {
     vi.mocked(getCurrentAdmin).mockResolvedValue(SUPER_ADMIN)
 
-    const fd = makeFormData({ id: 'a1', name: 'Jane', email: 'j@t.am' }) // no venue_id
+    // id must be a valid UUID even for the validation-fail path (zUpdateAdminSchema checks id first)
+    const fd = makeFormData({ id: 'e0000000-0000-4000-8000-000000000001', name: 'Jane', email: 'j@t.am' }) // no venue_id
     const result = await updateAdmin(PREV, fd)
 
-    expect(result).toMatchObject({ ok: false, error: expect.stringContaining('venue') })
+    // validateAction returns { ok: false, fieldErrors } — no top-level error string
+    expect(result.ok).toBe(false)
   })
 
   it('[FAILURE SCENARIO] auth error → returns error', async () => {

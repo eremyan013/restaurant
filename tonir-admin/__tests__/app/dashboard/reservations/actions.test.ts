@@ -28,6 +28,12 @@ import {
   SUPER_ADMIN, REGULAR_ADMIN,
 } from '../../../helpers/supabase-mock'
 
+// UUID constants — Zod v4 requires version [1-8] nibble and variant [89abAB] nibble
+const ID_RESERVATION   = 'a0000000-0000-4000-8000-000000000001'
+const ID_VENUE_MANAGED = 'b0000000-0000-4000-a000-000000000001' // matches REGULAR_ADMIN.managed_venue_ids[0]
+const ID_VENUE_OTHER   = 'c0000000-0000-4000-8000-000000000001'
+const ID_USER          = 'd0000000-0000-4000-a000-000000000001'
+
 // ─────────────────────────────────────────────────────────────────────────────
 // editReservation
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,41 +45,41 @@ describe('editReservation()', () => {
   it('[FAILURE SCENARIO] returns Unauthorized when no session', async () => {
     vi.mocked(getCurrentAdmin).mockResolvedValue(null)
 
-    const fd = makeFormData({ id: 'r1', date_iso: '2026-01-05', time: '19:00', people: '2' })
+    const fd = makeFormData({ id: ID_RESERVATION, date_iso: '2026-01-05', time: '19:00', people: '2' })
     const result = await editReservation(PREV, fd)
 
     expect(result).toEqual({ ok: false, error: 'Unauthorized' })
   })
 
   it('[FAILURE SCENARIO] regular admin cannot edit a reservation for a venue they do not manage', async () => {
-    vi.mocked(getCurrentAdmin).mockResolvedValue(REGULAR_ADMIN) // manages ['venue-managed-1']
+    vi.mocked(getCurrentAdmin).mockResolvedValue(REGULAR_ADMIN) // manages [ID_VENUE_MANAGED]
     const client = makeMockSupabaseClient({
       tableResponses: {
         // venue_id lookup returns a venue the admin does NOT manage
-        reservations: { data: { venue_id: 'venue-other' }, error: null },
+        reservations: { data: { venue_id: ID_VENUE_OTHER }, error: null },
       },
     })
     vi.mocked(createSupabaseAdminClient).mockReturnValue(client as any)
 
-    const fd = makeFormData({ id: 'r1', date_iso: '2026-01-05', time: '19:00', people: '2' })
+    const fd = makeFormData({ id: ID_RESERVATION, date_iso: '2026-01-05', time: '19:00', people: '2' })
     const result = await editReservation(PREV, fd)
 
     expect(result).toEqual({ ok: false, error: 'Unauthorized' })
   })
 
   it('[HAPPY PATH] regular admin can edit a reservation for their own venue', async () => {
-    vi.mocked(getCurrentAdmin).mockResolvedValue(REGULAR_ADMIN) // manages ['venue-managed-1']
+    vi.mocked(getCurrentAdmin).mockResolvedValue(REGULAR_ADMIN) // manages [ID_VENUE_MANAGED]
     const client = makeMockSupabaseClient({
       tableResponses: {
         reservations: [
-          { data: { venue_id: 'venue-managed-1' }, error: null }, // venue check
-          { data: null, error: null },                             // update
+          { data: { venue_id: ID_VENUE_MANAGED }, error: null }, // venue check
+          { data: null, error: null },                            // update
         ],
       },
     })
     vi.mocked(createSupabaseAdminClient).mockReturnValue(client as any)
 
-    const fd = makeFormData({ id: 'r1', date_iso: '2026-01-05', time: '19:00', people: '2' })
+    const fd = makeFormData({ id: ID_RESERVATION, date_iso: '2026-01-05', time: '19:00', people: '2' })
     const result = await editReservation(PREV, fd)
 
     expect(result).toEqual({ ok: true })
@@ -87,7 +93,7 @@ describe('editReservation()', () => {
     })
     vi.mocked(createSupabaseAdminClient).mockReturnValue(client as any)
 
-    const fd = makeFormData({ id: 'r1', date_iso: '2026-06-11', time: '20:00', people: '4' })
+    const fd = makeFormData({ id: ID_RESERVATION, date_iso: '2026-06-11', time: '20:00', people: '4' })
     const result = await editReservation(PREV, fd)
 
     expect(result).toEqual({ ok: true })
@@ -103,7 +109,7 @@ describe('editReservation()', () => {
     const client = { from: vi.fn(() => chain) }
     vi.mocked(createSupabaseAdminClient).mockReturnValue(client as any)
 
-    const fd = makeFormData({ id: 'r1', date_iso: '2026-01-05', time: '19:00', people: '2' })
+    const fd = makeFormData({ id: ID_RESERVATION, date_iso: '2026-01-05', time: '19:00', people: '2' })
     await editReservation(PREV, fd)
 
     expect(chain.update).toHaveBeenCalledWith(
@@ -116,7 +122,7 @@ describe('editReservation()', () => {
     const chain = makeChain({ data: null, error: null })
     vi.mocked(createSupabaseAdminClient).mockReturnValue({ from: vi.fn(() => chain) } as any)
 
-    const fd = makeFormData({ id: 'r1', date_iso: '2026-01-01', time: '18:00', people: '2' })
+    const fd = makeFormData({ id: ID_RESERVATION, date_iso: '2026-01-01', time: '18:00', people: '2' })
     await editReservation(PREV, fd)
 
     expect(chain.update).toHaveBeenCalledWith(
@@ -129,7 +135,7 @@ describe('editReservation()', () => {
     const chain = makeChain({ data: null, error: null })
     vi.mocked(createSupabaseAdminClient).mockReturnValue({ from: vi.fn(() => chain) } as any)
 
-    const fd = makeFormData({ id: 'r1', date_iso: '2026-06-11', time: '18:00', people: '2' })
+    const fd = makeFormData({ id: ID_RESERVATION, date_iso: '2026-06-11', time: '18:00', people: '2' })
     await editReservation(PREV, fd)
 
     expect(chain.update).toHaveBeenCalledWith(
@@ -151,16 +157,17 @@ describe('editReservation()', () => {
   it('[FAILURE SCENARIO] returns error when date_iso is missing', async () => {
     vi.mocked(getCurrentAdmin).mockResolvedValue(SUPER_ADMIN)
 
-    const fd = makeFormData({ id: 'r1', time: '19:00', people: '2' })
+    const fd = makeFormData({ id: ID_RESERVATION, time: '19:00', people: '2' })
     const result = await editReservation(PREV, fd)
 
-    expect(result).toMatchObject({ ok: false, error: expect.stringContaining('required') })
+    // validateAction returns { ok: false, fieldErrors } — no top-level error field
+    expect(result.ok).toBe(false)
   })
 
   it('[FAILURE SCENARIO] returns error when time is missing', async () => {
     vi.mocked(getCurrentAdmin).mockResolvedValue(SUPER_ADMIN)
 
-    const fd = makeFormData({ id: 'r1', date_iso: '2026-01-05', people: '2' })
+    const fd = makeFormData({ id: ID_RESERVATION, date_iso: '2026-01-05', people: '2' })
     const result = await editReservation(PREV, fd)
 
     expect(result).toMatchObject({ ok: false })
@@ -169,7 +176,7 @@ describe('editReservation()', () => {
   it('[FAILURE SCENARIO] returns error when people = 0', async () => {
     vi.mocked(getCurrentAdmin).mockResolvedValue(SUPER_ADMIN)
 
-    const fd = makeFormData({ id: 'r1', date_iso: '2026-01-05', time: '19:00', people: '0' })
+    const fd = makeFormData({ id: ID_RESERVATION, date_iso: '2026-01-05', time: '19:00', people: '0' })
     const result = await editReservation(PREV, fd)
 
     expect(result).toMatchObject({ ok: false })
@@ -178,7 +185,7 @@ describe('editReservation()', () => {
   it('[FAILURE SCENARIO] returns error when people is NaN', async () => {
     vi.mocked(getCurrentAdmin).mockResolvedValue(SUPER_ADMIN)
 
-    const fd = makeFormData({ id: 'r1', date_iso: '2026-01-05', time: '19:00', people: 'abc' })
+    const fd = makeFormData({ id: ID_RESERVATION, date_iso: '2026-01-05', time: '19:00', people: 'abc' })
     const result = await editReservation(PREV, fd)
 
     expect(result).toMatchObject({ ok: false })
@@ -189,7 +196,7 @@ describe('editReservation()', () => {
     const client = makeMockSupabaseClient({ tableResponses: { reservations: { data: null, error: null } } })
     vi.mocked(createSupabaseAdminClient).mockReturnValue(client as any)
 
-    const fd = makeFormData({ id: 'r1', date_iso: '2026-01-05', time: '19:00', people: '1' })
+    const fd = makeFormData({ id: ID_RESERVATION, date_iso: '2026-01-05', time: '19:00', people: '1' })
     const result = await editReservation(PREV, fd)
 
     expect(result).toEqual({ ok: true })
@@ -200,7 +207,7 @@ describe('editReservation()', () => {
     const chain = makeChain({ data: null, error: null })
     vi.mocked(createSupabaseAdminClient).mockReturnValue({ from: vi.fn(() => chain) } as any)
 
-    const fd = makeFormData({ id: 'r1', date_iso: '2026-01-05', time: '19:00', people: '2' })
+    const fd = makeFormData({ id: ID_RESERVATION, date_iso: '2026-01-05', time: '19:00', people: '2' })
     // occasion and note are NOT set
     await editReservation(PREV, fd)
 
@@ -216,7 +223,7 @@ describe('editReservation()', () => {
     })
     vi.mocked(createSupabaseAdminClient).mockReturnValue(client as any)
 
-    const fd = makeFormData({ id: 'r1', date_iso: '2026-01-05', time: '19:00', people: '2' })
+    const fd = makeFormData({ id: ID_RESERVATION, date_iso: '2026-01-05', time: '19:00', people: '2' })
     const result = await editReservation(PREV, fd)
 
     expect(result).toEqual({ ok: false, error: 'FK constraint violation' })
@@ -233,7 +240,7 @@ describe('createReservationAdmin()', () => {
     vi.mocked(getCurrentAdmin).mockResolvedValue(null)
 
     const fd = makeFormData({
-      venue_id: 'v1', user_id: 'u1', date_iso: '2026-01-05', time: '19:00', people: '2',
+      venue_id: ID_VENUE_MANAGED, user_id: ID_USER, date_iso: '2026-01-05', time: '19:00', people: '2',
     })
     const result = await createReservationAdmin(PREV, fd)
 
@@ -241,10 +248,10 @@ describe('createReservationAdmin()', () => {
   })
 
   it('[FAILURE SCENARIO] regular admin cannot create reservation for a venue they do not manage', async () => {
-    vi.mocked(getCurrentAdmin).mockResolvedValue(REGULAR_ADMIN) // manages ['venue-managed-1']
+    vi.mocked(getCurrentAdmin).mockResolvedValue(REGULAR_ADMIN) // manages [ID_VENUE_MANAGED]
 
     const fd = makeFormData({
-      venue_id: 'venue-other', user_id: 'u1', date_iso: '2026-01-05', time: '19:00', people: '2',
+      venue_id: ID_VENUE_OTHER, user_id: ID_USER, date_iso: '2026-01-05', time: '19:00', people: '2',
     })
     const result = await createReservationAdmin(PREV, fd)
 
@@ -259,7 +266,7 @@ describe('createReservationAdmin()', () => {
     vi.mocked(createSupabaseAdminClient).mockReturnValue(client as any)
 
     const fd = makeFormData({
-      venue_id: 'venue-managed-1', user_id: 'u1',
+      venue_id: ID_VENUE_MANAGED, user_id: ID_USER,
       date_iso: '2026-01-05', time: '19:00', people: '3',
     })
     const result = await createReservationAdmin(PREV, fd)
@@ -275,7 +282,7 @@ describe('createReservationAdmin()', () => {
     vi.mocked(createSupabaseAdminClient).mockReturnValue(client as any)
 
     const fd = makeFormData({
-      venue_id: 'any-venue', user_id: 'u1',
+      venue_id: ID_VENUE_OTHER, user_id: ID_USER,
       date_iso: '2026-06-11', time: '20:00', people: '5',
     })
     const result = await createReservationAdmin(PREV, fd)
@@ -290,7 +297,7 @@ describe('createReservationAdmin()', () => {
     vi.mocked(createSupabaseAdminClient).mockReturnValue({ from: vi.fn(() => chain) } as any)
 
     const fd = makeFormData({
-      venue_id: 'v1', user_id: 'u1', date_iso: '2026-01-05', time: '19:00', people: '2',
+      venue_id: ID_VENUE_MANAGED, user_id: ID_USER, date_iso: '2026-01-05', time: '19:00', people: '2',
     })
     await createReservationAdmin(PREV, fd)
 
@@ -304,7 +311,7 @@ describe('createReservationAdmin()', () => {
   it('[FAILURE SCENARIO] missing venue_id → validation error', async () => {
     vi.mocked(getCurrentAdmin).mockResolvedValue(SUPER_ADMIN)
 
-    const fd = makeFormData({ user_id: 'u1', date_iso: '2026-01-05', time: '19:00', people: '2' })
+    const fd = makeFormData({ user_id: ID_USER, date_iso: '2026-01-05', time: '19:00', people: '2' })
     const result = await createReservationAdmin(PREV, fd)
 
     expect(result).toMatchObject({ ok: false })
@@ -313,7 +320,7 @@ describe('createReservationAdmin()', () => {
   it('[FAILURE SCENARIO] missing user_id → validation error', async () => {
     vi.mocked(getCurrentAdmin).mockResolvedValue(SUPER_ADMIN)
 
-    const fd = makeFormData({ venue_id: 'v1', date_iso: '2026-01-05', time: '19:00', people: '2' })
+    const fd = makeFormData({ venue_id: ID_VENUE_MANAGED, date_iso: '2026-01-05', time: '19:00', people: '2' })
     const result = await createReservationAdmin(PREV, fd)
 
     expect(result).toMatchObject({ ok: false })
@@ -323,7 +330,7 @@ describe('createReservationAdmin()', () => {
     vi.mocked(getCurrentAdmin).mockResolvedValue(SUPER_ADMIN)
 
     const fd = makeFormData({
-      venue_id: 'v1', user_id: 'u1', date_iso: '2026-01-05', time: '19:00', people: '0',
+      venue_id: ID_VENUE_MANAGED, user_id: ID_USER, date_iso: '2026-01-05', time: '19:00', people: '0',
     })
     const result = await createReservationAdmin(PREV, fd)
 

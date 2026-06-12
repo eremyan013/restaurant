@@ -21,6 +21,10 @@ import { NextRequest } from 'next/server'
 // ── Module mocks ───────────────────────────────────────────────────────────
 vi.mock('@/lib/current-admin', () => ({ getCurrentAdmin: vi.fn() }))
 vi.mock('@/lib/supabase-admin', () => ({ createSupabaseAdminClient: vi.fn() }))
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ limited: false, remaining: 99, resetAt: 0, toResponse: null }),
+  RATE_CRITICAL: { limit: 5, windowSecs: 60 },
+}))
 
 import { POST, GET } from '@/app/api/send-push/route'
 import { getCurrentAdmin } from '@/lib/current-admin'
