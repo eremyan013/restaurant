@@ -73,17 +73,70 @@ export async function fetchReservations(userId: string): Promise<ReservationRow[
   return (data ?? []) as ReservationRow[];
 }
 
+export type CreateReservationPayload = Omit<ReservationRow, 'id' | 'created_at' | 'updated_at'>;
+
+export type CreateReservationResult =
+  | { data: { reservation_id: string }; error: null }
+  | { data: null; error: string };
+
+const EDGE_ERROR_MESSAGES: Record<string, string> = {
+  no_availability:              'No tables are available for that time. Please choose a different time or date.',
+  cancellation_deadline_passed: 'The cancellation window has passed.',
+  invalid_token:                'This link is invalid or has already been used.',
+  already_confirmed:            'This reservation is already confirmed.',
+  already_cancelled:            'This reservation has already been cancelled.',
+};
+
+function mapEdgeError(raw: unknown, fallback: string): string {
+  if (typeof raw === 'string' && EDGE_ERROR_MESSAGES[raw]) return EDGE_ERROR_MESSAGES[raw]!;
+  if (typeof raw === 'object' && raw !== null) {
+    const code = (raw as Record<string, unknown>)['code'] ?? (raw as Record<string, unknown>)['error'];
+    if (typeof code === 'string' && EDGE_ERROR_MESSAGES[code]) return EDGE_ERROR_MESSAGES[code]!;
+  }
+  return fallback;
+}
+
 export async function createReservation(
-  reservation: Omit<ReservationRow, 'id' | 'created_at'>
-): Promise<ReservationRow> {
-  const { data, error } = await sb.from('reservations').insert(reservation).select().single();
-  if (error) throw error;
-  return data as ReservationRow;
+  payload: CreateReservationPayload
+): Promise<CreateReservationResult> {
+  const { data, error } = await sb.functions.invoke('create-reservation', { body: payload });
+  if (error) {
+    return { data: null, error: mapEdgeError(error?.context, 'Booking failed. Please try again.') };
+  }
+  const id = (data as Record<string, unknown>)?.reservation_id ?? (data as Record<string, unknown>)?.id;
+  if (!id) {
+    return { data: null, error: 'Booking failed. Please try again.' };
+  }
+  return { data: { reservation_id: String(id) }, error: null };
 }
 
 export async function cancelReservation(id: string): Promise<void> {
   const { error } = await sb.from('reservations').update({ status: 'cancelled' }).eq('id', id);
   if (error) throw error;
+}
+
+export type ReservationActionResult =
+  | { data: { status: string }; error: null }
+  | { data: null; error: string };
+
+export async function confirmReservationByToken(
+  token: string
+): Promise<ReservationActionResult> {
+  const { data, error } = await sb.functions.invoke('confirm-reservation', { body: { token } });
+  if (error) {
+    return { data: null, error: mapEdgeError(error?.context, 'Could not confirm reservation. Please try again.') };
+  }
+  return { data: { status: (data as Record<string, unknown>)?.status as string ?? 'confirmed' }, error: null };
+}
+
+export async function cancelReservationByToken(
+  token: string
+): Promise<ReservationActionResult> {
+  const { data, error } = await sb.functions.invoke('cancel-reservation', { body: { token } });
+  if (error) {
+    return { data: null, error: mapEdgeError(error?.context, 'Could not cancel reservation. Please try again.') };
+  }
+  return { data: { status: (data as Record<string, unknown>)?.status as string ?? 'cancelled' }, error: null };
 }
 
 // ─────────────────────────────────────────────

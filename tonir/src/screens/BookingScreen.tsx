@@ -120,11 +120,13 @@ export function BookingScreen({ navigation, route }: Props) {
       });
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       navigation.navigate('Confirmation');
-    } catch {
+    } catch (err: unknown) {
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      const message =
+        err instanceof Error ? err.message : tr('book_error_sub');
       Alert.alert(
         tr('book_error_title'),
-        tr('book_error_sub'),
+        message,
         [{ text: tr('book_error_back'), style: 'cancel' }]
       );
     } finally {

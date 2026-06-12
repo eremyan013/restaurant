@@ -72,6 +72,7 @@ import { ConciergeScreen } from '../screens/ConciergeScreen';
 import { MarketScreen } from '../screens/MarketScreen';
 import { MyPrizesScreen } from '../screens/MyPrizesScreen';
 import { PhoneVerifyScreen } from '../screens/PhoneVerifyScreen';
+import { ReservationActionScreen } from '../screens/ReservationActionScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -85,6 +86,7 @@ export type RootStackParamList = {
   Concierge: undefined;
   Market: undefined;
   MyPrizes: undefined;
+  ReservationAction: { token: string; action: 'confirm' | 'cancel' };
 };
 
 export type TabParamList = {
@@ -176,6 +178,21 @@ function TabNavigator() {
   );
 }
 
+const linking = {
+  prefixes: ['tonir://'],
+  config: {
+    screens: {
+      ReservationAction: {
+        path: 'reservation/:action',
+        parse: {
+          action: (action: string) => action as 'confirm' | 'cancel',
+          token: (token: string) => token,
+        },
+      },
+    },
+  },
+};
+
 export function AppNavigator() {
   const { theme: t, pendingPhoneVerification } = useStore();
   const [session, setSession] = useState<boolean | null>(null);          // null = still checking
@@ -217,7 +234,7 @@ export function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {session && !pendingPhoneVerification ? (
           // ── Authenticated ──────────────────────────────
@@ -257,6 +274,11 @@ export function AppNavigator() {
               name="MyPrizes"
               component={MyPrizesScreen}
               options={{ animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="ReservationAction"
+              component={ReservationActionScreen}
+              options={{ headerShown: false, animation: 'slide_from_bottom', gestureEnabled: false }}
             />
           </>
         ) : (

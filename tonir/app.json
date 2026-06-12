@@ -2,6 +2,7 @@
   "expo": {
     "name": "Tonir",
     "slug": "tonir",
+    "scheme": "tonir",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -12,7 +13,15 @@
       }
     },
     "android": {
-      "package": "com.tonir.app"
+      "package": "com.tonir.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "tonir" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "plugins": [
       ["expo-notifications", { "color": "#1A1208" }]

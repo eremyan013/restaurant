@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchReservations, createReservation, cancelReservation } from '../lib/api';
+import { fetchReservations, createReservation, cancelReservation, CreateReservationPayload, CreateReservationResult } from '../lib/api';
 import { ReservationRow } from '../lib/database.types';
 import { useStore } from '../store';
 import { supabase } from '../lib/supabase';
@@ -71,11 +71,14 @@ export function useReservations() {
   }, [upcoming.length, setUpcomingCount]);
 
   const book = useCallback(
-    async (data: Omit<ReservationRow, 'id' | 'created_at' | 'user_id'>) => {
+    async (data: Omit<ReservationRow, 'id' | 'created_at' | 'updated_at' | 'user_id'>): Promise<void> => {
       if (!userId) throw new Error('Not logged in');
-      const res = await createReservation({ ...data, user_id: userId });
-      setReservations((prev) => [res, ...prev]);
-      return res;
+      const payload: CreateReservationPayload = { ...data, user_id: userId };
+      const result = await createReservation(payload);
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      // The realtime subscription (lines 29-58) will push the inserted row into state.
     },
     [userId]
   );
