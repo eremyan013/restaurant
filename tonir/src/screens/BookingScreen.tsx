@@ -76,6 +76,18 @@ export function BookingScreen({ navigation, route }: Props) {
     return filterAvailableTimes(venue.times, d.getDay(), hoursMap, dateIndex === 0);
   }, [venue, dateIndex, hoursMap]);
 
+  const nextAvailableDateIndex = useMemo(() => {
+    if (!venue || availableTimes.length > 0) return null;
+    for (let i = dateIndex + 1; i < DATES.length; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      if (!isDateAvailable(isoDates[i]!, blockedDates)) continue;
+      const times = filterAvailableTimes(venue.times, d.getDay(), hoursMap, false);
+      if (times.length > 0) return i;
+    }
+    return null;
+  }, [venue, dateIndex, hoursMap, availableTimes.length, DATES.length, blockedDates, isoDates]);
+
   const [people, setPeople] = useState(initialPeople ?? 2);
   const [dateIndex, setDateIndex] = useState(0);
   const [time, setTime] = useState(initialTime ?? '');
@@ -319,9 +331,25 @@ export function BookingScreen({ navigation, route }: Props) {
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { color: t.text }]}>{tr('book_time')}</Text>
           {availableTimes.length === 0 ? (
-            <Text style={[styles.timeBtnText, { color: t.textMute }]}>
-              No available times for this day
-            </Text>
+            <View style={styles.noTimesWrap}>
+              <Text style={[styles.timeBtnText, { color: t.textMute }]}>
+                {tr('book_no_times')}
+              </Text>
+              {nextAvailableDateIndex !== null && (
+                <Pressable
+                  onPress={() => {
+                    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setDateIndex(nextAvailableDateIndex);
+                  }}
+                  style={[styles.noTimesBtn, { backgroundColor: t.surface, borderColor: t.border }]}
+                >
+                  <Text style={[styles.noTimesBtnText, { color: t.primary }]}>
+                    {tr('book_try_next_date')} {DATES[nextAvailableDateIndex]?.day}, {DATES[nextAvailableDateIndex]?.date}
+                  </Text>
+                  <Icon name="chevR" size={14} color={t.primary} />
+                </Pressable>
+              )}
+            </View>
           ) : (
             <View style={styles.timeGrid}>
               {availableTimes.map((t2) => (
@@ -484,6 +512,18 @@ const styles = StyleSheet.create({
   dateDateText: { fontSize: 20, fontFamily: FONTS.bold, fontWeight: '700' },
   dateLabelText: { fontSize: 10.5, fontFamily: FONTS.semiBold, fontWeight: '600' },
   timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  noTimesWrap: { gap: 12 },
+  noTimesBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+  },
+  noTimesBtnText: { fontSize: 13, fontFamily: FONTS.semiBold, fontWeight: '600' },
   timeBtn: {
     paddingVertical: 10,
     paddingHorizontal: 16,
