@@ -15,76 +15,105 @@ import { useTranslation } from '../hooks/useTranslation';
 import { Icon } from '../components/Icon';
 import { HeroCard } from '../components/HeroCard';
 import { FONTS } from '../theme';
+import { VenueRow } from '../lib/database.types';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Concierge'>;
 };
 
 interface Message {
-  id: string;
-  role: 'user' | 'concierge';
-  text: string;
-  suggestions?: string[];
+  id:           string;
+  role:         'user' | 'concierge';
+  text:         string;
+  suggestions?: VenueRow[];
 }
 
 interface ReplyRule {
   keywords: string[];
-  textKey: string;
-  suggestions: string[];
+  textKey:  string;
+  filter: (v: VenueRow) => boolean;
 }
+
+const MAX_SUGGESTIONS = 3 as const;
 
 const REPLY_RULES: ReplyRule[] = [
   {
     keywords: ['ռոմ', 'rom', 'романт', 'свидан', 'couple', 'date', 'սիր'],
     textKey: 'conc_reply_romantic',
-    suggestions: ['kond-house', 'dolmama', 'in-vino'],
+    filter: (v) =>
+      v.kind === 'restaurant' &&
+      (v.tags.includes('romantic') || v.tags.includes('wine') || v.tags.includes('fine-dining')),
   },
   {
     keywords: ['խմ', 'group', 'ընկ', 'друз', 'family', 'ընտ', 'birthday', 'ծնունդ', 'компания'],
     textKey: 'conc_reply_group',
-    suggestions: ['lavash', 'pandok', 'tumanyan-khinkali'],
+    filter: (v) =>
+      v.kind === 'restaurant' &&
+      (v.tags.includes('group') || v.tags.includes('family') || v.tags.includes('large-party')),
   },
   {
     keywords: ['գին', 'wine', 'вин', 'сом'],
     textKey: 'conc_reply_wine',
-    suggestions: ['wine-republic', 'in-vino', 'dolmama'],
+    filter: (v) => v.tags.includes('wine') || v.cuisine.toLowerCase().includes('wine'),
   },
   {
     keywords: ['բար', 'bar', 'club', 'dj', 'night', 'ուշ', 'lounge', 'ночн', 'клуб'],
     textKey: 'conc_reply_bar',
-    suggestions: ['theater-bar', 'calumet', 'club-aurora'],
+    filter: (v) => v.kind === 'bar' || v.kind === 'club' || v.kind === 'lounge',
   },
   {
     keywords: ['հայ', 'hay', 'armen', 'traditional', 'ավանդ', 'khorovats', 'армян', 'традиц'],
     textKey: 'conc_reply_armenian',
-    suggestions: ['dolmama', 'sherep', 'lavash'],
+    filter: (v) =>
+      v.cuisine.toLowerCase().includes('armenian') ||
+      v.tags.includes('armenian') ||
+      v.tags.includes('traditional'),
   },
   {
     keywords: ['budget', 'cheap', 'afford', 'бюдж', 'недорог', 'մատч', 'арж'],
     textKey: 'conc_reply_budget',
-    suggestions: ['lavash', 'anteb', 'tumanyan-khinkali'],
+    filter: (v) =>
+      v.tags.includes('budget') || v.tags.includes('affordable') || v.price === '$',
   },
   {
     keywords: ['brunch', 'breakfast', 'aravot', 'cafe', 'кафе', 'завтр', 'бранч', 'սրճ'],
     textKey: 'conc_reply_brunch',
-    suggestions: ['mirzoyan', 'cascade-cafe', 'anteb'],
+    filter: (v) =>
+      v.tags.includes('brunch') || v.tags.includes('breakfast') || v.tags.includes('cafe'),
   },
   {
     keywords: ['patio', 'terrace', 'outdoor', 'բաց', 'террас', 'двор', 'летн'],
     textKey: 'conc_reply_outdoor',
-    suggestions: ['dolmama', 'cascade-cafe', 'mirzoyan'],
+    filter: (v) =>
+      v.tags.includes('outdoor') || v.tags.includes('terrace') || v.tags.includes('patio'),
   },
   {
     keywords: ['georgian', 'վրաց', 'грузин', 'khinkali', 'khachapuri', 'хинкал', 'хачапур', 'խինկ', 'խաչ'],
     textKey: 'conc_reply_georgian',
-    suggestions: ['tumanyan-khinkali'],
+    filter: (v) =>
+      v.cuisine.toLowerCase().includes('georgian') || v.tags.includes('georgian'),
   },
   {
     keywords: ['italian', 'итал', 'իտալ', 'pizza', 'пицц', 'պիցց', 'pasta', 'паст'],
     textKey: 'conc_reply_italian',
-    suggestions: ['cascade-cafe'],
+    filter: (v) =>
+      v.cuisine.toLowerCase().includes('italian') ||
+      v.tags.includes('italian') ||
+      v.tags.includes('pizza'),
   },
 ];
+
+const HEAT_RANK: Record<string, number> = { high: 2, med: 1, low: 0 };
+
+function resolveVenues(venues: VenueRow[], predicate: (v: VenueRow) => boolean): VenueRow[] {
+  return venues
+    .filter(predicate)
+    .sort((a, b) => {
+      if (b.rating !== a.rating) return b.rating - a.rating;
+      return (HEAT_RANK[b.heat] ?? 0) - (HEAT_RANK[a.heat] ?? 0);
+    })
+    .slice(0, MAX_SUGGESTIONS);
+}
 
 const CONCIERGE_API = process.env.EXPO_PUBLIC_CONCIERGE_URL?.replace(/\/$/, '');
 
@@ -120,24 +149,30 @@ function extractBookingHints(history: Message[]): { people?: number; time?: stri
   };
 }
 
-function buildReply(input: string, tr: (key: string) => string): { text: string; suggestions: string[] } {
+function buildReply(
+  input: string,
+  venues: VenueRow[],
+  tr: (key: string) => string,
+): { text: string; suggestions: VenueRow[] } {
   const q = input.toLowerCase();
   for (const rule of REPLY_RULES) {
     if (rule.keywords.some((kw) => q.includes(kw))) {
-      return { text: tr(rule.textKey), suggestions: rule.suggestions };
+      return { text: tr(rule.textKey), suggestions: resolveVenues(venues, rule.filter) };
     }
   }
-  return { text: tr('conc_reply_fallback'), suggestions: ['sherep', 'theater-bar', 'dolmama'] };
+  const fallback = resolveVenues(venues, (v) => v.heat === 'high' || v.rating >= 4.5);
+  return { text: tr('conc_reply_fallback'), suggestions: fallback };
 }
 
 async function askConcierge(
   userText: string,
   history: Message[],
+  venues: VenueRow[],
   tr: (key: string) => string,
   userId?: string | null,
   sessionId?: string | null,
-): Promise<{ text: string; suggestions: string[]; session_id?: string; offline?: boolean }> {
-  if (!CONCIERGE_API) return { ...buildReply(userText, tr), offline: true };
+): Promise<{ text: string; suggestions: VenueRow[]; session_id?: string; offline?: boolean }> {
+  if (!CONCIERGE_API) return { ...buildReply(userText, venues, tr), offline: true };
   try {
     const res = await fetch(`${CONCIERGE_API}/api/concierge`, {
       method: 'POST',
@@ -153,10 +188,17 @@ async function askConcierge(
     });
     if (!res.ok) throw new Error(`${res.status}`);
     const data = await res.json();
-    if (typeof data.text === 'string' && Array.isArray(data.suggestions)) return data;
+    if (typeof data.text === 'string' && Array.isArray(data.suggestions)) {
+      const ids: string[] = data.suggestions;
+      const resolved = ids
+        .map((id: string) => venues.find((v) => v.id === id))
+        .filter((v): v is VenueRow => v !== undefined)
+        .slice(0, MAX_SUGGESTIONS);
+      return { text: data.text, suggestions: resolved, session_id: data.session_id };
+    }
     throw new Error('bad_response');
   } catch {
-    return { ...buildReply(userText, tr), offline: true };
+    return { ...buildReply(userText, venues, tr), offline: true };
   }
 }
 
@@ -181,7 +223,7 @@ export function ConciergeScreen({ navigation }: Props) {
     id: 'm1',
     role: 'concierge',
     text: tr('conc_initial'),
-    suggestions: ['dolmama', 'sherep', 'theater-bar'],
+    suggestions: resolveVenues(venues, (v) => v.heat === 'high'),
   });
 
   const [messages, setMessages] = useState<Message[]>(() => [makeInitial()]);
@@ -242,7 +284,7 @@ export function ConciergeScreen({ navigation }: Props) {
     setInput('');
     setTyping(true);
     const [matched] = await Promise.all([
-      askConcierge(text, nextHistory, tr, userId, sessionId),
+      askConcierge(text, nextHistory, venues, tr, userId, sessionId),
       new Promise<void>((r) => setTimeout(r, 800)),
     ]);
     if (matched.session_id && !sessionId) setSessionId(matched.session_id);
@@ -352,28 +394,24 @@ export function ConciergeScreen({ navigation }: Props) {
                 contentContainerStyle={styles.suggestions}
                 style={{ marginBottom: 8 }}
               >
-                {msg.suggestions.map((id) => {
-                  const venue = venues.find((v) => v.id === id);
-                  if (!venue) return null;
-                  return (
-                    <HeroCard
-                      key={venue.id}
-                      venue={venue}
-                      t={t}
-                      onOpen={() => navigation.navigate('Detail', { venueId: venue.id })}
-                      onFav={() => toggleFav(venue.id)}
-                      isFav={favs.has(venue.id)}
-                      onBook={() => {
-                        const { people, time } = extractBookingHints(messages);
-                        navigation.navigate('Booking', {
-                          venueId: venue.id,
-                          ...(people ? { people } : {}),
-                          ...(time   ? { time }   : {}),
-                        });
-                      }}
-                    />
-                  );
-                })}
+                {msg.suggestions.map((venue) => (
+                  <HeroCard
+                    key={venue.id}
+                    venue={venue}
+                    t={t}
+                    onOpen={() => navigation.navigate('Detail', { venueId: venue.id })}
+                    onFav={() => toggleFav(venue.id)}
+                    isFav={favs.has(venue.id)}
+                    onBook={() => {
+                      const { people, time } = extractBookingHints(messages);
+                      navigation.navigate('Booking', {
+                        venueId: venue.id,
+                        ...(people ? { people } : {}),
+                        ...(time   ? { time }   : {}),
+                      });
+                    }}
+                  />
+                ))}
               </ScrollView>
             )}
           </View>
