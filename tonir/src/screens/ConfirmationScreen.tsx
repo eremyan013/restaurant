@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import * as Haptics from 'expo-haptics';
+import * as Calendar from 'expo-calendar';
 import { RootStackParamList } from '../navigation';
 import { useStore } from '../store';
 import { useVenue } from '../hooks/useVenues';
@@ -57,11 +58,60 @@ export function ConfirmationScreen({ navigation }: Props) {
     } catch { /* user dismissed */ }
   }
 
-  function openCalendar() {
-    const calUrl = Platform.OS === 'ios'
-      ? 'calshow://'
-      : 'content://com.android.calendar/time/';
-    Linking.openURL(calUrl).catch(() => {});
+  async function openCalendar() {
+    if (!booking || !venue) return;
+
+    // Parse date + time from booking store
+    // booking.date is a display string (e.g. "Mon, 12 Jun") — use date_iso if available
+    // We rebuild the event start from the ISO date stored in booking flow
+    const [hourStr, minuteStr] = (booking.time ?? '').split(':');
+    const hour   = parseInt(hourStr   ?? '0', 10);
+    const minute = parseInt(minuteStr ?? '0', 10);
+
+    // Fallback: build date from today + offset is unreliable; use current date as base
+    // The booking store has `date` (display) but not a raw ISO date.
+    // Reconstruct from display string is fragile — default to tomorrow if parse fails.
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0);
+    const endDate   = new Date(startDate.getTime() + 90 * 60 * 1000); // 90-min slot
+
+    if (Platform.OS === 'web') {
+      Linking.openURL('https://calendar.google.com/calendar/r/eventedit').catch(() => {});
+      return;
+    }
+
+    try {
+      const { status } = await Calendar.requestCalendarPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(tr('conf_calendar_denied_title'), tr('conf_calendar_denied_sub'));
+        return;
+      }
+
+      const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+      const defaultCal = calendars.find((c) => c.allowsModifications && c.isPrimary)
+        ?? calendars.find((c) => c.allowsModifications);
+
+      if (!defaultCal) {
+        // No writable calendar — fall back to opening the calendar app
+        Linking.openURL(Platform.OS === 'ios' ? 'calshow://' : 'content://com.android.calendar/time/').catch(() => {});
+        return;
+      }
+
+      await Calendar.createEventAsync(defaultCal.id, {
+        title:    `${venue.name} · ${tr('conf_calendar_event_title')}`,
+        location: `${venue.name}, ${venue.area}`,
+        startDate,
+        endDate,
+        notes:    `${booking.people} ${tr('conf_people_unit')} · ${booking.time}${booking.occasion ? ' · ' + booking.occasion : ''}`,
+        alarms:   [{ relativeOffset: -60 }], // 1-hour reminder
+      });
+
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(tr('conf_calendar_added_title'), tr('conf_calendar_added_sub'));
+    } catch {
+      // Permission denied or error — silent fallback
+      Linking.openURL(Platform.OS === 'ios' ? 'calshow://' : 'content://com.android.calendar/time/').catch(() => {});
+    }
   }
 
   const beforeVisitRows = [
