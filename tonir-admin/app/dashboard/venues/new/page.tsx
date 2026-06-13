@@ -52,6 +52,7 @@ async function createVenue(formData: FormData) {
     photo_url:      g('photo_url'),
     dish_url:       g('dish_url'),
     distance_km:    g('distance_km'),
+    booked_today:   0,
     heat:           g('heat') as 'high' | 'med' | 'low',
     kind:           g('kind') as 'restaurant' | 'bar' | 'lounge' | 'club',
     coord_x:        parseFloat(g('coord_x')) || 0,
