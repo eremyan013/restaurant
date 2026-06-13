@@ -13,6 +13,9 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 
 async function saveVenueHours(venueId: string, formData: FormData) {
   'use server'
+  const admin = await getCurrentAdmin()
+  if (!admin) return
+  if (admin.role === 'admin' && !admin.managed_venue_ids.includes(venueId)) return
   const supabase = createSupabaseAdminClient()
   const upserts = Array.from({ length: 7 }, (_, day) => ({
     venue_id:    venueId,
@@ -29,6 +32,9 @@ async function saveVenueHours(venueId: string, formData: FormData) {
 
 async function addBlockedDate(venueId: string, formData: FormData) {
   'use server'
+  const admin = await getCurrentAdmin()
+  if (!admin) return
+  if (admin.role === 'admin' && !admin.managed_venue_ids.includes(venueId)) return
   const date   = (formData.get('date') as string)?.trim()
   const reason = (formData.get('reason') as string)?.trim() || null
   if (!date) return
@@ -41,6 +47,9 @@ async function addBlockedDate(venueId: string, formData: FormData) {
 
 async function removeBlockedDate(venueId: string, dateId: string) {
   'use server'
+  const admin = await getCurrentAdmin()
+  if (!admin) return
+  if (admin.role === 'admin' && !admin.managed_venue_ids.includes(venueId)) return
   const supabase = createSupabaseAdminClient()
   await supabase.from('venue_blocked_dates').delete().eq('id', dateId)
   revalidatePath(`/dashboard/venues/${venueId}`)
@@ -87,7 +96,6 @@ async function updateVenue(id: string, formData: FormData) {
       tags_en:        arr('tags_en').length ? arr('tags_en') : null,
       price:          g('price'),
       rating:         parseFloat(g('rating')) || 0,
-      reviews_count:  parseInt(g('reviews_count')) || 0,
       photo_url:      g('photo_url'),
       dish_url:       g('dish_url'),
       distance_km:    g('distance_km'),
@@ -108,6 +116,8 @@ async function updateVenue(id: string, formData: FormData) {
 
 async function deleteVenue(id: string) {
   'use server'
+  const admin = await getCurrentAdmin()
+  if (admin?.role !== 'super_admin') return
   const supabase = createSupabaseAdminClient()
   await supabase.from('venues').delete().eq('id', id)
   revalidatePath('/dashboard/venues')
@@ -171,7 +181,6 @@ export default async function EditVenuePage({
     tags_en:        (venue.tags_en ?? []).join(', '),
     price:          venue.price,
     rating:         String(venue.rating),
-    reviews_count:  String(venue.reviews_count),
     photo_url:      venue.photo_url      ?? '',
     dish_url:       venue.dish_url       ?? '',
     distance_km:    venue.distance_km    ?? '',

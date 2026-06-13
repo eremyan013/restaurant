@@ -58,14 +58,12 @@ export default async function AnalyticsPage({
       .not('role', 'in', '("admin","super_admin")'),
   ])
 
-  // User sign-ups (last 90 days)
-  const growthStart = new Date()
-  growthStart.setDate(growthStart.getDate() - 89)
+  // User sign-ups (selected range)
   const { data: rawProfiles } = await supabase
     .from('profiles')
     .select('created_at')
     .not('role', 'in', '("admin","super_admin")')
-    .gte('created_at', growthStart.toISOString())
+    .gte('created_at', startDate.toISOString())
     .order('created_at', { ascending: true })
 
   // ── Reservations by day ─────────────────────────────────────────────────────
@@ -124,9 +122,9 @@ export default async function AnalyticsPage({
 
   // ── User sign-ups by day ────────────────────────────────────────────────────
   const signupsByDay: Record<string, number> = {}
-  for (let d = 0; d < 90; d++) {
+  for (let d = 0; d < range; d++) {
     const dt = new Date()
-    dt.setDate(dt.getDate() - (89 - d))
+    dt.setDate(dt.getDate() - (range - 1 - d))
     signupsByDay[dt.toISOString().split('T')[0]] = 0
   }
   for (const p of (rawProfiles ?? [])) {

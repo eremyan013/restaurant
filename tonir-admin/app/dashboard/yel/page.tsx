@@ -132,6 +132,11 @@ async function saveTierSettings(formData: FormData) {
     { key: 'tier_4_min',  value: formData.get('tier_4_min') as string || '3000' },
   ]
 
+  const t2 = parseInt(upserts.find(u => u.key === 'tier_2_min')?.value ?? '0')
+  const t3 = parseInt(upserts.find(u => u.key === 'tier_3_min')?.value ?? '0')
+  const t4 = parseInt(upserts.find(u => u.key === 'tier_4_min')?.value ?? '0')
+  if (!(t2 > 0 && t3 > t2 && t4 > t3)) return
+
   await supabase.from('settings').upsert(upserts, { onConflict: 'key' })
 
   const names = Object.fromEntries(upserts.filter(u => u.key.endsWith('_name')).map(u => [

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { CreateAdminForm } from './CreateAdminForm'
+import { ConfirmButton } from '@/components/confirm-button'
 
 async function removeAdmin(formData: FormData) {
   'use server'
@@ -14,6 +15,8 @@ async function removeAdmin(formData: FormData) {
   if (!id) return
 
   const supabase = createSupabaseAdminClient()
+  const { data: target } = await supabase.from('profiles').select('role').eq('id', id).single()
+  if (target?.role !== 'admin') return  // never demote super_admins via this action
   await supabase
     .from('profiles')
     .update({ role: 'user', managed_venue_ids: [], managed_venue_id: null, is_admin: false })
@@ -94,12 +97,12 @@ export default async function AdminsPage() {
                           </Link>
                           <form action={removeAdmin}>
                             <input type="hidden" name="id" value={a.id} />
-                            <button
-                              type="submit"
+                            <ConfirmButton
+                              message={`Remove ${a.name} as admin? Their account will be banned.`}
                               className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
                             >
                               Remove
-                            </button>
+                            </ConfirmButton>
                           </form>
                         </div>
                       </td>

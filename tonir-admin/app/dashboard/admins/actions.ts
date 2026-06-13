@@ -103,6 +103,8 @@ export async function deleteAdmin(_prev: unknown, formData: FormData): Promise<v
   if (!id) return
 
   const supabase = createSupabaseAdminClient()
+  const { data: target } = await supabase.from('profiles').select('role').eq('id', id).single()
+  if (target?.role !== 'admin') return
   await supabase
     .from('profiles')
     .update({ role: 'user', managed_venue_ids: [], managed_venue_id: null, is_admin: false })

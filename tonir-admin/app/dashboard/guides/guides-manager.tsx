@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { GuideRow } from '@/lib/database.types'
 import { GuideForm } from '@/components/guide-form'
@@ -74,9 +74,8 @@ export function GuidesManager({ guides, venues, toggleActive }: Props) {
             </thead>
             <tbody>
               {guides.map((guide) => (
-                <>
+                <React.Fragment key={guide.id}>
                   <tr
-                    key={guide.id}
                     className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50/50 transition-colors align-middle"
                   >
                     <td className="px-4 py-3">
@@ -149,7 +148,7 @@ export function GuidesManager({ guides, venues, toggleActive }: Props) {
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               ))}
             </tbody>
           </table>

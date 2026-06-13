@@ -8,6 +8,7 @@ import { ReservationFilters } from '@/components/reservation-filters'
 import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
 import { ReservationEditModal } from './reservation-edit-modal'
 import { NewReservationModal } from './new-reservation-modal'
+import { NoteForm } from './note-form'
 
 const STATUS_CLASSES: Record<string, string> = {
   pending:   'bg-amber-100 text-amber-800',
@@ -63,7 +64,7 @@ async function setStatus(id: string, status: ReservationRow['status']) {
   revalidatePath('/dashboard/reservations')
 }
 
-async function saveNote(id: string, formData: FormData) {
+export async function saveNote(id: string, formData: FormData) {
   'use server'
   const admin = await getCurrentAdmin()
   if (!admin) return
@@ -75,11 +76,17 @@ async function saveNote(id: string, formData: FormData) {
     if (!admin.managed_venue_ids.includes(res?.venue_id ?? '')) return
   }
 
+  const rawStatus = formData.get('status') as string
+  const validStatuses = ['pending', 'confirmed', 'cancelled', 'visited'] as const
+  if (!validStatuses.includes(rawStatus as typeof validStatuses[number])) return
+
+  const adminNote = ((formData.get('admin_note') as string) ?? '').slice(0, 500) || null
+
   await supabase
     .from('reservations')
     .update({
-      status:     formData.get('status') as ReservationRow['status'],
-      admin_note: (formData.get('admin_note') as string) || null,
+      status:     rawStatus as ReservationRow['status'],
+      admin_note: adminNote,
     })
     .eq('id', id)
   revalidatePath('/dashboard/reservations')
@@ -352,17 +359,12 @@ export default async function ReservationsPage({
                             </form>
                           )}
                         </div>
-                        <form action={saveNote.bind(null, r.id)} className="flex gap-1.5">
-                          <input type="hidden" name="status" value={r.status} />
-                          <input
-                            type="text"
-                            name="admin_note"
-                            defaultValue={r.admin_note ?? ''}
-                            placeholder="Admin note…"
-                            className="text-xs px-2 py-1 rounded-md border border-zinc-200 bg-white text-zinc-700 w-32"
-                          />
-                          <button type="submit" className="text-xs px-2 py-1 rounded-md bg-zinc-800 text-white hover:bg-zinc-600 transition-colors">Save</button>
-                        </form>
+                        <NoteForm
+                          id={r.id}
+                          status={r.status}
+                          defaultNote={r.admin_note ?? ''}
+                          saveNote={saveNote}
+                        />
                       </div>
                     </td>
                   </tr>

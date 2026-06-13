@@ -78,7 +78,12 @@ export default async function UserProfilePage({
   )
   const favorites = rawFavorites.map((f) => ({
     ...f,
-    venues: favVenueMap[f.venue_id] ?? null,
+    venues: favVenueMap[f.venue_id] ?? {
+      id: f.venue_id,
+      name: `Venue …${f.venue_id.slice(-8)}`,
+      cuisine: '',
+      photo_url: '',
+    },
   })) as FavoriteWithVenue[]
 
   const initials = user.name
@@ -169,7 +174,6 @@ export default async function UserProfilePage({
               <ul className="space-y-3">
                 {favorites.map((fav) => {
                   const venue = fav.venues
-                  if (!venue) return null
                   return (
                     <li key={fav.id} className="flex items-center gap-3">
                       <div className="relative h-9 w-9 rounded-lg overflow-hidden bg-zinc-100 shrink-0">

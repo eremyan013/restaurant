@@ -50,11 +50,21 @@ export default async function VenuesPage() {
         )}
       </div>
 
-      <VenuesSearchTable
-        venues={venues ?? []}
-        toggleActive={toggleActive}
-        isSuperAdmin={admin.role === 'super_admin'}
-      />
+      {(venues ?? []).length === 0 ? (
+        <div className="bg-white rounded-xl border border-zinc-200 py-16 text-center text-zinc-400 text-sm">
+          {admin.role === 'super_admin' ? (
+            <>No venues yet. <a href="/dashboard/venues/new" className="text-zinc-900 font-medium hover:underline">Create one →</a></>
+          ) : (
+            'No venues assigned to your account. Contact a super-admin.'
+          )}
+        </div>
+      ) : (
+        <VenuesSearchTable
+          venues={venues ?? []}
+          toggleActive={toggleActive}
+          isSuperAdmin={admin.role === 'super_admin'}
+        />
+      )}
     </div>
   )
 }

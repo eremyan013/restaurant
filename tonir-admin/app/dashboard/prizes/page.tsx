@@ -153,12 +153,12 @@ export default async function PrizesPage() {
                   <td className="px-4 py-3 text-zinc-600 tabular-nums">{claimCountMap[p.id] ?? 0}</td>
                   <td className="px-4 py-3">
                     <form action={toggleActive.bind(null, p.id, p.is_active)}>
-                      <button
-                        type="submit"
+                      <ConfirmButton
+                        message={p.is_active ? `Deactivate "${p.name}"?` : `Activate "${p.name}"?`}
                         className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${p.is_active ? 'bg-green-500' : 'bg-zinc-300'}`}
                       >
                         <span className={`absolute top-0.5 left-0 w-4 h-4 rounded-full bg-white shadow transition-transform ${p.is_active ? 'translate-x-[18px]' : 'translate-x-[2px]'}`} />
-                      </button>
+                      </ConfirmButton>
                     </form>
                   </td>
                   <td className="px-4 py-3">

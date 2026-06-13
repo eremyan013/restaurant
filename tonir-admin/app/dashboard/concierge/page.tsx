@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
-import type { ConciergeSessionRow, ConciergeMessageRow } from '@/lib/database.types'
+import type { ConciergeSessionRow } from '@/lib/database.types'
 
 type StatusFilter = 'all' | 'escalated' | 'active' | 'resolved'
 
@@ -50,11 +50,7 @@ export default async function ConciergePage({
   // Paginated sessions for the current tab
   let sessionsQuery = supabase
     .from('concierge_sessions')
-    .select(`
-      id, status, started_at, last_message_at,
-      profiles(name, player_id),
-      concierge_messages(id, role, text, created_at)
-    `, { count: 'exact' })
+    .select('id, status, started_at, last_message_at, profiles(name, player_id)', { count: 'exact' })
     .order('last_message_at', { ascending: false })
     .range(from, to)
 
@@ -63,10 +59,39 @@ export default async function ConciergePage({
   const { data: sessionsData, count: tabCount } = await sessionsQuery
   type SessionWithJoins = ConciergeSessionRow & {
     profiles: { name: string; player_id: number } | null
-    concierge_messages: ConciergeMessageRow[]
   }
   const sessions: SessionWithJoins[] = sessionsData ?? []
   const totalForTab = tabCount ?? 0
+
+  const sessionIds = (sessionsData ?? []).map((s: { id: string }) => s.id)
+
+  const [lastMsgsRes, msgCountsRes] = await Promise.all([
+    sessionIds.length > 0
+      ? supabase
+          .from('concierge_messages')
+          .select('session_id, text, created_at')
+          .in('session_id', sessionIds)
+          .eq('role', 'user')
+          .order('created_at', { ascending: false })
+          .limit(sessionIds.length * 3)
+      : Promise.resolve({ data: [] as { session_id: string; text: string; created_at: string }[] }),
+    sessionIds.length > 0
+      ? supabase
+          .from('concierge_messages')
+          .select('session_id')
+          .in('session_id', sessionIds)
+      : Promise.resolve({ data: [] as { session_id: string }[] }),
+  ])
+
+  // Build lookup maps
+  const lastUserMsgMap: Record<string, string> = {}
+  for (const msg of (lastMsgsRes.data ?? [])) {
+    if (!lastUserMsgMap[msg.session_id]) lastUserMsgMap[msg.session_id] = msg.text
+  }
+  const msgCountMap: Record<string, number> = {}
+  for (const msg of (msgCountsRes.data ?? [])) {
+    msgCountMap[msg.session_id] = (msgCountMap[msg.session_id] ?? 0) + 1
+  }
 
   function tabHref(key: StatusFilter, p = 1) {
     const params = new URLSearchParams()
@@ -131,8 +156,8 @@ export default async function ConciergePage({
               </thead>
               <tbody>
                 {sessions.map((s) => {
-                  const msgs = s.concierge_messages ?? []
-                  const lastUserMsg = [...msgs].reverse().find((m) => m.role === 'user')
+                  const lastUserMsg = lastUserMsgMap[s.id]
+                  const msgCount = msgCountMap[s.id] ?? 0
                   return (
                     <tr
                       key={s.id}
@@ -148,12 +173,12 @@ export default async function ConciergePage({
                       </td>
                       <td className="px-4 py-3 text-zinc-600 max-w-xs">
                         {lastUserMsg ? (
-                          <p className="truncate">{lastUserMsg.text}</p>
+                          <p className="truncate">{lastUserMsg}</p>
                         ) : (
                           <span className="text-zinc-300 italic">No messages</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-zinc-500 tabular-nums">{msgs.length}</td>
+                      <td className="px-4 py-3 text-zinc-500 tabular-nums">{msgCount}</td>
                       <td className="px-4 py-3 text-zinc-400 text-xs whitespace-nowrap">
                         {new Date(s.last_message_at).toLocaleDateString('en-GB', {
                           day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',

@@ -20,7 +20,7 @@ async function sendAdminReply(sessionId: string, text: string) {
   'use server'
   const actor = await getCurrentAdmin()
   if (!actor || actor.role !== 'super_admin') return
-  const trimmed = text.trim()
+  const trimmed = text.trim().slice(0, 4000)
   if (!trimmed) return
   const supabase = createSupabaseAdminClient()
   await supabase.from('concierge_messages').insert({

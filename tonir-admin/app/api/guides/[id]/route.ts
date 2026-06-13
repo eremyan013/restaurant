@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { getCurrentAdmin } from '@/lib/current-admin'
 import { rateLimit, RATE_WRITE } from '@/lib/rate-limit'
 
 export async function PATCH(
@@ -9,6 +10,9 @@ export async function PATCH(
 ) {
   const rl = await rateLimit(request, RATE_WRITE)
   if (rl.limited) return rl.toResponse!()
+
+  const admin = await getCurrentAdmin()
+  if (admin?.role !== 'super_admin') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
   const body = await request.json()
@@ -45,6 +49,9 @@ export async function DELETE(
 ) {
   const rl = await rateLimit(_request, RATE_WRITE)
   if (rl.limited) return rl.toResponse!()
+
+  const admin = await getCurrentAdmin()
+  if (admin?.role !== 'super_admin') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
   const supabase = createSupabaseAdminClient()

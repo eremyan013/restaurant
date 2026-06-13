@@ -76,6 +76,7 @@ async function fetchMatchingUsers(
     .from('profiles')
     .select('id, name, player_id, yel_points, tier, tier_level')
     .eq('role', 'user')
+    .limit(500)
   return data ?? []
 }
 
@@ -313,6 +314,12 @@ export default async function BulkYelPage({
                   </tbody>
                 </table>
               </div>
+
+              {filterType === 'all' && matchingUsers.length === 500 && (
+                <p className="text-xs text-amber-600 mt-2">
+                  Showing first 500 users. Use a tier or date filter to target a subset.
+                </p>
+              )}
 
               <form action={applyBulk}>
                 <input type="hidden" name="filter_type" value={filterType} />

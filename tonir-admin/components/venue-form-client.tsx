@@ -109,7 +109,7 @@ export interface VenueFormDefaults {
   description_hy?: string; description_ru?: string; description_en?: string
   perk_hy?: string;  perk_ru?: string;  perk_en?: string
   tags_hy?: string;  tags_ru?: string;  tags_en?: string
-  price?: string; rating?: string; reviews_count?: string
+  price?: string; rating?: string
   heat?: string; kind?: string; photo_url?: string; dish_url?: string
   distance_km?: string; coord_x?: string; coord_y?: string
   times?: string; is_active?: string
@@ -159,6 +159,12 @@ export function VenueFormClient({
       e.preventDefault()
       setLang('hy')
       setValidErr('Armenian (Հայ) name is required')
+      return
+    }
+    const timesInput = (e.currentTarget as HTMLFormElement).elements.namedItem('times') as HTMLInputElement
+    if (!timesInput?.value.trim()) {
+      e.preventDefault()
+      setValidErr('At least one time slot is required (e.g. 12:00, 14:00)')
     }
   }
 
@@ -205,7 +211,6 @@ export function VenueFormClient({
         {/* Non-translatable */}
         <F label="Price (e.g. $$)"   name="price"         required defaultValue={defaults.price} />
         <F label="Rating (0–5)"      name="rating"        required type="number" step="0.1" min="0" max="5" defaultValue={defaults.rating} />
-        <F label="Reviews count"     name="reviews_count" type="number" defaultValue={defaults.reviews_count ?? '0'} />
         {bookedToday !== undefined && (
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-zinc-700">Booked today</label>
@@ -255,7 +260,7 @@ export function VenueFormClient({
         {/* Non-translatable: times */}
         <div className="sm:col-span-2 flex flex-col gap-1">
           <label className="text-sm font-medium text-zinc-700">Times (comma-separated, e.g. 12:00, 13:00)</label>
-          <input type="text" name="times" required defaultValue={defaults.times ?? ''} className="h-10 px-3 rounded-lg border border-zinc-300 text-sm" />
+          <input type="text" name="times" defaultValue={defaults.times ?? ''} className="h-10 px-3 rounded-lg border border-zinc-300 text-sm" />
         </div>
 
         {/* Translatable: tags */}
