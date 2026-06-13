@@ -140,7 +140,7 @@ export default async function EditVenuePage({
   const [venueRes, hoursRes, blockedRes, bookedTodayRes] = await Promise.all([
     supabase.from('venues').select('id, name, name_hy, name_ru, name_en, cuisine, cuisine_hy, cuisine_ru, cuisine_en, area, area_hy, area_ru, area_en, description, description_hy, description_ru, description_en, perk, perk_hy, perk_ru, perk_en, tags, tags_hy, tags_ru, tags_en, price, rating, photo_url, dish_url, distance_km, heat, kind, coord_x, coord_y, times, is_active').eq('id', id).single(),
     supabase.from('venue_hours').select('id, venue_id, day_of_week, is_open, open_time, close_time').eq('venue_id', id).order('day_of_week'),
-    supabase.from('venue_blocked_dates').select('id, venue_id, date, reason').eq('venue_id', id).order('date'),
+    supabase.from('venue_blocked_dates').select('id, venue_id, date, reason, created_at').eq('venue_id', id).order('date'),
     supabase
       .from('reservations')
       .select('*', { count: 'exact', head: true })
