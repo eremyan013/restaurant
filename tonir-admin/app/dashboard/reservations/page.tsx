@@ -147,7 +147,7 @@ export default async function ReservationsPage({
 
   // ── Helper: apply all non-status filters to a query ──────────────────────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- supabase builder type is not publicly exported
-  function applyFilters<T>(q: T): T {
+  function applyFilters(q: any) {
     // Admin scope
     if (admin!.role === 'admin' && admin!.managed_venue_ids.length) {
       const scopeVenue = sp.venue && admin!.managed_venue_ids.includes(sp.venue) ? sp.venue : null
