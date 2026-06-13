@@ -7,6 +7,9 @@ import { VenuesSearchTable } from '@/components/venues-search-table'
 
 async function toggleActive(id: string, current: boolean) {
   'use server'
+  const admin = await getCurrentAdmin()
+  if (!admin) return
+  if (admin.role === 'admin' && !admin.managed_venue_ids.includes(id)) return
   const supabase = createSupabaseAdminClient()
   await supabase.from('venues').update({ is_active: !current }).eq('id', id)
   revalidatePath('/dashboard/venues')

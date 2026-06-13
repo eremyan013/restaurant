@@ -107,6 +107,7 @@ export async function deleteAdmin(_prev: unknown, formData: FormData): Promise<v
     .from('profiles')
     .update({ role: 'user', managed_venue_ids: [], managed_venue_id: null, is_admin: false })
     .eq('id', id)
+  await supabase.auth.admin.updateUserById(id, { ban_duration: '87600h' }).catch(() => {})
 
   revalidatePath('/dashboard/admins')
 }

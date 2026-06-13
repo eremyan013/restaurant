@@ -82,6 +82,9 @@ async function saveNote(id: string, formData: FormData) {
       admin_note: (formData.get('admin_note') as string) || null,
     })
     .eq('id', id)
+  await logActivity(admin, 'update_reservation_note', 'reservation', id, id, {
+    note: (formData.get('admin_note') as string) || null,
+  })
   revalidatePath('/dashboard/reservations')
 }
 

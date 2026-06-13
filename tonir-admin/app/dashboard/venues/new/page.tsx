@@ -7,6 +7,8 @@ import { VenueFormClient } from '@/components/venue-form-client'
 
 async function createVenue(formData: FormData) {
   'use server'
+  const admin = await getCurrentAdmin()
+  if (admin?.role !== 'super_admin') return
   const supabase = createSupabaseAdminClient()
 
   const id = (formData.get('id') as string).trim()
