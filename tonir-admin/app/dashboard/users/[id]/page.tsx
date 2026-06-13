@@ -11,7 +11,7 @@ type ReservationWithVenue = ReservationRow & { venues: { name: string } | null }
 type FavoriteWithVenue = {
   id: string
   created_at: string
-  venues: { id: string; name: string; cuisine: string; photo_url: string } | null
+  venues: { id: string; name: string; cuisine: string; photo_url: string }
 }
 
 const STATUS_STYLES: Record<string, string> = {
