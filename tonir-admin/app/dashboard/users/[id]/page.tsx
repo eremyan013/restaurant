@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import type { ProfileRow, ReservationRow } from '@/lib/database.types'
 import { UserEditForm } from './user-edit-form'
+import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
 
 type ReservationWithVenue = ReservationRow & { venues: { name: string } | null }
 type FavoriteWithVenue = {
@@ -20,8 +21,20 @@ const STATUS_STYLES: Record<string, string> = {
   visited:   'bg-zinc-100 text-zinc-600',
 }
 
-export default async function UserProfilePage({ params }: { params: Promise<{ id: string }> }) {
+const RES_PAGE_SIZE = PAGINATION_SIZE
+
+export default async function UserProfilePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ page?: string }>
+}) {
   const { id } = await params
+  const sp = await searchParams
+  const page = Math.max(0, parseInt(sp.page ?? '0', 10) || 0)
+  const from = page * RES_PAGE_SIZE
+  const to   = from + RES_PAGE_SIZE - 1
 
   const admin = await getCurrentAdmin()
   if (admin?.role !== 'super_admin') redirect('/dashboard')
@@ -37,10 +50,10 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
       .single(),
     supabase
       .from('reservations')
-      .select('id, date, time, people, occasion, status, yel_earned, created_at, venues(name)')
+      .select('id, date, time, people, occasion, status, yel_earned, created_at, venues(name)', { count: 'exact' })
       .eq('user_id', id)
       .order('date_iso', { ascending: false })
-      .limit(20),
+      .range(from, to),
     supabase
       .from('favorites')
       .select('id, created_at, venue_id')
@@ -52,6 +65,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
 
   const user = profileResult.data as ProfileRow
   const reservations = (reservationsResult.data ?? []) as unknown as ReservationWithVenue[]
+  const reservationTotal = reservationsResult.count ?? 0
 
   const rawFavorites = favoritesResult.data ?? []
   const favVenueIds = [...new Set(rawFavorites.map((f) => f.venue_id).filter(Boolean))]
@@ -214,6 +228,16 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                 </tbody>
               </table>
             )}
+            <Pagination
+              page={page + 1}
+              total={reservationTotal}
+              prevHref={page > 0
+                ? `/dashboard/users/${id}?page=${page - 1}`
+                : null}
+              nextHref={(page + 1) * RES_PAGE_SIZE < reservationTotal
+                ? `/dashboard/users/${id}?page=${page + 1}`
+                : null}
+            />
           </div>
         </div>
       </div>

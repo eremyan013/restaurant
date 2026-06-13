@@ -7,6 +7,8 @@ import { getCurrentAdmin } from '@/lib/current-admin'
 
 async function toggleActive(id: string, current: boolean) {
   'use server'
+  const actor = await getCurrentAdmin()
+  if (actor?.role !== 'super_admin') return
   const supabase = createSupabaseAdminClient()
   await supabase.from('guides').update({ is_active: !current }).eq('id', id)
   revalidatePath('/dashboard/guides')

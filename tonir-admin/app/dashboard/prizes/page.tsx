@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { logActivity } from '@/lib/log-activity'
 import type { PrizeRow, UserPrizeRow, VenueRow, SettingRow } from '@/lib/database.types'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -36,7 +37,13 @@ async function deletePrize(formData: FormData) {
   const id = formData.get('id') as string
   if (!id) return
   const supabase = createSupabaseAdminClient()
+  const { data: prize } = await supabase
+    .from('prizes')
+    .select('name')
+    .eq('id', id)
+    .single()
   await supabase.from('prizes').delete().eq('id', id)
+  await logActivity(actor, 'delete_prize', 'prize', id, prize?.name ?? id)
   revalidatePath('/dashboard/prizes')
 }
 

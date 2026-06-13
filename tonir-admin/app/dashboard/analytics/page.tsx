@@ -38,12 +38,14 @@ export default async function AnalyticsPage({
   startDate.setDate(startDate.getDate() - range + 1)
   const startISO = startDate.toISOString().split('T')[0]
 
+  // Cap at 5 000 rows — sufficient for a 90-day window at current venue volume.
   // Reservations in the selected range
   const { data: rawRes } = await supabase
     .from('reservations')
     .select('date_iso, time, people, status, venue_id, venues(name, price)')
     .gte('date_iso', startISO)
     .order('date_iso', { ascending: true })
+    .limit(5000)
 
   const reservations: RawReservation[] = rawRes ?? []
 

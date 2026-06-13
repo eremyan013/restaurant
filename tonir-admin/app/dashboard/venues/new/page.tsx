@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { logActivity } from '@/lib/log-activity'
 import { VenueFormClient } from '@/components/venue-form-client'
 
 async function createVenue(formData: FormData) {
@@ -51,7 +52,6 @@ async function createVenue(formData: FormData) {
     photo_url:      g('photo_url'),
     dish_url:       g('dish_url'),
     distance_km:    g('distance_km'),
-    booked_today:   parseInt(g('booked_today')) || 0,
     heat:           g('heat') as 'high' | 'med' | 'low',
     kind:           g('kind') as 'restaurant' | 'bar' | 'lounge' | 'club',
     coord_x:        parseFloat(g('coord_x')) || 0,
@@ -61,6 +61,7 @@ async function createVenue(formData: FormData) {
   })
 
   if (error) throw new Error(error.message)
+  await logActivity(admin, 'create_venue', 'venue', id, name_hy || g('name_ru') || g('name_en') || id)
   revalidatePath('/dashboard/venues')
   redirect('/dashboard/venues')
 }

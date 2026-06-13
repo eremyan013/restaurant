@@ -1,20 +1,18 @@
-import { redirect, notFound } from 'next/navigation'
+﻿import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { getCurrentAdmin } from '@/lib/current-admin'
+import { logActivity } from '@/lib/log-activity'
 import { DeleteButton } from '@/components/delete-button'
 import { ConfirmButton } from '@/components/confirm-button'
 import { VenueFormClient, type VenueFormDefaults } from '@/components/venue-form-client'
 import type { VenueHoursRow, VenueBlockedDateRow } from '@/lib/database.types'
-import { getCurrentAdmin } from '@/lib/current-admin'
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 async function saveVenueHours(venueId: string, formData: FormData) {
   'use server'
-  const admin = await getCurrentAdmin()
-  if (!admin) return
-  if (admin.role === 'admin' && !admin.managed_venue_ids.includes(venueId)) return
   const supabase = createSupabaseAdminClient()
   const upserts = Array.from({ length: 7 }, (_, day) => ({
     venue_id:    venueId,
@@ -31,9 +29,6 @@ async function saveVenueHours(venueId: string, formData: FormData) {
 
 async function addBlockedDate(venueId: string, formData: FormData) {
   'use server'
-  const admin = await getCurrentAdmin()
-  if (!admin) return
-  if (admin.role === 'admin' && !admin.managed_venue_ids.includes(venueId)) return
   const date   = (formData.get('date') as string)?.trim()
   const reason = (formData.get('reason') as string)?.trim() || null
   if (!date) return
@@ -46,9 +41,6 @@ async function addBlockedDate(venueId: string, formData: FormData) {
 
 async function removeBlockedDate(venueId: string, dateId: string) {
   'use server'
-  const admin = await getCurrentAdmin()
-  if (!admin) return
-  if (admin.role === 'admin' && !admin.managed_venue_ids.includes(venueId)) return
   const supabase = createSupabaseAdminClient()
   await supabase.from('venue_blocked_dates').delete().eq('id', dateId)
   revalidatePath(`/dashboard/venues/${venueId}`)
@@ -99,7 +91,6 @@ async function updateVenue(id: string, formData: FormData) {
       photo_url:      g('photo_url'),
       dish_url:       g('dish_url'),
       distance_km:    g('distance_km'),
-      booked_today:   parseInt(g('booked_today')) || 0,
       heat:           g('heat') as 'high' | 'med' | 'low',
       kind:           g('kind') as 'restaurant' | 'bar' | 'lounge' | 'club',
       coord_x:        parseFloat(g('coord_x')) || 0,
@@ -110,14 +101,13 @@ async function updateVenue(id: string, formData: FormData) {
     .eq('id', id)
 
   if (error) throw new Error(error.message)
+  await logActivity(admin, 'update_venue', 'venue', id, name_hy || g('name_ru') || g('name_en') || id)
   revalidatePath('/dashboard/venues')
   redirect('/dashboard/venues')
 }
 
 async function deleteVenue(id: string) {
   'use server'
-  const admin = await getCurrentAdmin()
-  if (admin?.role !== 'super_admin') return
   const supabase = createSupabaseAdminClient()
   await supabase.from('venues').delete().eq('id', id)
   revalidatePath('/dashboard/venues')
@@ -132,11 +122,21 @@ export default async function EditVenuePage({
   const { id } = await params
   const supabase = createSupabaseAdminClient()
 
-  const [venueRes, hoursRes, blockedRes] = await Promise.all([
+  const todayISO = new Date().toISOString().split('T')[0]
+
+  const [venueRes, hoursRes, blockedRes, bookedTodayRes] = await Promise.all([
     supabase.from('venues').select('*').eq('id', id).single(),
     supabase.from('venue_hours').select('*').eq('venue_id', id).order('day_of_week'),
     supabase.from('venue_blocked_dates').select('*').eq('venue_id', id).order('date'),
+    supabase
+      .from('reservations')
+      .select('*', { count: 'exact', head: true })
+      .eq('venue_id', id)
+      .eq('status', 'confirmed')
+      .eq('date_iso', todayISO),
   ])
+
+  const bookedToday = bookedTodayRes.count ?? 0
 
   if (venueRes.error || !venueRes.data) notFound()
 
@@ -175,7 +175,6 @@ export default async function EditVenuePage({
     photo_url:      venue.photo_url      ?? '',
     dish_url:       venue.dish_url       ?? '',
     distance_km:    venue.distance_km    ?? '',
-    booked_today:   String(venue.booked_today ?? 0),
     heat:           venue.heat,
     kind:           venue.kind,
     coord_x:        String(venue.coord_x ?? 44),
@@ -188,12 +187,12 @@ export default async function EditVenuePage({
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
         <Link href="/dashboard/venues" className="text-sm text-zinc-400 hover:text-zinc-700 transition-colors">
-          ← Venues
+          â† Venues
         </Link>
         <h1 className="text-2xl font-semibold text-zinc-900">Edit: {venue.name_hy ?? venue.name}</h1>
       </div>
 
-      <VenueFormClient action={updateVenue.bind(null, id)} defaults={defaults} />
+      <VenueFormClient action={updateVenue.bind(null, id)} defaults={defaults} bookedToday={bookedToday} />
 
       {/* Opening Hours */}
       <div className="mt-10">
@@ -261,7 +260,7 @@ export default async function EditVenuePage({
                 {blockedDates.map((bd) => (
                   <tr key={bd.id} className="border-b border-zinc-100 last:border-0">
                     <td className="px-4 py-3 font-medium text-zinc-900 tabular-nums">{bd.date}</td>
-                    <td className="px-4 py-3 text-zinc-500">{bd.reason ?? '—'}</td>
+                    <td className="px-4 py-3 text-zinc-500">{bd.reason ?? 'â€”'}</td>
                     <td className="px-4 py-3 text-right">
                       <form action={removeBlockedDate.bind(null, id, bd.id)}>
                         <ConfirmButton

@@ -32,6 +32,35 @@ async function sendAdminReply(sessionId: string, text: string) {
     .from('concierge_sessions')
     .update({ last_message_at: new Date().toISOString() })
     .eq('id', sessionId)
+
+  // Send push notification to user
+  const { data: sessionRow } = await supabase
+    .from('concierge_sessions')
+    .select('user_id')
+    .eq('id', sessionId)
+    .single()
+
+  if (sessionRow?.user_id) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('push_token')
+      .eq('id', sessionRow.user_id)
+      .single()
+
+    if (profile?.push_token) {
+      await fetch('https://exp.host/--/api/v2/push/send', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          to:    profile.push_token,
+          title: 'Concierge Reply',
+          body:  trimmed.length > 100 ? trimmed.slice(0, 97) + '…' : trimmed,
+          sound: 'default',
+        }),
+      }).catch(() => {})
+    }
+  }
+
   revalidatePath(`/dashboard/concierge/${sessionId}`)
   revalidatePath('/dashboard/concierge')
 }

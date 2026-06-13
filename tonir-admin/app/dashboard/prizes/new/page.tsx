@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { logActivity } from '@/lib/log-activity'
 import { PrizeForm } from '@/components/prize-form'
 import { validateAction } from '@/lib/validate-action'
 import { zPrizeSchema, parsePrizeFormData } from '@/lib/schemas'
@@ -33,10 +34,16 @@ export default async function NewPrizePage() {
     const { name, description, type, unlock_type, points_cost, min_tier_level, venue_id, image_url, stock, sort_order, is_active } = parsed.data
 
     const supabase = createSupabaseAdminClient()
-    await supabase.from('prizes').insert({
-      name, description, type, unlock_type, points_cost, min_tier_level,
-      venue_id, image_url, stock, sort_order, is_active,
-    })
+    const { data: inserted } = await supabase
+      .from('prizes')
+      .insert({
+        name, description, type, unlock_type, points_cost, min_tier_level,
+        venue_id, image_url, stock, sort_order, is_active,
+      })
+      .select('id')
+      .single()
+
+    await logActivity(actor, 'create_prize', 'prize', inserted?.id ?? '', name)
     redirect('/dashboard/prizes')
   }
 

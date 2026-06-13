@@ -82,9 +82,6 @@ async function saveNote(id: string, formData: FormData) {
       admin_note: (formData.get('admin_note') as string) || null,
     })
     .eq('id', id)
-  await logActivity(admin, 'update_reservation_note', 'reservation', id, id, {
-    note: (formData.get('admin_note') as string) || null,
-  })
   revalidatePath('/dashboard/reservations')
 }
 
@@ -184,13 +181,19 @@ export default async function ReservationsPage({
   const totalFiltered = filteredCount ?? 0
 
   // ── Status counts (filtered, without status restriction) ─────────────────────
-  let countsQuery = applyFilters(
-    supabase.from('reservations').select('status').limit(2000)
-  )
-  const { data: counts } = await countsQuery
+  const [pendingRes, confirmedRes, cancelledRes, visitedRes] = await Promise.all([
+    applyFilters(supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'pending')),
+    applyFilters(supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'confirmed')),
+    applyFilters(supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'cancelled')),
+    applyFilters(supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'visited')),
+  ])
 
-  const countMap: Record<string, number> = { pending: 0, confirmed: 0, cancelled: 0, visited: 0 }
-  for (const r of (counts ?? [])) countMap[r.status] = (countMap[r.status] ?? 0) + 1
+  const countMap: Record<string, number> = {
+    pending:   pendingRes.count   ?? 0,
+    confirmed: confirmedRes.count ?? 0,
+    cancelled: cancelledRes.count ?? 0,
+    visited:   visitedRes.count   ?? 0,
+  }
   const total = Object.values(countMap).reduce((a, b) => a + b, 0)
 
   // ── URL builders ──────────────────────────────────────────────────────────────
