@@ -13,7 +13,7 @@ async function sendSms(to: string, body: string): Promise<void> {
 
   if (!sid || !token || !from) {
     // Dev fallback: log the code instead of sending
-    console.log(`[OTP] SMS to ${to}: ${body}`)
+    console.log(`[OTP] SMS would be sent to ${to.slice(0, 4)}**** (set TWILIO_* env vars to send real SMS)`)
     return
   }
 

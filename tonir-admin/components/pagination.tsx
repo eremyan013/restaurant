@@ -21,11 +21,11 @@ export function Pagination({ page, total, prevHref, nextHref }: Props) {
       <span>{from.toLocaleString()}–{to.toLocaleString()} of {total.toLocaleString()}</span>
       <div className="flex items-center gap-2">
         {prevHref ? (
-          <a href={prevHref} className="px-3 py-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors text-zinc-700">
+          <a href={prevHref} aria-label="Previous page" className="px-3 py-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors text-zinc-700">
             ← Previous
           </a>
         ) : (
-          <span className="px-3 py-1.5 rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-300 select-none">
+          <span aria-disabled="true" aria-label="Previous page" className="px-3 py-1.5 rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-300 select-none">
             ← Previous
           </span>
         )}
@@ -33,11 +33,11 @@ export function Pagination({ page, total, prevHref, nextHref }: Props) {
           {page} / {totalPages}
         </span>
         {nextHref ? (
-          <a href={nextHref} className="px-3 py-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors text-zinc-700">
+          <a href={nextHref} aria-label="Next page" className="px-3 py-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors text-zinc-700">
             Next →
           </a>
         ) : (
-          <span className="px-3 py-1.5 rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-300 select-none">
+          <span aria-disabled="true" aria-label="Next page" className="px-3 py-1.5 rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-300 select-none">
             Next →
           </span>
         )}

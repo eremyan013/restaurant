@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+
+export const metadata: Metadata = { title: 'Venues — Tonir Admin' }
 import { VenuesSearchTable } from '@/components/venues-search-table'
 
 async function toggleActive(id: string, current: boolean) {

@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ConfirmButton } from '@/components/confirm-button'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+
+export const metadata: Metadata = { title: 'Prizes — Tonir Admin' }
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { logActivity } from '@/lib/log-activity'
 import type { PrizeRow, UserPrizeRow, VenueRow, SettingRow } from '@/lib/database.types'
@@ -54,7 +57,7 @@ export default async function PrizesPage() {
   const supabase = createSupabaseAdminClient()
 
   const [prizesRes, claimsRes, venuesRes, settingsRes] = await Promise.all([
-    supabase.from('prizes').select('*').order('sort_order').order('created_at', { ascending: false }),
+    supabase.from('prizes').select('id, name, description, type, unlock_type, points_cost, min_tier_level, venue_id, stock, sort_order, is_active, created_at').order('sort_order').order('created_at', { ascending: false }),
     supabase.from('user_prizes').select('prize_id, status'),
     supabase.from('venues').select('id, name').order('name'),
     supabase.from('settings').select('key, value').in('key', ['tier_1_name','tier_2_name','tier_3_name','tier_4_name']),

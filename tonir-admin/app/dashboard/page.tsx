@@ -1,7 +1,10 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+
+export const metadata: Metadata = { title: 'Dashboard — Tonir Admin' }
 
 const STATUS_CLASSES: Record<string, string> = {
   pending:   'bg-amber-100 text-amber-800',

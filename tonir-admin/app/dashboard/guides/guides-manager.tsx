@@ -107,6 +107,7 @@ export function GuidesManager({ guides, venues, toggleActive }: Props) {
                       <form action={toggleActive.bind(null, guide.id, guide.is_active)}>
                         <button
                           type="submit"
+                          aria-label={guide.is_active ? `Deactivate ${guide.title}` : `Activate ${guide.title}`}
                           className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${guide.is_active ? 'bg-green-500' : 'bg-red-500'}`}
                         >
                           <span className={`absolute top-0.5 left-0 w-4 h-4 rounded-full bg-white shadow transition-transform ${guide.is_active ? 'translate-x-[18px]' : 'translate-x-[2px]'}`} />
@@ -127,6 +128,7 @@ export function GuidesManager({ guides, venues, toggleActive }: Props) {
                         <button
                           onClick={() => handleDelete(guide.id)}
                           disabled={deletingId === guide.id}
+                          aria-label={`Delete guide: ${guide.title}`}
                           className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium disabled:opacity-40 transition-colors"
                         >
                           {deletingId === guide.id ? '…' : '✕'}

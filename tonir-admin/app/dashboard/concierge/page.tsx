@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
+
+export const metadata: Metadata = { title: 'Concierge Inbox — Tonir Admin' }
 import type { ConciergeSessionRow } from '@/lib/database.types'
 
 type StatusFilter = 'all' | 'escalated' | 'active' | 'resolved'

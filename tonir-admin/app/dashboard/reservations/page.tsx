@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { logActivity } from '@/lib/log-activity'
+
+export const metadata: Metadata = { title: 'Reservations — Tonir Admin' }
 import type { ReservationRow } from '@/lib/database.types'
 import { ReservationFilters } from '@/components/reservation-filters'
 import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
@@ -143,8 +146,8 @@ export default async function ReservationsPage({
   }
 
   // ── Helper: apply all non-status filters to a query ──────────────────────────
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function applyFilters(q: any) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- supabase builder type is not publicly exported
+  function applyFilters<T>(q: T): T {
     // Admin scope
     if (admin!.role === 'admin' && admin!.managed_venue_ids.length) {
       const scopeVenue = sp.venue && admin!.managed_venue_ids.includes(sp.venue) ? sp.venue : null
@@ -316,9 +319,9 @@ export default async function ReservationsPage({
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-zinc-500 max-w-[160px]">
-                      {r.occasion && <p className="mb-0.5 text-zinc-400">🎉 {r.occasion}</p>}
+                      {r.occasion && <p className="mb-0.5 text-zinc-400"><span aria-hidden="true">🎉 </span>{r.occasion}</p>}
                       <p>{r.note ?? '—'}</p>
-                      {r.admin_note && <p className="mt-1 text-indigo-500">📝 {r.admin_note}</p>}
+                      {r.admin_note && <p className="mt-1 text-indigo-500"><span aria-hidden="true">📝 </span>{r.admin_note}</p>}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1.5">

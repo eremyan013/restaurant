@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ConfirmButton } from '@/components/confirm-button'
 import { redirect } from 'next/navigation'
@@ -6,6 +7,10 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { logActivity } from '@/lib/log-activity'
 import { calcTierLevel, genYelCode } from '@/lib/yel-logic'
+
+export const metadata: Metadata = { title: 'Bulk Adjustment — Tonir Admin' }
+
+const BULK_ALL_LIMIT = 500
 
 type FilterType = 'all' | 'visited' | 'tier'
 
@@ -51,7 +56,7 @@ async function fetchMatchingUsers(
       .eq('status', 'visited')
       .gte('date_iso', fromDate)
       .lte('date_iso', toDate)
-    const ids = [...new Set((resvData ?? []).map((r: any) => r.user_id as string))]
+    const ids = [...new Set((resvData ?? []).map((r) => r.user_id))]
     if (!ids.length) return []
     const { data } = await supabase
       .from('profiles')
@@ -76,7 +81,7 @@ async function fetchMatchingUsers(
     .from('profiles')
     .select('id, name, player_id, yel_points, tier, tier_level')
     .eq('role', 'user')
-    .limit(500)
+    .limit(BULK_ALL_LIMIT)
   return data ?? []
 }
 
@@ -315,7 +320,7 @@ export default async function BulkYelPage({
                 </table>
               </div>
 
-              {filterType === 'all' && matchingUsers.length === 500 && (
+              {filterType === 'all' && matchingUsers.length === BULK_ALL_LIMIT && (
                 <p className="text-xs text-amber-600 mt-2">
                   Showing first 500 users. Use a tier or date filter to target a subset.
                 </p>

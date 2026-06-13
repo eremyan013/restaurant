@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import type { GuideRow } from '@/lib/database.types'
 import { GuidesManager } from './guides-manager'
+
+export const metadata: Metadata = { title: 'Guides — Tonir Admin' }
 import { getCurrentAdmin } from '@/lib/current-admin'
 
 async function toggleActive(id: string, current: boolean) {

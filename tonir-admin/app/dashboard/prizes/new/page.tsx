@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { logActivity } from '@/lib/log-activity'
 import { PrizeForm } from '@/components/prize-form'
+
+export const metadata: Metadata = { title: 'New Prize — Tonir Admin' }
 import { validateAction } from '@/lib/validate-action'
 import { zPrizeSchema, parsePrizeFormData } from '@/lib/schemas'
 import type { VenueRow, SettingRow } from '@/lib/database.types'
@@ -50,7 +53,7 @@ export default async function NewPrizePage() {
   return (
     <div className="max-w-2xl">
       <div className="mb-6">
-        <a href="/dashboard/prizes" className="text-sm text-zinc-500 hover:text-zinc-700">← Back to Prizes</a>
+        <Link href="/dashboard/prizes" className="text-sm text-zinc-500 hover:text-zinc-700">← Back to Prizes</Link>
       </div>
       <h1 className="text-2xl font-semibold text-zinc-900 mb-6">New Prize</h1>
       <PrizeForm action={createPrize} venues={venues} tierNames={tierNames} isNew />

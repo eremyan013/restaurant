@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
 import type { AdminActivityRow } from '@/lib/database.types'
+
+export const metadata: Metadata = { title: 'Activity Log — Tonir Admin' }
 import { ActivityFilters } from './activity-filters'
 
 const ACTION_LABELS: Record<string, string> = {
@@ -60,7 +63,7 @@ export default async function ActivityPage({
 
   let query = supabase
     .from('admin_activity_log')
-    .select('*', { count: 'exact' })
+    .select('id, admin_id, admin_name, action, entity_type, entity_id, entity_name, meta, created_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to)
 

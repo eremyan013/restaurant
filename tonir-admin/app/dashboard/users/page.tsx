@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
 import UsersClient from './users-client'
+
+export const metadata: Metadata = { title: 'Users — Tonir Admin' }
 
 export default async function UsersPage({
   searchParams,

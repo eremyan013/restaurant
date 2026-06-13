@@ -16,19 +16,19 @@ export async function logActivity(
   entityType: string,
   entityId: string,
   entityName: string,
-  details?: Record<string, unknown>,
+  meta?: Record<string, unknown>,
 ): Promise<void> {
   if (!admin) return
   try {
     const supabase = createSupabaseAdminClient()
-    await (supabase as any).from('admin_activity_log').insert({
+    await supabase.from('admin_activity_log').insert({
       admin_id:    admin.id,
       admin_name:  admin.name,
       action,
       entity_type: entityType,
       entity_id:   entityId,
       entity_name: entityName,
-      details:     details ?? null,
+      meta:        meta ?? null,
     })
   } catch {
     // logging failures must never crash the actual operation

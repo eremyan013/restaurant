@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
@@ -6,6 +7,8 @@ import { getCurrentAdmin } from '@/lib/current-admin'
 import type { ProfileRow, ReservationRow } from '@/lib/database.types'
 import { UserEditForm } from './user-edit-form'
 import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
+
+export const metadata: Metadata = { title: 'User Profile — Tonir Admin' }
 
 type ReservationWithVenue = ReservationRow & { venues: { name: string } | null }
 type FavoriteWithVenue = {
@@ -44,7 +47,7 @@ export default async function UserProfilePage({
   const [profileResult, reservationsResult, favoritesResult] = await Promise.all([
     supabase
       .from('profiles')
-      .select('*')
+      .select('id, name, email, phone, role, player_id, tier, tier_level, yel_points, total_visits, avatar_url, created_at, updated_at')
       .eq('id', id)
       .eq('role', 'user')
       .single(),
@@ -93,7 +96,7 @@ export default async function UserProfilePage({
     .toUpperCase()
     .slice(0, 2)
 
-  const memberSince = new Date(user.created_at).toLocaleDateString('en-US', {
+  const memberSince = new Date(user.created_at).toLocaleDateString('en-GB', {
     year: 'numeric', month: 'long', day: 'numeric',
   })
 
@@ -163,7 +166,7 @@ export default async function UserProfilePage({
               <DetailRow label="Phone" value={<span className="tabular-nums">{user.phone ?? '—'}</span>} />
               <DetailRow label="User ID" value={<span className="font-mono text-xs break-all">{user.id}</span>} />
               <DetailRow label="Role" value={user.role} />
-              <DetailRow label="Last updated" value={new Date(user.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} />
+              <DetailRow label="Last updated" value={new Date(user.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} />
             </dl>
           </div>
 

@@ -21,8 +21,8 @@ function ImageField({
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Upload failed')
       setUrl(json.url)
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Upload failed')
     } finally {
       setUploading(false)
     }
@@ -41,6 +41,7 @@ function ImageField({
           <button
             type="button"
             onClick={() => setUrl('')}
+            aria-label={`Remove ${label} image`}
             className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white text-xs flex items-center justify-center hover:bg-black/70"
           >
             ✕

@@ -1,7 +1,10 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { AnalyticsCharts } from './analytics-charts'
+
+export const metadata: Metadata = { title: 'Analytics — Tonir Admin' }
 
 // Estimated avg check per person in AMD, by venue price tier
 const PRICE_CHECK: Record<string, number> = {

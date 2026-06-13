@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+
+export const metadata: Metadata = { title: 'Admins — Tonir Admin' }
 import { CreateAdminForm } from './CreateAdminForm'
 import { ConfirmButton } from '@/components/confirm-button'
 
@@ -47,6 +50,9 @@ export default async function AdminsPage() {
   const venueMap: Record<string, string> = {}
   for (const v of (venues ?? [])) venueMap[v.id] = v.name
 
+  type AdminRow = { id: string; name: string; email: string; managed_venue_ids: string[]; created_at: string }
+  const adminRows = (admins ?? []) as AdminRow[]
+
   return (
     <div>
       <h1 className="text-2xl font-semibold text-zinc-900 mb-6">Restaurant Admins</h1>
@@ -70,7 +76,7 @@ export default async function AdminsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(admins as { id: string; name: string; email: string; managed_venue_ids: string[] }[]).map((a) => (
+                  {adminRows.map((a) => (
                     <tr key={a.id} className="odd:bg-white even:bg-zinc-100 hover:bg-zinc-200 transition-colors">
                       <td className="px-4 py-3 font-medium text-zinc-900">{a.name}</td>
                       <td className="px-4 py-3 text-zinc-500">{a.email}</td>

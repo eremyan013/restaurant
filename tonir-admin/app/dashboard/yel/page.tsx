@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+
+export const metadata: Metadata = { title: 'YEL Points — Tonir Admin' }
 import { YelAdjustForm } from '@/components/yel-adjust-form'
 import { TierSettingsForm } from '@/components/tier-settings-form'
 import { logActivity } from '@/lib/log-activity'

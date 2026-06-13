@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
@@ -5,6 +6,8 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { logActivity } from '@/lib/log-activity'
 import { VenueFormClient } from '@/components/venue-form-client'
+
+export const metadata: Metadata = { title: 'New Venue — Tonir Admin' }
 
 async function createVenue(formData: FormData) {
   'use server'

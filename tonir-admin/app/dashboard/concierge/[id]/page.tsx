@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+
+export const metadata: Metadata = { title: 'Concierge Session — Tonir Admin' }
 import ConciergeReplyForm from './reply-form'
 import type { ConciergeMessageRow, ConciergeSessionRow } from '@/lib/database.types'
 
@@ -78,7 +81,7 @@ export default async function ConciergeSessionPage({
 
   const { data: rawSession, error } = await supabase
     .from('concierge_sessions')
-    .select('*')
+    .select('id, user_id, status, started_at, last_message_at')
     .eq('id', id)
     .single()
 
@@ -95,7 +98,7 @@ export default async function ConciergeSessionPage({
 
   const { data: messagesRaw } = await supabase
     .from('concierge_messages')
-    .select('*')
+    .select('id, session_id, role, text, suggestions, created_at')
     .eq('session_id', id)
     .order('created_at', { ascending: true })
 
@@ -185,7 +188,7 @@ export default async function ConciergeSessionPage({
                       ))}
                     </div>
                   )}
-                  <p className="text-xs mt-1 text-white/50">
+                  <p className={`text-xs mt-1 ${isUser || isAdmin ? 'text-white/50' : 'text-zinc-400'}`}>
                     {new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>

@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { type SupabaseClient } from '@supabase/supabase-js'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+
+export const metadata: Metadata = { title: 'Reviews — Tonir Admin' }
 import { logActivity } from '@/lib/log-activity'
 import { ConfirmButton } from '@/components/confirm-button'
 import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
@@ -42,7 +45,8 @@ async function approveReview(formData: FormData) {
   const supabase = createSupabaseAdminClient()
   await supabase.from('reviews').update({ status: 'approved' }).eq('id', id)
   await recalcVenueRating(supabase, venueId)
-  await logActivity(actor, 'approve_review', 'review', id, venueId)
+  const { data: venue } = await supabase.from('venues').select('name').eq('id', venueId).single()
+  await logActivity(actor, 'approve_review', 'review', id, venue?.name ?? venueId)
   revalidatePath('/dashboard/reviews')
 }
 
@@ -55,7 +59,8 @@ async function hideReview(formData: FormData) {
   const supabase = createSupabaseAdminClient()
   await supabase.from('reviews').update({ status: 'hidden' }).eq('id', id)
   await recalcVenueRating(supabase, venueId)
-  await logActivity(actor, 'hide_review', 'review', id, venueId)
+  const { data: venue } = await supabase.from('venues').select('name').eq('id', venueId).single()
+  await logActivity(actor, 'hide_review', 'review', id, venue?.name ?? venueId)
   revalidatePath('/dashboard/reviews')
 }
 
@@ -68,7 +73,8 @@ async function deleteReview(formData: FormData) {
   const supabase = createSupabaseAdminClient()
   await supabase.from('reviews').delete().eq('id', id)
   await recalcVenueRating(supabase, venueId)
-  await logActivity(actor, 'delete_review', 'review', id, venueId)
+  const { data: venue } = await supabase.from('venues').select('name').eq('id', venueId).single()
+  await logActivity(actor, 'delete_review', 'review', id, venue?.name ?? venueId)
   revalidatePath('/dashboard/reviews')
 }
 
