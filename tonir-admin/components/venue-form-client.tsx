@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { LangTabs, LANGS, type Lang } from '@/components/lang-tabs'
@@ -96,15 +96,15 @@ const CUISINES: Array<{ id: string; hy: string; ru: string; en: string }> = [
   { id: 'mexican',       hy: 'Մեքսիկական',       ru: 'Мексиканская',       en: 'Mexican' },
   { id: 'indian',        hy: 'Հնդկական',         ru: 'Индийская',          en: 'Indian' },
   { id: 'bbq',           hy: 'BBQ',              ru: 'Барбекю',            en: 'BBQ / Grill' },
-  { id: 'seafood',       hy: 'Ծովամթerқ',        ru: 'Морепродукты',       en: 'Seafood' },
+  { id: 'seafood',       hy: 'Ծովամթերք',        ru: 'Морепродукты',       en: 'Seafood' },
   { id: 'vegetarian',    hy: 'Բուսակերական',     ru: 'Вегетарианская',     en: 'Vegetarian' },
   { id: 'vegan',         hy: 'Վեգան',            ru: 'Веганская',          en: 'Vegan' },
   { id: 'fusion',        hy: 'Ֆյուժն',           ru: 'Фьюжн',             en: 'Fusion' },
   { id: 'pizza',         hy: 'Պիցցա',            ru: 'Пицца',             en: 'Pizza' },
   { id: 'sushi',         hy: 'Սուշի',            ru: 'Суши',              en: 'Sushi' },
-  { id: 'burger',        hy: 'Բurgер',           ru: 'Бургеры',           en: 'Burger' },
+  { id: 'burger',        hy: 'Բուրգեր',           ru: 'Бургеры',           en: 'Burger' },
   { id: 'cafe',          hy: 'Կաֆե',             ru: 'Кафе',              en: 'Cafe' },
-  { id: 'bar',           hy: 'Բar',              ru: 'Барная',            en: 'Bar' },
+  { id: 'bar',           hy: 'Բար',              ru: 'Барная',            en: 'Bar' },
 ]
 
 function initSelectedCuisines(defaults: VenueFormDefaults): string[] {
