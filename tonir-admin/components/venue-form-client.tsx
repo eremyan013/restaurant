@@ -78,9 +78,57 @@ function ImageField({
   )
 }
 
+// ── Predefined cuisine list ────────────────────────────────────────────────────
+// Update hy / ru translations to match your app's copy as needed.
+const CUISINES: Array<{ id: string; hy: string; ru: string; en: string }> = [
+  { id: 'armenian',      hy: 'Հայկական',        ru: 'Армянская',          en: 'Armenian' },
+  { id: 'georgian',      hy: 'Վրացական',         ru: 'Грузинская',         en: 'Georgian' },
+  { id: 'russian',       hy: 'Ռուսական',         ru: 'Русская',            en: 'Russian' },
+  { id: 'european',      hy: 'Եվրոպական',        ru: 'Европейская',        en: 'European' },
+  { id: 'mediterranean', hy: 'Միջերկրածովյան',  ru: 'Средиземноморская',  en: 'Mediterranean' },
+  { id: 'italian',       hy: 'Իտալական',         ru: 'Итальянская',        en: 'Italian' },
+  { id: 'french',        hy: 'Ֆրանսիական',       ru: 'Французская',        en: 'French' },
+  { id: 'japanese',      hy: 'Ճապոնական',        ru: 'Японская',           en: 'Japanese' },
+  { id: 'chinese',       hy: 'Չինական',          ru: 'Китайская',          en: 'Chinese' },
+  { id: 'turkish',       hy: 'Թուրքական',        ru: 'Турецкая',           en: 'Turkish' },
+  { id: 'lebanese',      hy: 'Լիբանանյան',       ru: 'Ливанская',          en: 'Lebanese' },
+  { id: 'american',      hy: 'Ամերիկյան',        ru: 'Американская',       en: 'American' },
+  { id: 'mexican',       hy: 'Մեքսիկական',       ru: 'Мексиканская',       en: 'Mexican' },
+  { id: 'indian',        hy: 'Հնդկական',         ru: 'Индийская',          en: 'Indian' },
+  { id: 'bbq',           hy: 'BBQ',              ru: 'Барбекю',            en: 'BBQ / Grill' },
+  { id: 'seafood',       hy: 'Ծովամթerқ',        ru: 'Морепродукты',       en: 'Seafood' },
+  { id: 'vegetarian',    hy: 'Բուսակերական',     ru: 'Вегетарианская',     en: 'Vegetarian' },
+  { id: 'vegan',         hy: 'Վեգան',            ru: 'Веганская',          en: 'Vegan' },
+  { id: 'fusion',        hy: 'Ֆյուժն',           ru: 'Фьюжн',             en: 'Fusion' },
+  { id: 'pizza',         hy: 'Պիցցա',            ru: 'Пицца',             en: 'Pizza' },
+  { id: 'sushi',         hy: 'Սուշի',            ru: 'Суши',              en: 'Sushi' },
+  { id: 'burger',        hy: 'Բurgер',           ru: 'Бургеры',           en: 'Burger' },
+  { id: 'cafe',          hy: 'Կաֆե',             ru: 'Кафе',              en: 'Cafe' },
+  { id: 'bar',           hy: 'Բar',              ru: 'Барная',            en: 'Bar' },
+]
+
+function initSelectedCuisines(defaults: VenueFormDefaults): string[] {
+  // Try matching by English name first (most reliable)
+  const enStr = defaults.cuisine_en ?? ''
+  if (enStr) {
+    const matched = enStr.split(',').map(s => s.trim())
+      .map(name => CUISINES.find(c => c.en.toLowerCase() === name.toLowerCase())?.id)
+      .filter((id): id is string => Boolean(id))
+    if (matched.length > 0) return matched
+  }
+  // Fall back to Armenian name matching
+  const hyStr = defaults.cuisine_hy ?? ''
+  if (hyStr) {
+    const matched = hyStr.split(',').map(s => s.trim())
+      .map(name => CUISINES.find(c => c.hy === name)?.id)
+      .filter((id): id is string => Boolean(id))
+    if (matched.length > 0) return matched
+  }
+  return []
+}
+
 type LangFields = {
   name: string
-  cuisine: string
   area: string
   description: string
   perk: string
@@ -129,13 +177,19 @@ export function VenueFormClient({
 }) {
   const [lang, setLang] = useState<Lang>('hy')
   const [lf, setLf] = useState<Record<Lang, LangFields>>({
-    hy: { name: defaults.name_hy ?? '', cuisine: defaults.cuisine_hy ?? '', area: defaults.area_hy ?? '', description: defaults.description_hy ?? '', perk: defaults.perk_hy ?? '', tags: defaults.tags_hy ?? '' },
-    ru: { name: defaults.name_ru ?? '', cuisine: defaults.cuisine_ru ?? '', area: defaults.area_ru ?? '', description: defaults.description_ru ?? '', perk: defaults.perk_ru ?? '', tags: defaults.tags_ru ?? '' },
-    en: { name: defaults.name_en ?? '', cuisine: defaults.cuisine_en ?? '', area: defaults.area_en ?? '', description: defaults.description_en ?? '', perk: defaults.perk_en ?? '', tags: defaults.tags_en ?? '' },
+    hy: { name: defaults.name_hy ?? '', area: defaults.area_hy ?? '', description: defaults.description_hy ?? '', perk: defaults.perk_hy ?? '', tags: defaults.tags_hy ?? '' },
+    ru: { name: defaults.name_ru ?? '', area: defaults.area_ru ?? '', description: defaults.description_ru ?? '', perk: defaults.perk_ru ?? '', tags: defaults.tags_ru ?? '' },
+    en: { name: defaults.name_en ?? '', area: defaults.area_en ?? '', description: defaults.description_en ?? '', perk: defaults.perk_en ?? '', tags: defaults.tags_en ?? '' },
   })
+  const [selectedCuisines, setSelectedCuisines] = useState<string[]>(() => initSelectedCuisines(defaults))
   const [coordX, setCoordX] = useState(defaults.coord_x ?? '44')
   const [coordY, setCoordY] = useState(defaults.coord_y ?? '40')
   const [validErr, setValidErr] = useState<string | null>(null)
+
+  // Computed cuisine strings per language from selected IDs
+  const cuisineHy = selectedCuisines.map(id => CUISINES.find(c => c.id === id)?.hy ?? id).join(', ')
+  const cuisineRu = selectedCuisines.map(id => CUISINES.find(c => c.id === id)?.ru ?? id).join(', ')
+  const cuisineEn = selectedCuisines.map(id => CUISINES.find(c => c.id === id)?.en ?? id).join(', ')
 
   function upd(field: keyof LangFields, value: string) {
     setLf(prev => ({ ...prev, [lang]: { ...prev[lang], [field]: value } }))
@@ -180,21 +234,28 @@ export function VenueFormClient({
       {/* Hidden inputs carry all language values on submit */}
       {LANGS.flatMap(l => [
         <input key={`name_${l}`}        type="hidden" name={`name_${l}`}        value={lf[l].name} />,
-        <input key={`cuisine_${l}`}     type="hidden" name={`cuisine_${l}`}     value={lf[l].cuisine} />,
         <input key={`area_${l}`}        type="hidden" name={`area_${l}`}        value={lf[l].area} />,
         <input key={`description_${l}`} type="hidden" name={`description_${l}`} value={lf[l].description} />,
         <input key={`perk_${l}`}        type="hidden" name={`perk_${l}`}        value={lf[l].perk} />,
         <input key={`tags_${l}`}        type="hidden" name={`tags_${l}`}        value={lf[l].tags} />,
       ])}
+      {/* Cuisine hidden inputs — computed from selected cuisine IDs */}
+      <input type="hidden" name="cuisine_hy" value={cuisineHy} />
+      <input type="hidden" name="cuisine_ru" value={cuisineRu} />
+      <input type="hidden" name="cuisine_en" value={cuisineEn} />
       <input type="hidden" name="coord_x" value={coordX} />
       <input type="hidden" name="coord_y" value={coordY} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {isNew && <F label="ID (slug)" name="id" required />}
 
-        {/* Translatable – visible input updates state (no name attr, no duplicate submit) */}
-        <TF label="Name"    value={f.name}    onChange={v => upd('name', v)} />
-        <TF label="Cuisine" value={f.cuisine} onChange={v => upd('cuisine', v)} />
+        {/* Translatable name */}
+        <TF label="Name" value={f.name} onChange={v => upd('name', v)} />
+
+        {/* Cuisine multi-select — spans full width */}
+        <div className="sm:col-span-2">
+          <CuisineSelect selected={selectedCuisines} onChange={setSelectedCuisines} />
+        </div>
 
         {/* Address field with autocomplete — spans full width */}
         <div className="sm:col-span-2">
@@ -287,6 +348,56 @@ export function VenueFormClient({
         </button>
       </div>
     </form>
+  )
+}
+
+function CuisineSelect({ selected, onChange }: {
+  selected: string[]
+  onChange: (ids: string[]) => void
+}) {
+  function toggle(id: string) {
+    onChange(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id])
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-medium text-zinc-700">Cuisine</label>
+        {selected.length > 0 && (
+          <button
+            type="button"
+            onClick={() => onChange([])}
+            className="text-xs text-zinc-400 hover:text-zinc-600 transition-colors"
+          >
+            Clear all
+          </button>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {CUISINES.map(c => {
+          const active = selected.includes(c.id)
+          return (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => toggle(c.id)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                active
+                  ? 'bg-zinc-900 text-white border-zinc-900'
+                  : 'bg-white text-zinc-600 border-zinc-300 hover:border-zinc-500 hover:text-zinc-800'
+              }`}
+            >
+              {c.en}
+            </button>
+          )
+        })}
+      </div>
+      {selected.length > 0 && (
+        <p className="text-xs text-zinc-400">
+          Selected: {selected.map(id => CUISINES.find(c => c.id === id)?.en).filter(Boolean).join(', ')}
+        </p>
+      )}
+    </div>
   )
 }
 
