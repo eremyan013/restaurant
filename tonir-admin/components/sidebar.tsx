@@ -14,6 +14,7 @@ const SUPER_ADMIN_NAV = [
   { href: '/dashboard/yel', label: 'Yel Points', exact: false },
   { href: '/dashboard/prizes', label: 'Prizes', exact: false },
   { href: '/dashboard/guides', label: 'Guides', exact: false },
+  { href: '/dashboard/home-sections', label: 'Home Sections', exact: false },
   { href: '/dashboard/reviews', label: 'Reviews', exact: false },
   { href: '/dashboard/concierge', label: 'Concierge', exact: false },
   { href: '/dashboard/redemption', label: 'Redeem', exact: false },

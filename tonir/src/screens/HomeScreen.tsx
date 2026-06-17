@@ -12,11 +12,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RootStackParamList, TabParamList } from '../navigation';
 import { useStore } from '../store';
-import { useVenues } from '../hooks/useVenues';
-import { useGuides } from '../hooks/useGuides';
+import { useHomeSections } from '../hooks/useHomeSections';
 import { useFavorites } from '../hooks/useFavorites';
 import { useProfile } from '../hooks/useProfile';
-import { VenueRow } from '../lib/database.types';
 import { Icon } from '../components/Icon';
 import { SearchBar } from '../components/SearchBar';
 import { SectionHeader } from '../components/SectionHeader';
@@ -37,27 +35,21 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
   const { theme: t, language, setLanguage } = useStore();
   const { tr } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { venues, loading, error, retry } = useVenues();
+  const { sections, loading, error, retry } = useHomeSections();
   const { favs, toggleFav } = useFavorites();
   const { profile } = useProfile();
-  const { guides, loading: guidesLoading, error: guidesError, retry: retryGuides } = useGuides();
   const [refreshing, setRefreshing] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
 
-  // Stop the pull-to-refresh spinner once both fetches complete
+  // Stop the pull-to-refresh spinner once the fetch completes
   useEffect(() => {
-    if (!loading && !guidesLoading) setRefreshing(false);
-  }, [loading, guidesLoading]);
+    if (!loading) setRefreshing(false);
+  }, [loading]);
 
   function onRefresh() {
     setRefreshing(true);
     retry();
-    retryGuides();
   }
-
-  const tonightVenues = venues.filter((v) => v.heat === 'high').slice(0, 6);
-  const trendingVenues = venues.filter((v) => v.reviews_count > 2000).slice(0, 5);
-  const nightlifeVenues = venues.filter((v) => v.kind === 'bar' || v.kind === 'lounge' || v.kind === 'club');
 
   // Only show full-screen loader on the very first load, not on pull-to-refresh
   if (loading && !refreshing) {
@@ -171,12 +163,12 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
           </Pressable>
         </View>
 
-        {/* Tonight */}
-        {tonightVenues.length > 0 && (
-          <View style={{ marginTop: 28 }}>
+        {/* Dynamic sections managed from the admin panel */}
+        {sections.map((section) => (
+          <View key={section.id} style={{ marginTop: 28 }}>
             <SectionHeader
-              title={tr('tonight_title')}
-              eyebrow={tr('tonight_eyebrow')}
+              title={section.name}
+              eyebrow={section.eyebrow}
               t={t}
               onAction={() => navigation.navigate('Search')}
             />
@@ -185,103 +177,28 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
             >
-              {tonightVenues.map((v) => (
-                <HeroCard
-                  key={v.id}
-                  venue={v}
-                  t={t}
-                  onOpen={() => navigation.navigate('Detail', { venueId: v.id })}
-                  onFav={() => toggleFav(v.id)}
-                  isFav={favs.has(v.id)}
-                />
-              ))}
+              {section.home_section_items.map((item) =>
+                item.item_type === 'guide' && item.guide ? (
+                  <GuideCard
+                    key={item.id}
+                    guide={item.guide}
+                    t={t}
+                    onOpen={() => navigation.navigate('Search')}
+                  />
+                ) : item.venue ? (
+                  <HeroCard
+                    key={item.id}
+                    venue={item.venue}
+                    t={t}
+                    onOpen={() => navigation.navigate('Detail', { venueId: item.venue!.id })}
+                    onFav={() => toggleFav(item.venue!.id)}
+                    isFav={favs.has(item.venue!.id)}
+                  />
+                ) : null
+              )}
             </ScrollView>
           </View>
-        )}
-
-        {/* Guides */}
-        {!guidesLoading && (guides.length > 0 || guidesError) && (
-          <View style={{ marginTop: 28 }}>
-            <SectionHeader
-              title={tr('guides_title')}
-              eyebrow={tr('guides_eyebrow')}
-              t={t}
-              onAction={() => {}}
-            />
-            {guidesError ? (
-              <Pressable onPress={retryGuides} style={{ paddingHorizontal: 20, paddingTop: 8, gap: 4 }}>
-                <Text style={{ color: t.textMute, fontSize: 13 }}>{tr('err_sub')}</Text>
-                <Text style={{ color: t.primary, fontSize: 13 }}>{tr('err_retry')}</Text>
-              </Pressable>
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
-              >
-                {guides.map((g) => (
-                  <GuideCard key={g.id} guide={g} t={t} onOpen={() => navigation.navigate('Search')} />
-                ))}
-              </ScrollView>
-            )}
-          </View>
-        )}
-
-        {/* Trending */}
-        {trendingVenues.length > 0 && (
-          <View style={{ marginTop: 28 }}>
-            <SectionHeader
-              title={tr('trending_title')}
-              eyebrow={tr('trending_eyebrow')}
-              t={t}
-              onAction={() => navigation.navigate('Search')}
-            />
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
-            >
-              {trendingVenues.map((v) => (
-                <HeroCard
-                  key={v.id}
-                  venue={v}
-                  t={t}
-                  onOpen={() => navigation.navigate('Detail', { venueId: v.id })}
-                  onFav={() => toggleFav(v.id)}
-                  isFav={favs.has(v.id)}
-                />
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Nightlife */}
-        {nightlifeVenues.length > 0 && (
-          <View style={{ marginTop: 28 }}>
-            <SectionHeader
-              title={tr('nightlife_title')}
-              eyebrow={tr('nightlife_eyebrow')}
-              t={t}
-              onAction={() => navigation.navigate('Search')}
-            />
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
-            >
-              {nightlifeVenues.map((v) => (
-                <HeroCard
-                  key={v.id}
-                  venue={v}
-                  t={t}
-                  onOpen={() => navigation.navigate('Detail', { venueId: v.id })}
-                  onFav={() => toggleFav(v.id)}
-                  isFav={favs.has(v.id)}
-                />
-              ))}
-            </ScrollView>
-          </View>
-        )}
+        ))}
 
         {/* Loyalty teaser */}
         <LinearGradient
