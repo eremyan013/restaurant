@@ -26,51 +26,75 @@ export function useHomeSections() {
     setLoading(true);
     setError(null);
 
-    // Cast to any to escape Supabase TS generic inference issues with nested selects
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase as any)
-      .from('home_sections')
-      .select(`
-        *,
-        home_section_items (
+    async function load() {
+      // Step 1: fetch sections + items with venue embed only (no guide FK exists)
+      const { data: sectionsData, error: sectionsErr } = await (supabase as any)
+        .from('home_sections')
+        .select(`
           *,
-          venue:venues ( * ),
-          guide:guides ( * )
-        )
-      `)
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true })
-      .order('sort_order', { ascending: true, referencedTable: 'home_section_items' })
-      .then(({ data, error: err }: { data: any[] | null; error: { message: string } | null }) => {
-        if (cancelled) return;
-        if (err) {
-          setError(err.message);
-          setLoading(false);
-          return;
+          home_section_items (
+            *,
+            venue:venues ( * )
+          )
+        `)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+
+      if (sectionsErr) throw new Error(sectionsErr.message);
+
+      const raw = (sectionsData ?? []) as any[];
+
+      // Step 2: collect all guide_ids across all sections
+      const guideIds: string[] = [];
+      for (const s of raw) {
+        for (const item of s.home_section_items ?? []) {
+          if (item.item_type === 'guide' && item.guide_id) {
+            guideIds.push(item.guide_id);
+          }
         }
-        const raw = (data ?? []) as any[];
-        const mapped: HomeSection[] = raw.map((s) => {
-          // Resolve localised name — fall back through locale chain to base name
-          const localName =
-            (language === 'hy' ? s.name_hy : language === 'ru' ? s.name_ru : s.name_en) ??
-            s.name_hy ??
-            s.name;
-          // Resolve localised eyebrow — same fallback chain
-          const localEyebrow =
-            (language === 'hy' ? s.eyebrow_hy : language === 'ru' ? s.eyebrow_ru : s.eyebrow_en) ??
-            s.eyebrow_hy ??
-            s.eyebrow ??
-            '';
-          return {
-            ...s,
-            name: localName,
-            eyebrow: localEyebrow,
-            home_section_items: (s.home_section_items ?? []) as HomeSectionItem[],
-          };
-        });
-        setSections(mapped);
-        setLoading(false);
+      }
+
+      // Step 3: fetch those guides in one query (skip if none)
+      const guideMap = new Map<string, GuideRow>();
+      if (guideIds.length > 0) {
+        const { data: guidesData } = await (supabase as any)
+          .from('guides')
+          .select('*')
+          .in('id', [...new Set(guideIds)]);
+        for (const g of guidesData ?? []) {
+          guideMap.set(g.id, g as GuideRow);
+        }
+      }
+
+      // Step 4: merge + localise
+      const mapped: HomeSection[] = raw.map((s) => {
+        const localName =
+          (language === 'hy' ? s.name_hy : language === 'ru' ? s.name_ru : s.name_en) ??
+          s.name_hy ??
+          s.name;
+        const localEyebrow =
+          (language === 'hy' ? s.eyebrow_hy : language === 'ru' ? s.eyebrow_ru : s.eyebrow_en) ??
+          s.eyebrow_hy ??
+          s.eyebrow ??
+          '';
+
+        const items: HomeSectionItem[] = [...(s.home_section_items ?? [])]
+          .sort((a: any, b: any) => a.sort_order - b.sort_order)
+          .map((item: any) => ({
+            ...item,
+            venue: item.venue ?? null,
+            guide: item.guide_id ? (guideMap.get(item.guide_id) ?? null) : null,
+          }));
+
+        return { ...s, name: localName, eyebrow: localEyebrow, home_section_items: items };
       });
+
+      return mapped;
+    }
+
+    load()
+      .then((mapped) => { if (!cancelled) { setSections(mapped); setLoading(false); } })
+      .catch((e) => { if (!cancelled) { setError(e.message); setLoading(false); } });
 
     return () => { cancelled = true; };
   }, [attempt, language]);
