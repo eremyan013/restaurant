@@ -25,7 +25,7 @@ create table home_section_items (
   section_id   uuid        not null references home_sections(id) on delete cascade,
   sort_order   int         not null default 0,
   item_type    text        not null check (item_type in ('venue', 'guide')),
-  venue_id     uuid        null references venues(id) on delete cascade,
+  venue_id     text        null references venues(id) on delete cascade,
   guide_id     text        null,
   created_at   timestamptz not null default now(),
   unique (section_id, venue_id),
