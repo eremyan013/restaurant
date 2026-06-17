@@ -247,9 +247,11 @@ function AddItemPicker({
 
 function SortableItem({
   item,
+  label,
   onRemove,
 }: {
   item: SectionItem
+  label: string
   onRemove: (id: string) => Promise<void>
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -260,9 +262,6 @@ function SortableItem({
     transition,
     opacity: isDragging ? 0.5 : 1,
   }
-
-  const label =
-    item.item_type === 'venue' ? item.venue?.name ?? '(unknown venue)' : item.guide?.title ?? '(unknown guide)'
 
   return (
     <li
@@ -358,9 +357,12 @@ function ItemsPanel({
             strategy={verticalListSortingStrategy}
           >
             <ul className="flex flex-col gap-1.5 mb-3" aria-label={`Items in ${section.name}`}>
-              {items.map((item) => (
-                <SortableItem key={item.id} item={item} onRemove={handleRemove} />
-              ))}
+              {items.map((item) => {
+                const label = item.item_type === 'venue'
+                  ? item.venue?.name ?? availableVenues.find(v => v.id === item.venue_id)?.name ?? '(unknown venue)'
+                  : availableGuides.find(g => g.id === item.guide_id)?.title ?? '(unknown guide)'
+                return <SortableItem key={item.id} item={item} label={label} onRemove={handleRemove} />
+              })}
             </ul>
           </SortableContext>
         </DndContext>

@@ -29,12 +29,10 @@ export default async function HomeSectionsPage() {
         *,
         home_section_items (
           *,
-          venue:venues ( id, name, photo_url ),
-          guide:guides ( id, title, cover_url )
+          venue:venues ( id, name, photo_url )
         )
       `)
-      .order('sort_order', { ascending: true })
-      .order('sort_order', { ascending: true, referencedTable: 'home_section_items' }),
+      .order('sort_order', { ascending: true }),
     supabase
       .from('venues')
       .select('id, name')
