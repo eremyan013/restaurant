@@ -355,48 +355,70 @@ function CuisineSelect({ selected, onChange }: {
   selected: string[]
   onChange: (ids: string[]) => void
 }) {
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function onOutside(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onOutside)
+    return () => document.removeEventListener('mousedown', onOutside)
+  }, [])
+
   function toggle(id: string) {
     onChange(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id])
   }
 
+  const triggerLabel = selected.length === 0
+    ? 'Select cuisines…'
+    : selected.map(id => CUISINES.find(c => c.id === id)?.en).filter(Boolean).join(', ')
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1" ref={wrapRef}>
       <div className="flex items-center justify-between">
         <label className="text-sm font-medium text-zinc-700">Cuisine</label>
         {selected.length > 0 && (
-          <button
-            type="button"
-            onClick={() => onChange([])}
-            className="text-xs text-zinc-400 hover:text-zinc-600 transition-colors"
-          >
+          <button type="button" onClick={() => onChange([])} className="text-xs text-zinc-400 hover:text-zinc-600 transition-colors">
             Clear all
           </button>
         )}
       </div>
-      <div className="flex flex-wrap gap-2">
-        {CUISINES.map(c => {
-          const active = selected.includes(c.id)
-          return (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => toggle(c.id)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                active
-                  ? 'bg-zinc-900 text-white border-zinc-900'
-                  : 'bg-white text-zinc-600 border-zinc-300 hover:border-zinc-500 hover:text-zinc-800'
-              }`}
-            >
-              {c.en}
-            </button>
-          )
-        })}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen(o => !o)}
+          className="w-full h-10 px-3 rounded-lg border border-zinc-300 text-sm bg-white text-left flex items-center justify-between gap-2 hover:border-zinc-400 transition-colors"
+        >
+          <span className={`truncate ${selected.length === 0 ? 'text-zinc-400' : 'text-zinc-700'}`}>
+            {triggerLabel}
+          </span>
+          <svg className="h-4 w-4 text-zinc-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
+        {open && (
+          <div className="absolute z-20 mt-1 w-full bg-white border border-zinc-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            {CUISINES.map(c => {
+              const checked = selected.includes(c.id)
+              return (
+                <label
+                  key={c.id}
+                  className="flex items-center gap-3 px-3 py-2 hover:bg-zinc-50 cursor-pointer select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggle(c.id)}
+                    className="h-4 w-4 rounded border-zinc-300 accent-zinc-900"
+                  />
+                  <span className="text-sm text-zinc-700">{c.en}</span>
+                </label>
+              )
+            })}
+          </div>
+        )}
       </div>
-      {selected.length > 0 && (
-        <p className="text-xs text-zinc-400">
-          Selected: {selected.map(id => CUISINES.find(c => c.id === id)?.en).filter(Boolean).join(', ')}
-        </p>
-      )}
     </div>
   )
 }
