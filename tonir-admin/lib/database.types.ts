@@ -673,7 +673,66 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['admin_activity_log']['Insert']>;
         Relationships: [];
       };
-
+      home_sections: {
+        Row: {
+          id: string;
+          name: string;
+          name_hy: string | null;
+          name_ru: string | null;
+          name_en: string | null;
+          eyebrow: string;
+          eyebrow_hy: string | null;
+          eyebrow_ru: string | null;
+          eyebrow_en: string | null;
+          sort_order: number;
+          is_active: boolean;
+          section_type: 'venue' | 'guide';
+          is_builtin: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          name_hy?: string | null;
+          name_ru?: string | null;
+          name_en?: string | null;
+          eyebrow?: string;
+          eyebrow_hy?: string | null;
+          eyebrow_ru?: string | null;
+          eyebrow_en?: string | null;
+          sort_order?: number;
+          is_active?: boolean;
+          section_type?: 'venue' | 'guide';
+          is_builtin?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['home_sections']['Insert']>;
+        Relationships: [];
+      };
+      home_section_items: {
+        Row: {
+          id: string;
+          section_id: string;
+          sort_order: number;
+          item_type: 'venue' | 'guide';
+          venue_id: string | null;
+          guide_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          section_id: string;
+          sort_order?: number;
+          item_type: 'venue' | 'guide';
+          venue_id?: string | null;
+          guide_id?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['home_section_items']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
