@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { GuideRow } from '@/lib/database.types'
 import { GuideForm } from '@/components/guide-form'
+import { useToast } from '@/components/toast-provider'
 
 type Venue = { id: string; name: string }
 
@@ -15,6 +16,7 @@ interface Props {
 
 export function GuidesManager({ guides, venues, toggleActive }: Props) {
   const router = useRouter()
+  const toast = useToast()
   const [showCreate, setShowCreate]   = useState(false)
   const [editingId, setEditingId]     = useState<string | null>(null)
   const [deletingId, setDeletingId]   = useState<string | null>(null)
@@ -23,8 +25,16 @@ export function GuidesManager({ guides, venues, toggleActive }: Props) {
     if (!confirm('Delete this guide? This cannot be undone.')) return
     setDeletingId(id)
     try {
-      await fetch(`/api/guides/${id}`, { method: 'DELETE' })
-      router.refresh()
+      const res = await fetch(`/api/guides/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        toast.error(json.error ?? 'Failed to delete guide')
+      } else {
+        toast.success('Guide deleted')
+        router.refresh()
+      }
+    } catch {
+      toast.error('Failed to delete guide')
     } finally {
       setDeletingId(null)
     }

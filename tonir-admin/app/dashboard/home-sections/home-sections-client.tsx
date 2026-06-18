@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/toast-provider'
 import {
   DndContext,
   DragEndEvent,
@@ -419,6 +420,7 @@ function EditMetaForm({
   onCancel: () => void
 }) {
   const router = useRouter()
+  const toast = useToast()
   const [activeTab, setActiveTab] = useState<LangTab>('hy')
   const [busy, setBusy] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
@@ -456,7 +458,9 @@ function EditMetaForm({
       })
       if (result?.error) {
         setServerError(result.error)
+        toast.error(result.error)
       } else {
+        toast.success('Section updated')
         router.refresh()
         onCancel()
       }
@@ -766,6 +770,7 @@ function CreateSectionForm({
   onCancel: () => void
 }) {
   const router = useRouter()
+  const toast = useToast()
   const [name, setName] = useState('')
   const [sectionType, setSectionType] = useState<'venue' | 'guide'>('venue')
   const [busy, setBusy] = useState(false)
@@ -780,7 +785,9 @@ function CreateSectionForm({
       const result = await onCreate({ name: name.trim(), section_type: sectionType })
       if (result?.error) {
         setServerError(result.error)
+        toast.error(result.error ?? 'Failed to create section')
       } else {
+        toast.success('Section created')
         router.refresh()
         onCancel()
       }
@@ -870,6 +877,7 @@ export function HomeSectionsClient({
   deleteSection,
 }: Props) {
   const router = useRouter()
+  const toast = useToast()
 
   // Canonical sections list — optimistically updated on drag
   const [sections, setSections] = useState<Section[]>(initialSections)
@@ -912,7 +920,9 @@ export function HomeSectionsClient({
 
     try {
       await reorderSections(reordered.map((s) => s.id))
+      toast.success('Section order saved')
     } catch {
+      toast.error('Failed to save section order')
       router.refresh()
     }
   }
@@ -928,8 +938,13 @@ export function HomeSectionsClient({
         return { ...prev, [sectionId]: reordered }
       })
 
-      // Fire server action in background; refresh on error
-      reorderItems(sectionId, orderedIds).catch(() => router.refresh())
+      // Fire server action in background; show toast on success or error
+      reorderItems(sectionId, orderedIds)
+        .then(() => toast.success('Item order saved'))
+        .catch(() => {
+          toast.error('Failed to save item order')
+          router.refresh()
+        })
     },
     [reorderItems, router]
   )
@@ -943,11 +958,13 @@ export function HomeSectionsClient({
     try {
       await toggleSection(id, current)
       router.refresh()
+      toast.success(current ? 'Section deactivated' : 'Section activated')
     } catch {
       // Revert
       setSections((prev) =>
         prev.map((s) => (s.id === id ? { ...s, is_active: current } : s))
       )
+      toast.error('Failed to update section')
     }
   }
 
@@ -977,22 +994,30 @@ export function HomeSectionsClient({
 
     const result = await deleteSection(id)
     if (result?.error) {
-      alert(result.error)
+      toast.error(result.error ?? 'Failed to delete section')
     } else {
+      toast.success('Section deleted')
       router.refresh()
     }
   }
 
   // ---- remove item ----
   async function handleRemoveItem(itemId: string) {
-    await removeItem(itemId)
+    try {
+      await removeItem(itemId)
+      toast.success('Item removed')
+    } catch {
+      toast.error('Failed to remove item')
+    }
   }
 
   // ---- add item ----
   async function handleAddItem(sectionId: string, type: 'venue' | 'guide', id: string) {
     const result = await addItem(sectionId, type, id)
     if (result?.error) {
-      alert(result.error)
+      toast.error(result.error ?? 'Failed to add item')
+    } else {
+      toast.success('Item added')
     }
   }
 

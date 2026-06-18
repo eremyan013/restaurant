@@ -2,6 +2,7 @@
 
 import { useActionState, useState, useEffect } from 'react'
 import { createReservationAdmin, searchUsersAction, ActionState } from './actions'
+import { useToast } from '@/components/toast-provider'
 
 const TIME_SLOTS: string[] = []
 for (let h = 10; h <= 23; h++) {
@@ -26,12 +27,17 @@ export function NewReservationModal({ venues, defaultVenueId }: Props) {
   const [createState, createAction, creating] = useActionState(createReservationAdmin, INIT_CREATE)
   const [searchState, searchAction, searching] = useActionState(searchUsersAction, INIT_SEARCH)
   const [selectedUser, setSelectedUser] = useState<UserResult | null>(null)
+  const toast = useToast()
 
   useEffect(() => {
     if (createState.ok) {
+      toast.success('Reservation created')
       setOpen(false)
       setSelectedUser(null)
+    } else if (createState.error) {
+      toast.error(createState.error ?? 'Failed to create reservation')
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createState])
 
   function handleClose() {

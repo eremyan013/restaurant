@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import type { GuideRow } from '@/lib/database.types'
+import { useToast } from '@/components/toast-provider'
 import { LangTabs, LANGS, type Lang } from '@/components/lang-tabs'
 
 type Venue = { id: string; name: string }
@@ -17,6 +18,7 @@ interface GuideFormProps {
 
 export function GuideForm({ mode, guide, venues, onCancel }: GuideFormProps) {
   const router = useRouter()
+  const toast = useToast()
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [lang, setLang] = useState<Lang>('hy')
@@ -99,10 +101,13 @@ export function GuideForm({ mode, guide, venues, onCancel }: GuideFormProps) {
         throw new Error(json.error ?? 'Failed to save')
       }
 
+      toast.success('Guide saved')
       router.refresh()
       onCancel()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
+      const msg = err instanceof Error ? err.message : 'Something went wrong'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setLoading(false)
     }

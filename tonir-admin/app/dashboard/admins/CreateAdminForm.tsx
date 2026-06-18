@@ -1,19 +1,30 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createAdmin } from './actions'
 import { zCreateAdminSchema, type CreateAdminInput } from '@/lib/schemas'
 import { FieldError } from '@/components/field-error'
+import { useToast } from '@/components/toast-provider'
 
 export function CreateAdminForm({ venues }: { venues: { id: string; name: string }[] }) {
   const [state, action, pending] = useActionState(createAdmin, { ok: false })
+  const toast = useToast()
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateAdminInput>({
     resolver: zodResolver(zCreateAdminSchema),
     defaultValues: { name: '', email: '', password: '', managed_venue_ids: [] },
   })
+
+  useEffect(() => {
+    if (state.ok) {
+      toast.success('Admin account created')
+    } else if (state.error) {
+      toast.error(state.error)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state])
 
   function onValid(data: CreateAdminInput) {
     const fd = new FormData()

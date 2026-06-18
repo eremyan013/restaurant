@@ -1,7 +1,8 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useState, useEffect } from 'react'
 import { updateUser, UpdateUserState } from './actions'
+import { useToast } from '@/components/toast-provider'
 
 interface Props {
   user: {
@@ -18,8 +19,17 @@ const INIT: UpdateUserState = { ok: false }
 export function UserEditForm({ user }: Props) {
   const [open, setOpen] = useState(false)
   const [state, action, pending] = useActionState(updateUser, INIT)
+  const toast = useToast()
 
-  if (state.ok && open) setOpen(false)
+  useEffect(() => {
+    if (state.ok) {
+      toast.success('User updated')
+      setOpen(false)
+    } else if (state.error) {
+      toast.error(state.error ?? 'Failed to update user')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state])
 
   return (
     <>
