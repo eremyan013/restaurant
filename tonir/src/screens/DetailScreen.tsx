@@ -22,7 +22,9 @@ import { TimePill } from '../components/TimePill';
 import { HeatDot } from '../components/HeatDot';
 import { HeroCard } from '../components/HeroCard';
 import { ErrorState } from '../components/ErrorState';
+import { VenueHoursSection } from '../components/VenueHoursSection';
 import { FONTS } from '../theme';
+import { getVenueStatus } from '../lib/venueStatus';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Detail'>;
@@ -35,7 +37,7 @@ const PHOTO_H = 320;
 export function DetailScreen({ navigation, route }: Props) {
   const { venueId } = route.params;
   const { theme: t } = useStore();
-  const { tr, tra } = useTranslation();
+  const { tr, tra, trf } = useTranslation();
   const { favs, toggleFav } = useFavorites();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState(0);
@@ -171,9 +173,24 @@ export function DetailScreen({ navigation, route }: Props) {
             <Text style={[styles.dot, { color: t.textFaint }]}>·</Text>
             <Icon name="pin" size={13} color={t.textMute} />
             <Text style={[styles.metaText, { color: t.textMute }]}>{venue.distance_km}</Text>
-            <Text style={[styles.dot, { color: t.textFaint }]}>·</Text>
-            <Text style={[styles.metaText, { color: t.textMute }]}>{tr('det_open_until')}</Text>
           </View>
+          {/* Open/closed badge */}
+          {(() => {
+            const result = getVenueStatus(hoursMap, new Date());
+            const isOpen = result.status === 'open';
+            let label: string;
+            if (result.detail === 'plain') label = tr(isOpen ? 'det_hours_open' : 'det_hours_closed_now');
+            else if (result.detail === 'closes_soon') label = trf('det_hours_closes_at', { time: result.closeTime });
+            else if (result.detail === 'opens_today') label = trf('det_hours_opens_at', { time: result.openTime });
+            else if (result.detail === 'opens_tomorrow') label = trf('det_hours_opens_tmr', { time: result.openTime });
+            else label = tr('det_hours_closed_now');
+            return (
+              <View style={[styles.openBadge, { backgroundColor: isOpen ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.10)' }]}>
+                <View style={[styles.openDot, { backgroundColor: isOpen ? '#22C55E' : '#EF4444' }]} />
+                <Text style={[styles.openBadgeText, { color: isOpen ? '#16A34A' : '#DC2626' }]}>{label}</Text>
+              </View>
+            );
+          })()}
           {/* Heat info */}
           <View style={[styles.heatCard, { backgroundColor: t.bgAlt, borderColor: t.border }]}>
             <HeatDot level={venue.heat} t={t} withLabel size={8} />
@@ -264,6 +281,7 @@ export function DetailScreen({ navigation, route }: Props) {
         <View style={styles.tabContent}>
           {activeTab === 0 && (
             <View style={{ gap: 16 }}>
+              <VenueHoursSection hoursMap={hoursMap} t={t} />
               <Text style={[styles.description, { color: t.text }]}>{venue.description}</Text>
               <View style={styles.factsGrid}>
                 {[
@@ -731,5 +749,26 @@ const styles = StyleSheet.create({
     color: '#FBF5E8',
     fontSize: 15,
     fontFamily: FONTS.bold, fontWeight: '700',
+  },
+  openBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    marginTop: 6,
+    marginBottom: 2,
+  },
+  openDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  openBadgeText: {
+    fontSize: 12,
+    fontFamily: FONTS.semiBold,
+    fontWeight: '600',
   },
 });

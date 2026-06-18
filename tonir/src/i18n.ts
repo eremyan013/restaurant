@@ -1,4 +1,4 @@
-﻿export type Lang = 'hy' | 'ru' | 'en';
+export type Lang = 'hy' | 'ru' | 'en';
 
 export const LANG_FLAGS: Record<Lang, string> = {
   hy: 'https://flagcdn.com/w40/am.png',
@@ -288,6 +288,14 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     // DetailScreen
     det_map:              'Քարտեզ',
     det_open_until:       'Բաց մինչև 23:30',
+    det_hours_title:      'Աշխատանքային ժամեր',
+    det_hours_open:       'Բաց է',
+    det_hours_closed_now: 'Փակ է',
+    det_hours_closes_at:  'Փակ է {time}-ին',
+    det_hours_opens_at:   'Բաց կլինի {time}-ին',
+    det_hours_opens_tmr:  'Վաղը բաց կլինի {time}-ին',
+    det_hours_closed:     'Փակ',
+    det_hours_allday:     'Ամբողջ օրը',
     det_booked_today:     'ամրագրված այսօր',
     det_book_table:       'Ամրագրել սեղան',
     det_show_less:        'Ցուցադրել քիչ',
@@ -589,6 +597,14 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     // DetailScreen
     det_map:              'Карта',
     det_open_until:       'Открыто до 23:30',
+    det_hours_title:      'Часы работы',
+    det_hours_open:       'Открыто',
+    det_hours_closed_now: 'Закрыто',
+    det_hours_closes_at:  'Закрывается в {time}',
+    det_hours_opens_at:   'Откроется в {time}',
+    det_hours_opens_tmr:  'Откроется завтра в {time}',
+    det_hours_closed:     'Закрыто',
+    det_hours_allday:     'Весь день',
     det_booked_today:     'забронировано сегодня',
     det_book_table:       'Забронировать столик',
     det_show_less:        'Свернуть',
@@ -890,6 +906,14 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     // DetailScreen
     det_map:              'Map',
     det_open_until:       'Open until 11:30 PM',
+    det_hours_title:      'Opening hours',
+    det_hours_open:       'Open now',
+    det_hours_closed_now: 'Closed',
+    det_hours_closes_at:  'Closes at {time}',
+    det_hours_opens_at:   'Opens at {time}',
+    det_hours_opens_tmr:  'Opens tomorrow at {time}',
+    det_hours_closed:     'Closed',
+    det_hours_allday:     'All day',
     det_booked_today:     'booked today',
     det_book_table:       'Book a table',
     det_show_less:        'Show less',
