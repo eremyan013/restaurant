@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next'
+import type { Metadata } from 'next'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
@@ -8,11 +8,10 @@ export const metadata: Metadata = { title: 'Edit Venue — Tonir Admin' }
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { logActivity } from '@/lib/log-activity'
 import { DeleteButton } from '@/components/delete-button'
-import { ConfirmButton } from '@/components/confirm-button'
 import { VenueFormClient, type VenueFormDefaults } from '@/components/venue-form-client'
-import type { VenueHoursRow, VenueBlockedDateRow } from '@/lib/database.types'
-
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+import { VenueHoursClient } from '@/components/venue-hours-client'
+import { VenueBlockedDatesClient } from '@/components/venue-blocked-dates-client'
+import type { VenueBlockedDateRow } from '@/lib/database.types'
 
 async function saveVenueHours(venueId: string, formData: FormData) {
   'use server'
@@ -153,12 +152,14 @@ export default async function EditVenuePage({
 
   if (venueRes.error || !venueRes.data) notFound()
 
-  const venue       = venueRes.data
-  const hoursRaw    = hoursRes.data ?? []
-  const blockedRaw  = blockedRes.data ?? []
+  const venue      = venueRes.data
+  const hoursRaw   = hoursRes.data ?? []
+  const blockedRaw = blockedRes.data ?? []
 
-  const hoursMap: Record<number, VenueHoursRow> = {}
-  for (const h of hoursRaw) hoursMap[h.day_of_week] = h
+  const hoursMap: Record<number, { is_open: boolean; open_time: string | null; close_time: string | null }> = {}
+  for (const h of hoursRaw) {
+    hoursMap[h.day_of_week] = { is_open: h.is_open, open_time: h.open_time, close_time: h.close_time }
+  }
 
   const blockedDates: VenueBlockedDateRow[] = blockedRaw
 
@@ -199,7 +200,7 @@ export default async function EditVenuePage({
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
         <Link href="/dashboard/venues" className="text-sm text-zinc-400 hover:text-zinc-700 transition-colors">
-          â† Venues
+          ← Venues
         </Link>
         <h1 className="text-2xl font-semibold text-zinc-900">Edit: {venue.name_hy ?? venue.name}</h1>
       </div>
@@ -209,102 +210,20 @@ export default async function EditVenuePage({
       {/* Opening Hours */}
       <div className="mt-10">
         <h2 className="text-lg font-semibold text-zinc-900 mb-4">Opening Hours</h2>
-        <form action={saveVenueHours.bind(null, id)}>
-          <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-zinc-50 border-b border-zinc-100 text-left">
-                  <th className="px-4 py-3 font-medium text-zinc-500 w-32">Day</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500 w-24">Open?</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Opens at</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Closes at</th>
-                </tr>
-              </thead>
-              <tbody>
-                {DAY_NAMES.map((name, day) => {
-                  const h = hoursMap[day]
-                  const isOpen = h ? h.is_open : true
-                  return (
-                    <tr key={day} className="border-b border-zinc-100 last:border-0">
-                      <td className="px-4 py-3 font-medium text-zinc-700">{name}</td>
-                      <td className="px-4 py-3">
-                        <select name={`is_open_${day}`} defaultValue={isOpen ? 'true' : 'false'}
-                          className="text-sm border border-zinc-200 rounded-lg px-2 py-1.5 bg-white text-zinc-700 focus:outline-none">
-                          <option value="true">Open</option>
-                          <option value="false">Closed</option>
-                        </select>
-                      </td>
-                      <td className="px-4 py-3">
-                        <input type="time" name={`open_time_${day}`} defaultValue={h?.open_time ?? '10:00'}
-                          className="text-sm border border-zinc-200 rounded-lg px-2 py-1.5 bg-white text-zinc-700 focus:outline-none" />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input type="time" name={`close_time_${day}`} defaultValue={h?.close_time ?? '23:00'}
-                          className="text-sm border border-zinc-200 rounded-lg px-2 py-1.5 bg-white text-zinc-700 focus:outline-none" />
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-          <button type="submit" className="mt-3 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors">
-            Save hours
-          </button>
-        </form>
+        <VenueHoursClient
+          hoursMap={hoursMap}
+          saveHoursAction={saveVenueHours.bind(null, id)}
+        />
       </div>
 
       {/* Blocked Dates */}
       <div className="mt-10">
         <h2 className="text-lg font-semibold text-zinc-900 mb-4">Blocked Dates</h2>
-
-        {blockedDates.length > 0 && (
-          <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden mb-4">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-zinc-50 border-b border-zinc-100 text-left">
-                  <th className="px-4 py-3 font-medium text-zinc-500">Date</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Reason</th>
-                  <th className="px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {blockedDates.map((bd) => (
-                  <tr key={bd.id} className="border-b border-zinc-100 last:border-0">
-                    <td className="px-4 py-3 font-medium text-zinc-900 tabular-nums">{bd.date}</td>
-                    <td className="px-4 py-3 text-zinc-500">{bd.reason ?? 'â€”'}</td>
-                    <td className="px-4 py-3 text-right">
-                      <form action={removeBlockedDate.bind(null, id, bd.id)}>
-                        <ConfirmButton
-                          message={`Remove blocked date ${bd.date}?`}
-                          className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
-                        >
-                          Remove
-                        </ConfirmButton>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        <form action={addBlockedDate.bind(null, id)} className="flex items-end gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-500">Date</label>
-            <input type="date" name="date" required
-              className="text-sm border border-zinc-200 rounded-lg px-3 py-2 bg-white text-zinc-700 focus:outline-none" />
-          </div>
-          <div className="flex flex-col gap-1 flex-1">
-            <label className="text-xs font-medium text-zinc-500">Reason (optional)</label>
-            <input type="text" name="reason" placeholder="e.g. Private event, Holiday"
-              className="text-sm border border-zinc-200 rounded-lg px-3 py-2 bg-white text-zinc-700 placeholder-zinc-400 focus:outline-none" />
-          </div>
-          <button type="submit" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors shrink-0">
-            Block date
-          </button>
-        </form>
+        <VenueBlockedDatesClient
+          blockedDates={blockedDates}
+          addBlockedDateAction={addBlockedDate.bind(null, id)}
+          removeBlockedDateAction={removeBlockedDate.bind(null, id)}
+        />
       </div>
 
       <form action={deleteVenue.bind(null, id)} className="mt-6">

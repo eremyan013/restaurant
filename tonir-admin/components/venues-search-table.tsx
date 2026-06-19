@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useTransition } from 'react'
 import Link from 'next/link'
 import { transliterate } from '@/lib/transliterate'
+import { useToast } from '@/components/toast-provider'
 
 type Venue = {
   id: string
@@ -40,6 +41,47 @@ function matches(venue: Venue, query: string): boolean {
     const translit = transliterate(name)
     return lower.includes(query.toLowerCase()) || translit.includes(q)
   })
+}
+
+function VenueActiveToggle({
+  venueId,
+  isActive,
+  venueName,
+  toggleActive,
+}: {
+  venueId: string
+  isActive: boolean
+  venueName: string
+  toggleActive: (id: string, current: boolean) => Promise<void>
+}) {
+  const toast = useToast()
+  const [pending, startTransition] = useTransition()
+
+  return (
+    <button
+      onClick={() => {
+        startTransition(async () => {
+          try {
+            await toggleActive(venueId, isActive)
+            toast.success(isActive ? `${venueName} deactivated` : `${venueName} activated`)
+          } catch {
+            toast.error('Failed to update venue status')
+          }
+        })
+      }}
+      disabled={pending}
+      title={isActive ? 'Deactivate' : 'Activate'}
+      className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer disabled:opacity-60 ${
+        isActive ? 'bg-green-500' : 'bg-red-500'
+      }`}
+    >
+      <span
+        className={`absolute top-0.5 left-0 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+          isActive ? 'translate-x-[18px]' : 'translate-x-[2px]'
+        }`}
+      />
+    </button>
+  )
 }
 
 export function VenuesSearchTable({ venues, toggleActive, isSuperAdmin }: Props) {
@@ -137,21 +179,12 @@ export function VenuesSearchTable({ venues, toggleActive, isSuperAdmin }: Props)
                 </td>
                 <td className="px-4 py-3 text-zinc-600">⭐ {venue.rating}</td>
                 <td className="px-4 py-3">
-                  <form action={toggleActive.bind(null, venue.id, venue.is_active)}>
-                    <button
-                      type="submit"
-                      title={venue.is_active ? 'Deactivate' : 'Activate'}
-                      className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${
-                        venue.is_active ? 'bg-green-500' : 'bg-red-500'
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-0.5 left-0 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                          venue.is_active ? 'translate-x-[18px]' : 'translate-x-[2px]'
-                        }`}
-                      />
-                    </button>
-                  </form>
+                  <VenueActiveToggle
+                    venueId={venue.id}
+                    isActive={venue.is_active}
+                    venueName={venue.name_hy ?? venue.name}
+                    toggleActive={toggleActive}
+                  />
                 </td>
                 <td className="px-4 py-3">
                   <Link
