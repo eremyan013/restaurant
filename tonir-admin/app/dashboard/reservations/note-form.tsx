@@ -1,5 +1,6 @@
 'use client'
 import { useState, useTransition } from 'react'
+import { useToast } from '@/components/toast-provider'
 
 export function NoteForm({ id, status, defaultNote, saveNote }: {
   id: string
@@ -9,15 +10,21 @@ export function NoteForm({ id, status, defaultNote, saveNote }: {
 }) {
   const [saved, setSaved] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const toast = useToast()
 
   return (
     <form
       className="flex gap-1.5"
       action={async (fd) => {
         startTransition(async () => {
-          await saveNote(id, fd)
-          setSaved(true)
-          setTimeout(() => setSaved(false), 2000)
+          try {
+            await saveNote(id, fd)
+            setSaved(true)
+            toast.success('Note saved')
+            setTimeout(() => setSaved(false), 2000)
+          } catch {
+            toast.error('Failed to save note')
+          }
         })
       }}
     >

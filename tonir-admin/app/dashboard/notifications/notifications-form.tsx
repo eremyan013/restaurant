@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useToast } from '@/components/toast-provider'
 
 type TargetType = 'all' | 'tier' | 'user'
 
@@ -26,6 +27,7 @@ interface UserResult {
 }
 
 export function NotificationsForm({ venues }: { venues: { id: string; name: string }[] }) {
+  const toast = useToast()
   const [targetType, setTargetType] = useState<TargetType>('all')
   const [tier, setTier] = useState(1)
   const [userSearch, setUserSearch] = useState('')
@@ -122,8 +124,11 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Send failed')
       setResult(data)
+      toast.success(`Sent ${data.sent} of ${data.total} notifications`)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to send notifications')
+      const msg = e instanceof Error ? e.message : 'Failed to send notifications'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setSending(false)
     }

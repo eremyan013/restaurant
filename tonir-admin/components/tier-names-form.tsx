@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useToast } from '@/components/toast-provider'
 
 const TIER_COLORS: Record<number, string> = {
   1: 'bg-zinc-100 text-zinc-600',
@@ -25,6 +26,7 @@ export function TierNamesForm({ tierNames, saveTierNames }: Props) {
   const [names, setNames] = useState({ ...tierNames })
   const [pending, setPending] = useState(false)
   const [saved, setSaved] = useState(false)
+  const toast = useToast()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -34,9 +36,15 @@ export function TierNamesForm({ tierNames, saveTierNames }: Props) {
     for (const [level, name] of Object.entries(names)) {
       fd.set(`tier_${level}_name`, name)
     }
-    await saveTierNames(fd)
-    setSaved(true)
-    setPending(false)
+    try {
+      await saveTierNames(fd)
+      setSaved(true)
+      toast.success('Tier names saved')
+    } catch {
+      toast.error('Failed to save tier names')
+    } finally {
+      setPending(false)
+    }
   }
 
   return (

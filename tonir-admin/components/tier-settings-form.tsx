@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useToast } from '@/components/toast-provider'
 
 const TIER_COLORS: Record<number, string> = {
   1: 'bg-zinc-100 text-zinc-600',
@@ -21,6 +22,7 @@ export function TierSettingsForm({ tierNames, tierMins, saveTierSettings }: Prop
   const [pending, setPending] = useState(false)
   const [saved,   setSaved]   = useState(false)
   const [error,   setError]   = useState<string | null>(null)
+  const toast = useToast()
 
   function validate(): string | null {
     if (mins[2] <= 0) return 'Level 2 minimum must be greater than 0'
@@ -35,7 +37,7 @@ export function TierSettingsForm({ tierNames, tierMins, saveTierSettings }: Prop
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const err = validate()
-    if (err) { setError(err); return }
+    if (err) { setError(err); toast.error(err); return }
     setPending(true)
     setSaved(false)
     setError(null)
@@ -44,9 +46,15 @@ export function TierSettingsForm({ tierNames, tierMins, saveTierSettings }: Prop
     fd.set('tier_2_min', String(mins[2]))
     fd.set('tier_3_min', String(mins[3]))
     fd.set('tier_4_min', String(mins[4]))
-    await saveTierSettings(fd)
-    setSaved(true)
-    setPending(false)
+    try {
+      await saveTierSettings(fd)
+      setSaved(true)
+      toast.success('Tier settings saved')
+    } catch {
+      toast.error('Failed to save tier settings')
+    } finally {
+      setPending(false)
+    }
   }
 
   function range(level: number) {

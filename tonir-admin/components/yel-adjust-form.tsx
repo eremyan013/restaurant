@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from 'react'
 import { searchUsersAction } from '@/app/dashboard/reservations/actions'
+import { useToast } from '@/components/toast-provider'
 
 type SearchResult = { id: string; name: string; email: string; player_id: number }
 const INIT_SEARCH: { results: SearchResult[] } = { results: [] }
@@ -16,6 +17,7 @@ export function YelAdjustForm({ adjustPoints }: Props) {
   const [amount, setAmount]     = useState('')
   const [pending, setPending]   = useState(false)
   const [success, setSuccess]   = useState<string | null>(null)
+  const toast = useToast()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -25,12 +27,19 @@ export function YelAdjustForm({ adjustPoints }: Props) {
     const fd = new FormData()
     fd.set('user_id', selected.id)
     fd.set('amount',  amount)
-    await adjustPoints(fd)
-    const pts = parseInt(amount)
-    setSuccess(`${pts > 0 ? '+' : ''}${pts} points applied to ${selected.name}`)
-    setAmount('')
-    setSelected(null)
-    setPending(false)
+    try {
+      await adjustPoints(fd)
+      const pts = parseInt(amount)
+      const msg = `${pts > 0 ? '+' : ''}${pts} points applied to ${selected.name}`
+      setSuccess(msg)
+      toast.success(msg)
+      setAmount('')
+      setSelected(null)
+    } catch {
+      toast.error('Failed to apply adjustment')
+    } finally {
+      setPending(false)
+    }
   }
 
   return (

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useTransition } from 'react'
+import { useToast } from '@/components/toast-provider'
 
 interface Props {
   onSend: (text: string) => Promise<void>
@@ -10,15 +11,21 @@ export default function ConciergeReplyForm({ onSend }: Props) {
   const [text, setText] = useState('')
   const [pending, startTransition] = useTransition()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const toast = useToast()
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const trimmed = text.trim()
     if (!trimmed) return
     startTransition(async () => {
-      await onSend(trimmed)
-      setText('')
-      textareaRef.current?.focus()
+      try {
+        await onSend(trimmed)
+        setText('')
+        textareaRef.current?.focus()
+        toast.success('Reply sent')
+      } catch {
+        toast.error('Failed to send reply')
+      }
     })
   }
 

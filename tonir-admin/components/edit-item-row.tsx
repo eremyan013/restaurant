@@ -4,11 +4,13 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import type { MenuItemRow } from '@/lib/database.types'
 import { LangTabs, LANGS, type Lang } from '@/components/lang-tabs'
+import { useToast } from '@/components/toast-provider'
 
 type LangItemFields = { name: string; description: string; allergens: string }
 
 export function EditItemRow({ item, venueId, index = 0 }: { item: MenuItemRow; venueId: string; index?: number }) {
   const router = useRouter()
+  const toast = useToast()
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -44,12 +46,14 @@ export function EditItemRow({ item, venueId, index = 0 }: { item: MenuItemRow; v
     if (!res.ok) {
       if (field === 'is_available') setIsAvailable(!newVal)
       else setIsPopular(!newVal)
+      toast.error('Failed to update item')
     }
   }
 
   async function handleDelete() {
     if (!confirm(`Delete "${item.name}"?`)) return
     await fetch(`/api/menu-items/${item.id}?venueId=${venueId}`, { method: 'DELETE' })
+    toast.success('Item deleted')
     router.refresh()
   }
 
@@ -100,10 +104,13 @@ export function EditItemRow({ item, venueId, index = 0 }: { item: MenuItemRow; v
         throw new Error(json.error ?? 'Failed to save')
       }
 
+      toast.success('Item saved')
       setEditing(false)
       router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
+      const msg = err instanceof Error ? err.message : 'Something went wrong'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setLoading(false)
     }

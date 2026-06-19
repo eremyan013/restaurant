@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { updateAdmin } from '../../actions'
+import { useToast } from '@/components/toast-provider'
 
 export function EditAdminForm({
   admin,
@@ -13,11 +14,18 @@ export function EditAdminForm({
   venues: { id: string; name: string }[]
 }) {
   const router = useRouter()
+  const toast = useToast()
   const [state, action, pending] = useActionState(updateAdmin, { ok: false })
 
   useEffect(() => {
-    if (state.ok) router.push('/dashboard/admins')
-  }, [state.ok, router])
+    if (state.ok) {
+      toast.success('Admin updated')
+      router.push('/dashboard/admins')
+    } else if (state.error) {
+      toast.error(state.error)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state])
 
   return (
     <div className="bg-white rounded-xl border border-zinc-200 p-6">

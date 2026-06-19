@@ -1,7 +1,8 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { LangTabs, LANGS, type Lang } from '@/components/lang-tabs'
+import { useToast } from '@/components/toast-provider'
 
 function ImageField({
   label, name, defaultValue,
@@ -10,6 +11,7 @@ function ImageField({
   const [uploading, setUploading] = useState(false)
   const [error, setError]     = useState<string | null>(null)
   const fileRef               = useRef<HTMLInputElement>(null)
+  const toast                 = useToast()
 
   const handleFile = useCallback(async (file: File) => {
     setError(null)
@@ -22,11 +24,13 @@ function ImageField({
       if (!res.ok) throw new Error(json.error ?? 'Upload failed')
       setUrl(json.url)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Upload failed')
+      const msg = e instanceof Error ? e.message : 'Upload failed'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setUploading(false)
     }
-  }, [])
+  }, [toast])
 
   return (
     <div className="flex flex-col gap-1">

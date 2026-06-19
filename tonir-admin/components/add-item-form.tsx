@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { LangTabs, LANGS, type Lang } from '@/components/lang-tabs'
+import { useToast } from '@/components/toast-provider'
 
 type LangItemFields = { name: string; description: string; allergens: string }
 
@@ -14,6 +15,7 @@ export function AddItemForm({
   categoryId: string
 }) {
   const router = useRouter()
+  const toast = useToast()
   const fileRef = useRef<HTMLInputElement>(null)
   const [lang, setLang] = useState<Lang>('hy')
   const [lf, setLf] = useState<Record<Lang, LangItemFields>>({
@@ -91,9 +93,12 @@ export function AddItemForm({
       setLf({ hy: { name: '', description: '', allergens: '' }, ru: { name: '', description: '', allergens: '' }, en: { name: '', description: '', allergens: '' } })
       ;(e.target as HTMLFormElement).reset()
       clearPhoto()
+      toast.success('Item added')
       router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
+      const msg = err instanceof Error ? err.message : 'Something went wrong'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setLoading(false)
     }

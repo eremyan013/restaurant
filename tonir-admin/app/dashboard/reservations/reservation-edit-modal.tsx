@@ -2,6 +2,7 @@
 
 import { useActionState, useState, useEffect } from 'react'
 import { editReservation, ActionState } from './actions'
+import { useToast } from '@/components/toast-provider'
 
 const TIME_SLOTS: string[] = []
 for (let h = 10; h <= 23; h++) {
@@ -25,12 +26,18 @@ const INIT: ActionState = { ok: false }
 export function ReservationEditModal({ reservation: r }: Props) {
   const [open, setOpen] = useState(false)
   const [state, action, pending] = useActionState(editReservation, INIT)
+  const toast = useToast()
 
   useEffect(() => {
-    if (state.ok) setOpen(false)
+    if (state.ok) {
+      toast.success('Reservation updated')
+      setOpen(false)
+    } else if (state.error) {
+      toast.error(state.error)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state])
 
-  // Default date: today if date_iso missing
   const defaultDate = r.date_iso ?? new Date().toISOString().split('T')[0]
 
   return (
