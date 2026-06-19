@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ConfirmButton } from '@/components/confirm-button'
 import { redirect } from 'next/navigation'
+import { PrizeActiveToggle, PrizeDeleteButton } from '@/components/prize-list-client'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 
@@ -33,11 +33,10 @@ async function toggleActive(id: string, current: boolean) {
   revalidatePath('/dashboard/prizes')
 }
 
-async function deletePrize(formData: FormData) {
+async function deletePrize(id: string) {
   'use server'
   const actor = await getCurrentAdmin()
   if (actor?.role !== 'super_admin') return
-  const id = formData.get('id') as string
   if (!id) return
   const supabase = createSupabaseAdminClient()
   const { data: prize } = await supabase
@@ -155,29 +154,21 @@ export default async function PrizesPage() {
                   </td>
                   <td className="px-4 py-3 text-zinc-600 tabular-nums">{claimCountMap[p.id] ?? 0}</td>
                   <td className="px-4 py-3">
-                    <form action={toggleActive.bind(null, p.id, p.is_active)}>
-                      <ConfirmButton
-                        message={p.is_active ? `Deactivate "${p.name}"?` : `Activate "${p.name}"?`}
-                        className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${p.is_active ? 'bg-green-500' : 'bg-zinc-300'}`}
-                      >
-                        <span className={`absolute top-0.5 left-0 w-4 h-4 rounded-full bg-white shadow transition-transform ${p.is_active ? 'translate-x-[18px]' : 'translate-x-[2px]'}`} />
-                      </ConfirmButton>
-                    </form>
+                    <PrizeActiveToggle
+                      prizeName={p.name}
+                      isActive={p.is_active}
+                      toggleAction={toggleActive.bind(null, p.id, p.is_active)}
+                    />
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <Link href={`/dashboard/prizes/${p.id}`} className="px-3 py-1.5 rounded-lg bg-[#F0AB0C] hover:bg-[#d99a0b] text-zinc-900 text-xs font-medium transition-colors">
                         Edit
                       </Link>
-                      <form action={deletePrize}>
-                        <input type="hidden" name="id" value={p.id} />
-                        <ConfirmButton
-                          message={`Delete "${p.name}"?`}
-                          className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
-                        >
-                          Delete
-                        </ConfirmButton>
-                      </form>
+                      <PrizeDeleteButton
+                        prizeName={p.name}
+                        deleteAction={deletePrize.bind(null, p.id)}
+                      />
                     </div>
                   </td>
                 </tr>

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { PrizeForm } from '@/components/prize-form'
+import { PrizeClaimMarkUsed } from '@/components/prize-claim-mark-used'
 
 const STATUS_COLORS: Record<string, string> = {
   active:  'bg-green-50 text-green-700',
@@ -85,11 +86,10 @@ export default async function EditPrizePage({ params }: { params: Promise<{ id: 
     revalidatePath(`/dashboard/prizes/${id}`)
   }
 
-  async function markUsed(formData: FormData) {
+  async function markUsed(claimId: string) {
     'use server'
     const actor = await getCurrentAdmin()
     if (actor?.role !== 'super_admin') return
-    const claimId = formData.get('claim_id') as string
     const supabase = createSupabaseAdminClient()
     await supabase.from('user_prizes').update({ status: 'used', used_at: new Date().toISOString() }).eq('id', claimId)
     revalidatePath(`/dashboard/prizes/${id}`)
@@ -165,12 +165,7 @@ export default async function EditPrizePage({ params }: { params: Promise<{ id: 
                   </td>
                   <td className="px-4 py-3">
                     {c.status === 'active' && (
-                      <form action={markUsed}>
-                        <input type="hidden" name="claim_id" value={c.id} />
-                        <button type="submit" className="text-xs px-2.5 py-1 rounded-md border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors">
-                          Mark used
-                        </button>
-                      </form>
+                      <PrizeClaimMarkUsed markUsedAction={markUsed.bind(null, c.id)} />
                     )}
                   </td>
                 </tr>

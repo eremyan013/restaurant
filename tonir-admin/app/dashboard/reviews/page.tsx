@@ -7,8 +7,8 @@ import { getCurrentAdmin } from '@/lib/current-admin'
 
 export const metadata: Metadata = { title: 'Reviews — Tonir Admin' }
 import { logActivity } from '@/lib/log-activity'
-import { ConfirmButton } from '@/components/confirm-button'
 import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
+import { ReviewActionButtons } from '@/components/review-actions-client'
 import type { Database, ReviewRow } from '@/lib/database.types'
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'hidden'
@@ -36,12 +36,10 @@ async function recalcVenueRating(supabase: SupabaseClient<Database>, venueId: st
     .eq('id', venueId)
 }
 
-async function approveReview(formData: FormData) {
+async function approveReview(id: string, venueId: string) {
   'use server'
   const actor = await getCurrentAdmin()
   if (actor?.role !== 'super_admin') return
-  const id       = formData.get('id') as string
-  const venueId  = formData.get('venue_id') as string
   const supabase = createSupabaseAdminClient()
   await supabase.from('reviews').update({ status: 'approved' }).eq('id', id)
   await recalcVenueRating(supabase, venueId)
@@ -50,12 +48,10 @@ async function approveReview(formData: FormData) {
   revalidatePath('/dashboard/reviews')
 }
 
-async function hideReview(formData: FormData) {
+async function hideReview(id: string, venueId: string) {
   'use server'
   const actor = await getCurrentAdmin()
   if (actor?.role !== 'super_admin') return
-  const id       = formData.get('id') as string
-  const venueId  = formData.get('venue_id') as string
   const supabase = createSupabaseAdminClient()
   await supabase.from('reviews').update({ status: 'hidden' }).eq('id', id)
   await recalcVenueRating(supabase, venueId)
@@ -64,12 +60,10 @@ async function hideReview(formData: FormData) {
   revalidatePath('/dashboard/reviews')
 }
 
-async function deleteReview(formData: FormData) {
+async function deleteReview(id: string, venueId: string) {
   'use server'
   const actor = await getCurrentAdmin()
   if (actor?.role !== 'super_admin') return
-  const id       = formData.get('id') as string
-  const venueId  = formData.get('venue_id') as string
   const supabase = createSupabaseAdminClient()
   await supabase.from('reviews').delete().eq('id', id)
   await recalcVenueRating(supabase, venueId)
@@ -246,36 +240,12 @@ export default async function ReviewsPage({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-3 justify-end">
-                        {r.status !== 'approved' && (
-                          <form action={approveReview}>
-                            <input type="hidden" name="id" value={r.id} />
-                            <input type="hidden" name="venue_id" value={r.venue_id} />
-                            <button type="submit" className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors">
-                              Approve
-                            </button>
-                          </form>
-                        )}
-                        {r.status !== 'hidden' && (
-                          <form action={hideReview}>
-                            <input type="hidden" name="id" value={r.id} />
-                            <input type="hidden" name="venue_id" value={r.venue_id} />
-                            <button type="submit" className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors">
-                              Hide
-                            </button>
-                          </form>
-                        )}
-                        <form action={deleteReview}>
-                          <input type="hidden" name="id" value={r.id} />
-                          <input type="hidden" name="venue_id" value={r.venue_id} />
-                          <ConfirmButton
-                            message="Delete this review permanently?"
-                            className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
-                          >
-                            Delete
-                          </ConfirmButton>
-                        </form>
-                      </div>
+                      <ReviewActionButtons
+                        status={r.status}
+                        onApprove={approveReview.bind(null, r.id, r.venue_id ?? '')}
+                        onHide={hideReview.bind(null, r.id, r.venue_id ?? '')}
+                        onDelete={deleteReview.bind(null, r.id, r.venue_id ?? '')}
+                      />
                     </td>
                   </tr>
                 ))}
