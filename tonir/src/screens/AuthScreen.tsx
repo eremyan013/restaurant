@@ -7,8 +7,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
-import { RootStackParamList } from '../navigation';
+import { RootStackParamList, REMEMBER_ME_KEY } from '../navigation';
 import { useStore } from '../store';
 import { useTranslation } from '../hooks/useTranslation';
 import { supabase } from '../lib/supabase';
@@ -31,6 +32,7 @@ export function AuthScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState(true);
   const isInfo = error === tr('auth_err_confirm');
 
   function switchMode(next: 'signin' | 'signup') {
@@ -114,6 +116,7 @@ export function AuthScreen({ navigation }: Props) {
             return;
           }
         }
+        await AsyncStorage.setItem(REMEMBER_ME_KEY, rememberMe ? 'true' : 'false');
         // onAuthStateChange in AppNavigator handles navigation
       }
     } catch (err: any) {
@@ -241,6 +244,24 @@ export function AuthScreen({ navigation }: Props) {
               />
             </View>
           </View>
+
+          {/* Remember me — sign-in only */}
+          {mode === 'signin' && (
+            <Pressable
+              onPress={() => setRememberMe((v) => !v)}
+              style={styles.rememberRow}
+              hitSlop={8}
+            >
+              <View style={[
+                styles.checkbox,
+                { borderColor: rememberMe ? t.primary : t.border },
+                rememberMe && { backgroundColor: t.primary },
+              ]}>
+                {rememberMe && <Icon name="check" size={11} color="#FBF5E8" strokeWidth={2.5} />}
+              </View>
+              <Text style={[styles.rememberLabel, { color: t.textMute }]}>{tr('auth_remember_me')}</Text>
+            </Pressable>
+          )}
 
           {/* Error */}
           {error && (
@@ -388,4 +409,21 @@ const styles = StyleSheet.create({
   },
   submitText: { color: '#FBF5E8', fontSize: 15, fontFamily: FONTS.bold, fontWeight: '700' },
   switchHint: { textAlign: 'center', fontSize: 13, marginTop: 4 },
+  rememberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: -4,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rememberLabel: {
+    fontSize: 14,
+  },
 });

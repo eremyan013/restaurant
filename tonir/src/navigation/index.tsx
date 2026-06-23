@@ -23,6 +23,7 @@ Notifications.setNotificationHandler({
 });
 
 export const ONBOARDING_KEY = 'tonir_onboarding_done';
+export const REMEMBER_ME_KEY = 'tonir_remember_me';
 
 // Screens
 import { OnboardingScreen } from '../screens/OnboardingScreen';
@@ -173,17 +174,23 @@ export function AppNavigator() {
   const [seenOnboarding, setSeenOnboarding] = useState<boolean | null>(null); // null = still checking
 
   useEffect(() => {
-    // Check existing session on mount
-    (supabase as any).auth.getSession().then(({ data }: any) => {
-      const uid = data.session?.user?.id ?? null;
-      setSession(!!data.session);
-      useStore.getState().setUserId(uid);
-    });
-
-    // Check whether onboarding has already been completed
-    AsyncStorage.getItem(ONBOARDING_KEY).then((val) => {
-      setSeenOnboarding(val === 'true');
-    });
+    // Check existing session and remember-me flag on mount
+    (async () => {
+      const [{ data }, rememberMe, onboardingVal] = await Promise.all([
+        (supabase as any).auth.getSession(),
+        AsyncStorage.getItem(REMEMBER_ME_KEY),
+        AsyncStorage.getItem(ONBOARDING_KEY),
+      ]);
+      if (data.session && rememberMe === 'false') {
+        await (supabase as any).auth.signOut();
+        setSession(false);
+        useStore.getState().setUserId(null);
+      } else {
+        setSession(!!data.session);
+        useStore.getState().setUserId(data.session?.user?.id ?? null);
+      }
+      setSeenOnboarding(onboardingVal === 'true');
+    })();
 
     // Listen for sign-in / sign-out
     const { data: { subscription } } = (supabase as any).auth.onAuthStateChange(

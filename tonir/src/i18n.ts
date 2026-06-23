@@ -223,6 +223,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     auth_err_not_confirmed: 'Հաստատեք ձեր email հասցեն',
     auth_err_generic:       'Սխալ է տեղի ունեցել',
     auth_err_admin:         'Այս հաշիվը նախատեսված է միայն ադմինիստրատորի վահանակի համար',
+    auth_remember_me:       'Հիշել ինձ',
     auth_email_or_id_placeholder: 'Email կամ ID',
     // Phone verification screen
     otp_title:            'Հաստատեք Ձեր հեռախոսը',
@@ -535,6 +536,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     auth_err_not_confirmed: 'Подтвердите ваш email адрес',
     auth_err_generic:       'Произошла ошибка',
     auth_err_admin:         'Этот аккаунт предназначен только для панели администратора',
+    auth_remember_me:       'Запомнить меня',
     auth_email_or_id_placeholder: 'Email или ID',
     // Phone verification screen
     otp_title:            'Подтвердите телефон',
@@ -844,6 +846,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     auth_err_not_confirmed: 'Confirm your email address',
     auth_err_generic:       'An error occurred',
     auth_err_admin:         'This account is for the admin panel only',
+    auth_remember_me:       'Remember me',
     auth_email_or_id_placeholder: 'Email or ID',
     // Phone verification screen
     otp_title:            'Verify your phone',
