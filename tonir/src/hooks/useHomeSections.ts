@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { HomeSectionRow, HomeSectionItemRow, VenueRow, GuideRow } from '../lib/database.types';
 import { useStore } from '../store';
+import { fetchTodayBookingCounts } from '../lib/api';
 
 export type HomeSectionItem = HomeSectionItemRow & {
   venue: VenueRow | null;
@@ -54,17 +55,20 @@ export function useHomeSections() {
         }
       }
 
-      // Step 3: fetch those guides in one query (skip if none)
+      // Step 3: fetch guides + today's booking counts in parallel
       const guideMap = new Map<string, GuideRow>();
-      if (guideIds.length > 0) {
-        const { data: guidesData } = await (supabase as any)
-          .from('guides')
-          .select('*')
-          .in('id', [...new Set(guideIds)]);
-        for (const g of guidesData ?? []) {
-          guideMap.set(g.id, g as GuideRow);
-        }
-      }
+      const [, bookingCounts] = await Promise.all([
+        guideIds.length > 0
+          ? (supabase as any)
+              .from('guides')
+              .select('*')
+              .in('id', [...new Set(guideIds)])
+              .then(({ data: guidesData }: any) => {
+                for (const g of guidesData ?? []) guideMap.set(g.id, g as GuideRow);
+              })
+          : Promise.resolve(),
+        fetchTodayBookingCounts().catch(() => ({} as Record<string, number>)),
+      ]);
 
       // Step 4: merge + localise
       const mapped: HomeSection[] = raw.map((s) => {
@@ -80,11 +84,16 @@ export function useHomeSections() {
 
         const items: HomeSectionItem[] = [...(s.home_section_items ?? [])]
           .sort((a: any, b: any) => a.sort_order - b.sort_order)
-          .map((item: any) => ({
-            ...item,
-            venue: item.venue ?? null,
-            guide: item.guide_id ? (guideMap.get(item.guide_id) ?? null) : null,
-          }));
+          .map((item: any) => {
+            const venue = item.venue ?? null;
+            return {
+              ...item,
+              venue: venue
+                ? { ...venue, booked_today: bookingCounts[venue.id] ?? venue.booked_today }
+                : null,
+              guide: item.guide_id ? (guideMap.get(item.guide_id) ?? null) : null,
+            };
+          });
 
         return { ...s, name: localName, eyebrow: localEyebrow, home_section_items: items };
       });

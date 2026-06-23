@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { fetchVenues, fetchVenueById } from '../lib/api';
+import { fetchVenues, fetchVenueById, fetchTodayBookingCounts } from '../lib/api';
 import { VenueRow } from '../lib/database.types';
 import { useStore } from '../store';
 import { localizeVenue } from '../lib/localize';
@@ -14,8 +14,10 @@ export function useVenues() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetchVenues()
-      .then(setRaw)
+    Promise.all([fetchVenues(), fetchTodayBookingCounts().catch(() => ({} as Record<string, number>))])
+      .then(([venues, counts]) => {
+        setRaw(venues.map(v => ({ ...v, booked_today: counts[v.id] ?? v.booked_today })));
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [attempt]);

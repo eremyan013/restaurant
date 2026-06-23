@@ -355,6 +355,21 @@ export async function fetchTierSettings(): Promise<{
 // RESERVATION COUNT (for detail screen)
 // ─────────────────────────────────────────────
 
+export async function fetchTodayBookingCounts(): Promise<Record<string, number>> {
+  const today = new Date().toISOString().split('T')[0]!;
+  const { data, error } = await sb
+    .from('reservations')
+    .select('venue_id')
+    .eq('date_iso', today)
+    .neq('status', 'cancelled');
+  if (error) throw error;
+  const counts: Record<string, number> = {};
+  for (const r of (data ?? []) as { venue_id: string }[]) {
+    counts[r.venue_id] = (counts[r.venue_id] ?? 0) + 1;
+  }
+  return counts;
+}
+
 export async function fetchTodayReservationCount(venueId: string): Promise<number> {
   const today = new Date().toISOString().split('T')[0]!;
   const { count, error } = await sb
