@@ -73,15 +73,17 @@ export function BookingScreen({ navigation, route }: Props) {
     const today = new Date();
     const d = new Date(today);
     d.setDate(today.getDate() + dateIndex);
+    const isoDate = isoDates[dateIndex]!;
+    if (!isDateAvailable(isoDate, d.getDay(), hoursMap, blockedDates)) return [];
     return filterAvailableTimes(venue.times, d.getDay(), hoursMap, dateIndex === 0);
-  }, [venue, dateIndex, hoursMap]);
+  }, [venue, dateIndex, hoursMap, blockedDates, isoDates]);
 
   const nextAvailableDateIndex = useMemo(() => {
     if (!venue || availableTimes.length > 0) return null;
     for (let i = dateIndex + 1; i < DATES.length; i++) {
       const d = new Date();
       d.setDate(d.getDate() + i);
-      if (!isDateAvailable(isoDates[i]!, blockedDates)) continue;
+      if (!isDateAvailable(isoDates[i]!, d.getDay(), hoursMap, blockedDates)) continue;
       const times = filterAvailableTimes(venue.times, d.getDay(), hoursMap, false);
       if (times.length > 0) return i;
     }
