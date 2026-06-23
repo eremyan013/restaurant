@@ -76,9 +76,11 @@ export function DetailScreen({ navigation, route }: Props) {
   const { categories: menuCats, items: menuItems, loading: menuLoading } = useMenu(venueId);
   const similar = allVenues.filter((v) => v.id !== venueId && venue && v.kind === venue.kind).slice(0, 4);
 
-  const { hoursMap, loading: availabilityLoading } = useVenueAvailability(venueId);
+  const { hoursMap, blockedDates, loading: availabilityLoading } = useVenueAvailability(venueId);
+  const todayISO = new Date().toISOString().split('T')[0]!;
+  const isTodayBlocked = blockedDates.has(todayISO);
   const todayDow = new Date().getDay();
-  const availableTimes: string[] = venue
+  const availableTimes: string[] = (venue && !isTodayBlocked)
     ? filterAvailableTimes(venue.times, todayDow, hoursMap, true)
     : [];
   const timesToShow = availabilityLoading ? (venue?.times ?? []) : availableTimes;
@@ -176,7 +178,7 @@ export function DetailScreen({ navigation, route }: Props) {
           </View>
           {/* Open/closed badge */}
           {(() => {
-            const result = getVenueStatus(hoursMap, new Date());
+            const result = getVenueStatus(hoursMap, new Date(), blockedDates);
             const isOpen = result.status === 'open';
             let label: string;
             if (result.detail === 'plain') label = tr(isOpen ? 'det_hours_open' : 'det_hours_closed_now');
@@ -281,7 +283,7 @@ export function DetailScreen({ navigation, route }: Props) {
         <View style={styles.tabContent}>
           {activeTab === 0 && (
             <View style={{ gap: 16 }}>
-              <VenueHoursSection hoursMap={hoursMap} t={t} />
+              <VenueHoursSection hoursMap={hoursMap} blockedDates={blockedDates} t={t} />
               <Text style={[styles.description, { color: t.text }]}>{venue.description}</Text>
               <View style={styles.factsGrid}>
                 {[

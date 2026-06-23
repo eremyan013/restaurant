@@ -15,7 +15,16 @@ function parseMinutes(hhmm: string): number {
 export function getVenueStatus(
   hoursMap: Record<number, VenueHoursRow>,
   now: Date,
+  blockedDates?: Set<string>,
 ): VenueStatusResult {
+  // Blocked date overrides all hours logic
+  if (blockedDates?.size) {
+    const todayISO = now.toISOString().split('T')[0]!;
+    if (blockedDates.has(todayISO)) {
+      return { status: 'closed', detail: 'unknown' };
+    }
+  }
+
   const dow = now.getDay(); // 0=Sun … 6=Sat
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const todayRow = hoursMap[dow];

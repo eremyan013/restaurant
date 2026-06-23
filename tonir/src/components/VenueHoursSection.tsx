@@ -14,17 +14,18 @@ export type VenueHoursRow = {
 
 type Props = {
   hoursMap: Record<number, VenueHoursRow>;
+  blockedDates?: Set<string>;
   t: Theme;
 };
 
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // Mon–Sat–Sun display order
 
-export function VenueHoursSection({ hoursMap, t }: Props) {
+export function VenueHoursSection({ hoursMap, blockedDates, t }: Props) {
   const [expanded, setExpanded] = useState(false);
   const { tr, tra, trf } = useTranslation();
   const now = new Date();
   const todayDow = now.getDay();
-  const result = getVenueStatus(hoursMap, now);
+  const result = getVenueStatus(hoursMap, now, blockedDates);
   const isOpen = result.status === 'open';
 
   let badgeText: string;
