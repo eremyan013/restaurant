@@ -60,6 +60,35 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
     }
   }, [profile?.tier_level]);
 
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  async function pickAndUploadAvatar() {
+    if (!userId || !profile) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    if (asset.fileSize !== undefined && asset.fileSize > 5 * 1024 * 1024) {
+      Alert.alert('', tr('prof_edit_photo_too_large'));
+      return;
+    }
+    haptic();
+    setUploadingAvatar(true);
+    try {
+      const avatar_url = await uploadAvatar(userId, asset.uri);
+      await updateProfile(userId, { name: profile.name, avatar_url });
+      refetch();
+    } catch {
+      Alert.alert('', 'Failed to upload photo');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
   const [editVisible, setEditVisible] = useState(false);
   const [editName, setEditName] = useState('');
   const [editAvatarUri, setEditAvatarUri] = useState<string | null>(null);
@@ -183,15 +212,25 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
       >
         {/* User card */}
         <View style={[styles.userCard, { backgroundColor: t.surface, borderColor: t.border }]}>
-          <View style={[styles.avatarWrap, { borderColor: t.accent }]}>
-            {user.avatar_url ? (
-              <Image source={{ uri: user.avatar_url }} style={styles.avatar} />
-            ) : (
-              <View style={[styles.avatar, { backgroundColor: t.bgAlt, alignItems: 'center', justifyContent: 'center' }]}>
-                <Icon name="user" size={28} color={t.textMute} />
-              </View>
-            )}
-          </View>
+          <Pressable onPress={pickAndUploadAvatar} disabled={uploadingAvatar} style={styles.avatarOuter} hitSlop={4}>
+            <View style={[styles.avatarWrap, { borderColor: t.accent }]}>
+              {user.avatar_url ? (
+                <Image source={{ uri: user.avatar_url }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatar, { backgroundColor: t.bgAlt, alignItems: 'center', justifyContent: 'center' }]}>
+                  <Icon name="user" size={28} color={t.textMute} />
+                </View>
+              )}
+              {uploadingAvatar && (
+                <View style={styles.avatarUploadingOverlay}>
+                  <ActivityIndicator color="#FBF5E8" size="small" />
+                </View>
+              )}
+            </View>
+            <View style={[styles.cameraBadge, { backgroundColor: t.primary, borderColor: t.surface }]}>
+              <Icon name="camera" size={10} color="#FBF5E8" strokeWidth={2} />
+            </View>
+          </Pressable>
           <View style={{ flex: 1 }}>
             <Text style={[styles.userName, { color: t.text }]}>{user.name}</Text>
             {!!user.email && <Text style={[styles.userEmail, { color: t.textMute }]}>{user.email}</Text>}
@@ -474,6 +513,9 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderWidth: 1,
   },
+  avatarOuter: {
+    position: 'relative',
+  },
   avatarWrap: {
     width: 64,
     height: 64,
@@ -482,6 +524,24 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   avatar: { width: '100%', height: '100%' },
+  avatarUploadingOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: -2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   userName: { fontSize: 17, fontFamily: FONTS.bold, fontWeight: '700', marginBottom: 2 },
   userEmail: { fontSize: 12, marginBottom: 4 },
   userPlayerId: { fontSize: 11, marginBottom: 8 },
