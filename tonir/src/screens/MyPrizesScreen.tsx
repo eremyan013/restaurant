@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, Pressable, StyleSheet, StatusBar,
   ActivityIndicator, Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 
 import { RootStackParamList } from '../navigation';
@@ -33,13 +34,16 @@ export function MyPrizesScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'active' | 'used' | 'all'>('active');
 
-  useEffect(() => {
-    if (!profile) return;
-    fetchUserPrizes(profile.id)
-      .then(setPrizes)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [profile]);
+  useFocusEffect(
+    useCallback(() => {
+      if (!profile?.id) return;
+      setLoading(true);
+      fetchUserPrizes(profile.id)
+        .then(setPrizes)
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    }, [profile?.id]),
+  );
 
   const filtered = useMemo(() => {
     if (tab === 'all') return prizes;
