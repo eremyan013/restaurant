@@ -162,7 +162,7 @@ export interface VenueFormDefaults {
   description_hy?: string; description_ru?: string; description_en?: string
   perk_hy?: string;  perk_ru?: string;  perk_en?: string
   tags_hy?: string;  tags_ru?: string;  tags_en?: string
-  price?: string; rating?: string
+  price?: string
   heat?: string; kind?: string; photo_url?: string; dish_url?: string
   distance_km?: string; coord_x?: string; coord_y?: string
   times?: string; is_active?: string
@@ -276,7 +276,6 @@ export function VenueFormClient({
 
         {/* Non-translatable */}
         <F label="Price (e.g. $$)"   name="price"         required defaultValue={defaults.price} />
-        <F label="Rating (0–5)"      name="rating"        required type="number" step="0.1" min="0" max="5" defaultValue={defaults.rating} />
         {bookedToday !== undefined && (
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-zinc-700">Booked today</label>

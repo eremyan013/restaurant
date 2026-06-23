@@ -50,7 +50,6 @@ async function createVenue(formData: FormData) {
     tags_ru:        arr('tags_ru').length ? arr('tags_ru') : null,
     tags_en:        arr('tags_en').length ? arr('tags_en') : null,
     price:          g('price'),
-    rating:         parseFloat(g('rating')) || 0,
     reviews_count:  0,
     photo_url:      g('photo_url'),
     dish_url:       g('dish_url'),
