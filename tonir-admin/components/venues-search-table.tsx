@@ -14,7 +14,8 @@ type Venue = {
   cuisine: string
   area: string
   kind: string
-  rating: number
+  rating: number | null
+  reviews_count: number
   is_active: boolean
 }
 
@@ -97,7 +98,7 @@ export function VenuesSearchTable({ venues, toggleActive, isSuperAdmin }: Props)
     matches(v, query) &&
     (cuisine === '' || v.cuisine === cuisine) &&
     (kind === '' || v.kind === kind) &&
-    v.rating >= minRating &&
+    (v.rating === null ? minRating === 0 : v.rating >= minRating) &&
     (activeFilter === 'all' || (activeFilter === 'active' ? v.is_active : !v.is_active))
   ), [venues, query, cuisine, kind, minRating, activeFilter])
 
@@ -177,7 +178,11 @@ export function VenuesSearchTable({ venues, toggleActive, isSuperAdmin }: Props)
                     {venue.kind}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-zinc-600">⭐ {venue.rating}</td>
+                <td className="px-4 py-3 text-zinc-600">
+                  {venue.rating !== null
+                    ? <span>⭐ {venue.rating} <span className="text-zinc-400 text-xs">({venue.reviews_count})</span></span>
+                    : <span className="text-zinc-400">—</span>}
+                </td>
                 <td className="px-4 py-3">
                   <VenueActiveToggle
                     venueId={venue.id}

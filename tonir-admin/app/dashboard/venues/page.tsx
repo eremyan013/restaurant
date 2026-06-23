@@ -25,7 +25,7 @@ export default async function VenuesPage() {
   const supabase = createSupabaseAdminClient()
   let venuesQuery = supabase
     .from('venues')
-    .select('id, name, name_hy, name_ru, name_en, cuisine, area, kind, rating, is_active')
+    .select('id, name, name_hy, name_ru, name_en, cuisine, area, kind, is_active')
     .order('name')
 
   if (admin.role === 'admin') {
@@ -33,9 +33,30 @@ export default async function VenuesPage() {
     venuesQuery = venuesQuery.in('id', admin.managed_venue_ids)
   }
 
-  const { data: venues, error } = await venuesQuery
+  const [{ data: venues, error }, { data: reviewRows }] = await Promise.all([
+    venuesQuery,
+    supabase.from('reviews').select('venue_id, rating').eq('status', 'approved'),
+  ])
 
   if (error) throw error
+
+  // Compute real average rating per venue from approved reviews
+  const ratingMap: Record<string, { avg: number; count: number }> = {}
+  for (const r of (reviewRows ?? [])) {
+    if (!ratingMap[r.venue_id]) ratingMap[r.venue_id] = { avg: 0, count: 0 }
+    ratingMap[r.venue_id].count += 1
+    ratingMap[r.venue_id].avg += r.rating
+  }
+  for (const id of Object.keys(ratingMap)) {
+    const { avg, count } = ratingMap[id]
+    ratingMap[id].avg = Math.round((avg / count) * 10) / 10
+  }
+
+  const venuesWithRating = (venues ?? []).map(v => ({
+    ...v,
+    rating: ratingMap[v.id]?.avg ?? null,
+    reviews_count: ratingMap[v.id]?.count ?? 0,
+  }))
 
   return (
     <div>
@@ -53,7 +74,7 @@ export default async function VenuesPage() {
         )}
       </div>
 
-      {(venues ?? []).length === 0 ? (
+      {venuesWithRating.length === 0 ? (
         <div className="bg-white rounded-xl border border-zinc-200 py-16 text-center text-zinc-400 text-sm">
           {admin.role === 'super_admin' ? (
             <>No venues yet. <a href="/dashboard/venues/new" className="text-zinc-900 font-medium hover:underline">Create one →</a></>
@@ -63,7 +84,7 @@ export default async function VenuesPage() {
         </div>
       ) : (
         <VenuesSearchTable
-          venues={venues ?? []}
+          venues={venuesWithRating}
           toggleActive={toggleActive}
           isSuperAdmin={admin.role === 'super_admin'}
         />
