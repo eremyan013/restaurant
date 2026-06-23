@@ -103,7 +103,7 @@ export function MarketScreen({ navigation }: Props) {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[styles.filterRow, { paddingHorizontal: 16 }]}
-        style={{ backgroundColor: t.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: t.border }}
+        style={{ flexShrink: 0, backgroundColor: t.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: t.border }}
       >
         {TYPE_FILTERS.map(f => (
           <Pressable
