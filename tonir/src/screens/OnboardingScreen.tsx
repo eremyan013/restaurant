@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, Pressable, StyleSheet, Image,
-  Animated, Platform, StatusBar,
+  Animated, Platform, StatusBar, PanResponder,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -59,6 +60,21 @@ export function OnboardingScreen({ navigation }: Props) {
 
   const current = STEPS[step];
 
+  const insets = useSafeAreaInsets();
+
+  const nextRef = useRef(next);
+  useEffect(() => { nextRef.current = next; }, [step]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > Math.abs(g.dy),
+      onPanResponderRelease: (_, g) => {
+        if (g.dx < -50) nextRef.current();
+      },
+    })
+  ).current;
+
   async function goToAuth() {
     await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
     navigation.navigate('Auth');
@@ -74,7 +90,7 @@ export function OnboardingScreen({ navigation }: Props) {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} {...panResponder.panHandlers}>
       <StatusBar barStyle="light-content" />
       <Image source={{ uri: current.photo }} style={StyleSheet.absoluteFillObject} />
       <LinearGradient
@@ -84,11 +100,16 @@ export function OnboardingScreen({ navigation }: Props) {
       />
 
       {/* Top bar */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { top: insets.top + 8 }]}>
         <View style={[styles.brandMark, { backgroundColor: t.accent }]}>
           <Icon name="tonir" size={18} color={t.primaryDeep} strokeWidth={2} />
         </View>
-        <View style={styles.dots}>
+        <View
+          style={styles.dots}
+          accessible={true}
+          accessibilityRole="progressbar"
+          accessibilityLabel={`Step ${step + 1} of ${STEPS.length}`}
+        >
           {STEPS.map((_, i) => (
             <Animated.View
               key={i}
@@ -103,29 +124,44 @@ export function OnboardingScreen({ navigation }: Props) {
           ))}
         </View>
         {step < STEPS.length - 1 && (
-          <Pressable onPress={() => {
-            if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            goToAuth();
-          }} hitSlop={12}>
+          <Pressable
+            onPress={() => {
+              if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              goToAuth();
+            }}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={tr('onb_skip')}
+          >
             <Text style={styles.skip}>{tr('onb_skip')}</Text>
           </Pressable>
         )}
       </View>
 
       {/* Bottom content */}
-      <View style={styles.bottom}>
-        <Text style={styles.title}>{current.title}</Text>
+      <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <Text style={styles.title} accessibilityRole="header">{current.title}</Text>
         <Text style={styles.subtitle}>{current.subtitle}</Text>
 
-        <Pressable onPress={next} style={styles.ctaBtn}>
+        <Pressable
+          onPress={next}
+          style={styles.ctaBtn}
+          accessibilityRole="button"
+          accessibilityLabel={current.cta}
+        >
           <Text style={[styles.ctaText, { color: t.primaryDeep }]}>{current.cta}</Text>
         </Pressable>
 
         {current.secondaryCta && (
-          <Pressable onPress={() => {
-            if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            goToAuth();
-          }} style={styles.secondaryBtn}>
+          <Pressable
+            onPress={() => {
+              if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              goToAuth();
+            }}
+            style={styles.secondaryBtn}
+            accessibilityRole="button"
+            accessibilityLabel={current.secondaryCta}
+          >
             <Text style={styles.secondaryText}>{current.secondaryCta}</Text>
           </Pressable>
         )}
@@ -141,7 +177,6 @@ const styles = StyleSheet.create({
   },
   topBar: {
     position: 'absolute',
-    top: 56,
     left: 20,
     right: 20,
     flexDirection: 'row',
@@ -175,7 +210,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 28,
-    paddingBottom: 52,
     gap: 16,
   },
   title: {
