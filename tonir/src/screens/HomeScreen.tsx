@@ -172,31 +172,39 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
               t={t}
               onAction={() => navigation.navigate('Search')}
             />
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
-            >
-              {section.home_section_items.map((item) =>
-                item.item_type === 'guide' && item.guide ? (
-                  <GuideCard
-                    key={item.id}
-                    guide={item.guide}
-                    t={t}
-                    onOpen={() => navigation.navigate('Search')}
-                  />
-                ) : item.venue ? (
-                  <HeroCard
-                    key={item.id}
-                    venue={item.venue}
-                    t={t}
-                    onOpen={() => navigation.navigate('Detail', { venueId: item.venue!.id })}
-                    onFav={() => toggleFav(item.venue!.id)}
-                    isFav={favs.has(item.venue!.id)}
-                  />
-                ) : null
-              )}
-            </ScrollView>
+            {section.home_section_items.length === 0 ? (
+              <View style={{ paddingHorizontal: 20, paddingVertical: 16 }}>
+                <Text style={{ color: t.textMute, fontSize: 13, fontFamily: FONTS.regular }}>
+                  {tr('home_section_empty')}
+                </Text>
+              </View>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
+              >
+                {section.home_section_items.map((item) =>
+                  item.item_type === 'guide' && item.guide ? (
+                    <GuideCard
+                      key={item.id}
+                      guide={item.guide}
+                      t={t}
+                      onOpen={() => navigation.navigate('Concierge')}
+                    />
+                  ) : item.venue ? (
+                    <HeroCard
+                      key={item.id}
+                      venue={item.venue}
+                      t={t}
+                      onOpen={() => navigation.navigate('Detail', { venueId: item.venue!.id })}
+                      onFav={() => toggleFav(item.venue!.id)}
+                      isFav={favs.has(item.venue!.id)}
+                    />
+                  ) : null
+                )}
+              </ScrollView>
+            )}
           </View>
         ))}
 
@@ -213,11 +221,14 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
               <Text style={styles.loyaltyLabel}>{tr('yel_label')}</Text>
               <Text style={styles.loyaltyPoints}>{(profile?.yel_points ?? 0).toLocaleString()} Yel</Text>
               <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: `${((profile?.yel_points ?? 0) % 1000) / 10}%`, backgroundColor: t.accent }]} />
+                <View style={[styles.progressFill, { width: `${(profile?.yel_points ?? 0) % 1000 === 0 && (profile?.yel_points ?? 0) > 0 ? 100 : ((profile?.yel_points ?? 0) % 1000) / 10}%`, backgroundColor: t.accent }]} />
               </View>
+              <Text style={[styles.progressLabel, { color: 'rgba(251,245,232,0.55)' }]}>
+                {`${(profile?.yel_points ?? 0) % 1000 === 0 && (profile?.yel_points ?? 0) > 0 ? 1000 : (profile?.yel_points ?? 0) % 1000} / 1000 Yel`}
+              </Text>
             </View>
           </View>
-          <Pressable style={[styles.redeemBtn, { borderColor: 'rgba(251,245,232,0.3)' }]} onPress={() => navigation.navigate('Profile')}>
+          <Pressable style={[styles.redeemBtn, { borderColor: 'rgba(251,245,232,0.3)' }]} onPress={() => navigation.navigate('Market')}>
             <Text style={styles.redeemText}>{tr('redeem')}</Text>
           </Pressable>
         </LinearGradient>
@@ -445,6 +456,7 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 2,
   },
+  progressLabel: { fontSize: 10, fontFamily: FONTS.medium, fontWeight: '500', marginTop: 3 },
   redeemBtn: {
     borderWidth: 1,
     borderRadius: 999,

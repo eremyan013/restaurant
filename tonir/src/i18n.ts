@@ -32,6 +32,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     nightlife_eyebrow:'ԳԻՇԵՐ',
     yel_label:        'Yel բոնուսներ',
     redeem:           'Օգտ.',
+    home_section_empty: 'Բովանդակություն դեռ ավելացված չէ',
     // ErrorState
     err_title:        'Ինչ-որ բան սխալ գնաց',
     err_sub:          'Չհաջողվեց բեռնել տվյալները։ Ստուգեք ինտերնետ կապը։',
@@ -350,6 +351,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     nightlife_eyebrow:'НОЧЬ',
     yel_label:        'Yel бонусы',
     redeem:           'Исп.',
+    home_section_empty: 'Содержимое ещё не добавлено',
     // ErrorState
     err_title:        'Что-то пошло не так',
     err_sub:          'Не удалось загрузить данные. Проверьте интернет-соединение.',
@@ -665,6 +667,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     nightlife_eyebrow:'NIGHT',
     yel_label:        'Yel bonuses',
     redeem:           'Use',
+    home_section_empty: 'No content added yet',
     // ErrorState
     err_title:        'Something went wrong',
     err_sub:          'Failed to load data. Check your internet connection.',
