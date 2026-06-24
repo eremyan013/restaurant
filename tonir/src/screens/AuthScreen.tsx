@@ -33,6 +33,7 @@ export function AuthScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const isInfo = error === tr('auth_err_confirm');
 
   function switchMode(next: 'signin' | 'signup') {
@@ -54,6 +55,10 @@ export function AuthScreen({ navigation }: Props) {
     }
     if (mode === 'signup' && !/^\d{8}$/.test(phone.trim())) {
       setError(tr('auth_err_phone'));
+      return;
+    }
+    if (mode === 'signup' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError(tr('auth_err_email_invalid'));
       return;
     }
     if (password.length < 6) {
@@ -135,6 +140,8 @@ export function AuthScreen({ navigation }: Props) {
     }
   }
 
+  const canGoBack = navigation.canGoBack();
+
   return (
     <View style={[styles.screen, { backgroundColor: t.bg }]}>
       <StatusBar barStyle={t.dark ? 'light-content' : 'dark-content'} />
@@ -145,13 +152,17 @@ export function AuthScreen({ navigation }: Props) {
         style={[styles.brandStrip, { paddingTop: insets.top + 20 }]}
       >
         <View style={styles.brandOrb} />
-        <Pressable
-          onPress={() => navigation.canGoBack() && navigation.goBack()}
-          style={styles.backBtn}
-          hitSlop={12}
-        >
-          <Icon name="chevL" size={22} color="rgba(251,245,232,0.7)" />
-        </Pressable>
+        {canGoBack && (
+          <Pressable
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}
+            hitSlop={12}
+            accessibilityLabel={tr('auth_back')}
+            accessibilityRole="button"
+          >
+            <Icon name="chevL" size={22} color="rgba(251,245,232,0.7)" />
+          </Pressable>
+        )}
         <Text style={styles.brandTitle}>Tonir</Text>
         <Text style={styles.brandSub}>{tr('auth_brand_sub')}</Text>
       </LinearGradient>
@@ -170,6 +181,8 @@ export function AuthScreen({ navigation }: Props) {
             <Pressable
               onPress={() => switchMode('signin')}
               style={[styles.toggleBtn, mode === 'signin' && [styles.toggleBtnActive, { backgroundColor: t.primary }]]}
+              accessibilityLabel={tr('auth_signin')}
+              accessibilityRole="button"
             >
               <Text style={[styles.toggleText, { color: mode === 'signin' ? '#FBF5E8' : t.text }]}>
                 {tr('auth_signin')}
@@ -178,6 +191,8 @@ export function AuthScreen({ navigation }: Props) {
             <Pressable
               onPress={() => switchMode('signup')}
               style={[styles.toggleBtn, mode === 'signup' && [styles.toggleBtnActive, { backgroundColor: t.primary }]]}
+              accessibilityLabel={tr('auth_signup')}
+              accessibilityRole="button"
             >
               <Text style={[styles.toggleText, { color: mode === 'signup' ? '#FBF5E8' : t.text }]}>
                 {tr('auth_signup')}
@@ -198,6 +213,7 @@ export function AuthScreen({ navigation }: Props) {
                     placeholderTextColor={t.textFaint}
                     autoCapitalize="words"
                     style={[styles.input, { color: t.text }]}
+                    accessibilityLabel={tr('auth_name_placeholder')}
                   />
                 </View>
                 <View style={[styles.inputWrap, { backgroundColor: t.surface, borderColor: t.border }]}>
@@ -212,6 +228,7 @@ export function AuthScreen({ navigation }: Props) {
                     keyboardType="number-pad"
                     maxLength={8}
                     style={[styles.input, { color: t.text }]}
+                    accessibilityLabel={tr('auth_phone_placeholder')}
                   />
                 </View>
               </>
@@ -225,9 +242,10 @@ export function AuthScreen({ navigation }: Props) {
                 placeholder={mode === 'signin' ? tr('auth_email_or_id_placeholder') : tr('auth_email_placeholder')}
                 placeholderTextColor={t.textFaint}
                 autoCapitalize="none"
-                keyboardType="email-address"
+                keyboardType={mode === 'signup' ? 'email-address' : 'default'}
                 autoComplete="email"
                 style={[styles.input, { color: t.text }]}
+                accessibilityLabel={mode === 'signin' ? tr('auth_email_or_id_placeholder') : tr('auth_email_placeholder')}
               />
             </View>
 
@@ -238,10 +256,19 @@ export function AuthScreen({ navigation }: Props) {
                 onChangeText={setPassword}
                 placeholder={tr('auth_pass_placeholder')}
                 placeholderTextColor={t.textFaint}
-                secureTextEntry
+                secureTextEntry={!showPassword}
                 autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                 style={[styles.input, { color: t.text }]}
+                accessibilityLabel={tr('auth_pass_placeholder')}
               />
+              <Pressable
+                onPress={() => setShowPassword((v) => !v)}
+                hitSlop={12}
+                accessibilityLabel={showPassword ? tr('auth_pass_hide') : tr('auth_pass_show')}
+                accessibilityRole="button"
+              >
+                <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} color={t.textMute} strokeWidth={1.75} />
+              </Pressable>
             </View>
           </View>
 
@@ -251,6 +278,9 @@ export function AuthScreen({ navigation }: Props) {
               onPress={() => setRememberMe((v) => !v)}
               style={styles.rememberRow}
               hitSlop={8}
+              accessibilityLabel={tr('auth_remember_me')}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: rememberMe }}
             >
               <View style={[
                 styles.checkbox,
@@ -284,6 +314,8 @@ export function AuthScreen({ navigation }: Props) {
             }}
             disabled={loading}
             style={[styles.submitBtn, { backgroundColor: t.primary, opacity: loading ? 0.7 : 1 }]}
+            accessibilityLabel={tr('auth_submit')}
+            accessibilityRole="button"
           >
             {loading ? (
               <ActivityIndicator color="#FBF5E8" />

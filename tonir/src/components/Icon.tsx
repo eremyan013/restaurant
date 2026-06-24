@@ -6,7 +6,7 @@ export type IconName =
   | 'user' | 'chevR' | 'chevL' | 'chevD' | 'arrow' | 'arrowUR' | 'star'
   | 'pin' | 'clock' | 'users' | 'sparkle' | 'gift' | 'map' | 'plus' | 'minus'
   | 'check' | 'x' | 'flame' | 'spark' | 'chat' | 'dot3' | 'share'
-  | 'split' | 'tonir' | 'lock' | 'mail' | 'trash' | 'phone' | 'camera';
+  | 'split' | 'tonir' | 'lock' | 'mail' | 'trash' | 'phone' | 'camera' | 'eye' | 'eyeOff';
 
 interface IconProps {
   name: IconName;
@@ -99,6 +99,10 @@ export function Icon({ name, size = 20, color = 'currentColor', strokeWidth = 1.
       return <Svg {...props}><Path d="M6.5 4h3l1.5 4-2 1.5a12 12 0 0 0 5.5 5.5L16 13l4 1.5V18a2 2 0 0 1-2 2C8 20 4 12 4 6a2 2 0 0 1 2-2z" /></Svg>;
     case 'camera':
       return <Svg {...props}><Rect x="2" y="8" width="20" height="13" rx="2" /><Circle cx="12" cy="14.5" r="3" /><Path d="M9 8l1.5-2.5h3L15 8" /></Svg>;
+    case 'eye':
+      return <Svg {...props}><Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><Circle cx="12" cy="12" r="3" /></Svg>;
+    case 'eyeOff':
+      return <Svg {...props}><Path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><Path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><Path d="m1 1 22 22" /></Svg>;
     default:
       return null;
   }
