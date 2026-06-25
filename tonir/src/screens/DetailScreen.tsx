@@ -43,9 +43,6 @@ export function DetailScreen({ navigation, route }: Props) {
   const { favs, toggleFav } = useFavorites();
   const insets = useSafeAreaInsets();
   const userLocation = useLocation();
-  const liveDistance = (userLocation && venue)
-    ? formatDistance(haversineKm(userLocation.lat, userLocation.lng, venue.coord_y, venue.coord_x))
-    : venue?.distance_km ?? '';
   const [activeTab, setActiveTab] = useState(0);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [people, setPeople] = useState(2);
@@ -90,6 +87,9 @@ export function DetailScreen({ navigation, route }: Props) {
     ? filterAvailableTimes(venue.times, todayDow, hoursMap, true)
     : [];
   const timesToShow = availabilityLoading ? (venue?.times ?? []) : availableTimes;
+  const liveDistance = (userLocation && venue)
+    ? formatDistance(haversineKm(userLocation.lat, userLocation.lng, venue.coord_y, venue.coord_x))
+    : venue?.distance_km ?? '';
 
   useEffect(() => {
     if (selectedTime && !timesToShow.includes(selectedTime)) {
