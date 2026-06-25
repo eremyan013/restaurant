@@ -14,6 +14,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import { useLocation } from '../hooks/useLocation';
 import { useTranslation } from '../hooks/useTranslation';
 import { haversineKm, formatDistance, parseDistanceToKm } from '../lib/distance';
+import { transliterate } from '../lib/transliterate';
 import { SearchBar } from '../components/SearchBar';
 import { Chip } from '../components/Chip';
 import { ListCard } from '../components/ListCard';
@@ -77,12 +78,15 @@ export function SearchScreen({ navigation }: { navigation: Nav }) {
     let list = [...venuesWithDist];
     if (debouncedQuery) {
       const q = debouncedQuery.toLowerCase();
-      list = list.filter(
-        (v) =>
+      list = list.filter((v) => {
+        if (
           v.name.toLowerCase().includes(q) ||
           v.cuisine.toLowerCase().includes(q) ||
           v.area.toLowerCase().includes(q)
-      );
+        ) return true;
+        const nameVariants = [v.name_hy, v.name_ru, v.name_en].filter(Boolean) as string[];
+        return nameVariants.some((n) => transliterate(n).includes(q));
+      });
     }
     if (activeFilter === 'tonight') list = list.filter((v) => v.heat !== 'low');
     if (activeFilter === 'best') list = list.sort((a, b) => b.rating - a.rating);
