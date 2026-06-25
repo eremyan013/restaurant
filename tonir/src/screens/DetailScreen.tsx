@@ -25,6 +25,8 @@ import { ErrorState } from '../components/ErrorState';
 import { VenueHoursSection } from '../components/VenueHoursSection';
 import { FONTS } from '../theme';
 import { getVenueStatus } from '../lib/venueStatus';
+import { useLocation } from '../hooks/useLocation';
+import { haversineKm, formatDistance } from '../lib/distance';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Detail'>;
@@ -40,6 +42,10 @@ export function DetailScreen({ navigation, route }: Props) {
   const { tr, tra, trf } = useTranslation();
   const { favs, toggleFav } = useFavorites();
   const insets = useSafeAreaInsets();
+  const userLocation = useLocation();
+  const liveDistance = (userLocation && venue)
+    ? formatDistance(haversineKm(userLocation.lat, userLocation.lng, venue.coord_y, venue.coord_x))
+    : venue?.distance_km ?? '';
   const [activeTab, setActiveTab] = useState(0);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [people, setPeople] = useState(2);
@@ -131,11 +137,11 @@ export function DetailScreen({ navigation, route }: Props) {
           />
           {/* Back / Share / Heart */}
           <View style={[styles.photoControls, { top: insets.top + 10 }]}>
-            <Pressable onPress={() => navigation.goBack()} style={styles.glassBtn}>
+            <Pressable onPress={() => navigation.goBack()} style={styles.glassBtn} hitSlop={3} accessibilityLabel={tr('det_back_btn')}>
               <Icon name="chevL" size={20} color="#fff" />
             </Pressable>
             <View style={styles.rightBtns}>
-              <Pressable onPress={shareVenue} style={styles.glassBtn}>
+              <Pressable onPress={shareVenue} style={styles.glassBtn} hitSlop={3} accessibilityLabel={tr('det_share_btn')}>
                 <Icon name="share" size={18} color="#fff" />
               </Pressable>
               <Pressable
@@ -144,6 +150,8 @@ export function DetailScreen({ navigation, route }: Props) {
                   toggleFav(venue.id);
                 }}
                 style={styles.glassBtn}
+                hitSlop={3}
+                accessibilityLabel={favs.has(venue.id) ? tr('det_fav_remove') : tr('det_fav_add')}
               >
                 <Icon
                   name={favs.has(venue.id) ? 'heartFill' : 'heart'}
@@ -174,7 +182,7 @@ export function DetailScreen({ navigation, route }: Props) {
             <Stars rating={venue.rating} reviews={venue.reviews_count} t={t} size={13} />
             <Text style={[styles.dot, { color: t.textFaint }]}>·</Text>
             <Icon name="pin" size={13} color={t.textMute} />
-            <Text style={[styles.metaText, { color: t.textMute }]}>{venue.distance_km}</Text>
+            <Text style={[styles.metaText, { color: t.textMute }]}>{liveDistance}</Text>
           </View>
           {/* Open/closed badge */}
           {(() => {
@@ -217,14 +225,14 @@ export function DetailScreen({ navigation, route }: Props) {
           <View style={styles.bookingHeader}>
             <Text style={styles.bookingTitle}>{tr('det_book_table')}</Text>
             <View style={[styles.partyPill, { backgroundColor: 'rgba(251,245,232,0.12)' }]}>
-              <Pressable onPress={() => setPeople((p) => Math.max(1, p - 1))} hitSlop={8}>
+              <Pressable onPress={() => setPeople((p) => Math.max(1, p - 1))} hitSlop={16} accessibilityLabel={tr('det_party_minus')}>
                 <Icon name="minus" size={12} color="#FBF5E8" strokeWidth={2.5} />
               </Pressable>
               <Icon name="users" size={13} color="#FBF5E8" strokeWidth={2} />
               <Text style={styles.partyText}>
                 {people}{selectedTime ? ` · ${selectedTime}` : ''}
               </Text>
-              <Pressable onPress={() => setPeople((p) => Math.min(20, p + 1))} hitSlop={8}>
+              <Pressable onPress={() => setPeople((p) => Math.min(20, p + 1))} hitSlop={16} accessibilityLabel={tr('det_party_plus')}>
                 <Icon name="plus" size={12} color="#FBF5E8" strokeWidth={2.5} />
               </Pressable>
             </View>
@@ -271,6 +279,9 @@ export function DetailScreen({ navigation, route }: Props) {
               key={tab}
               onPress={() => setActiveTab(i)}
               style={[styles.tabBtn, activeTab === i && [styles.tabBtnActive, { borderBottomColor: t.primary }]]}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activeTab === i }}
+              accessibilityLabel={tab}
             >
               <Text style={[styles.tabLabel, { color: activeTab === i ? t.primary : t.textMute }]}>
                 {tab}
@@ -290,7 +301,7 @@ export function DetailScreen({ navigation, route }: Props) {
                   [tr('det_fact_reservation'), tr('det_fact_confirmed')],
                   [tr('det_fact_cuisine'), venue.cuisine],
                   [tr('det_fact_price'), venue.price],
-                  [tr('det_fact_distance'), venue.distance_km],
+                  [tr('det_fact_distance'), liveDistance],
                 ].map(([label, value]) => (
                   <View key={label} style={[styles.factItem, { borderColor: t.border }]}>
                     <Text style={[styles.factLabel, { color: t.textMute }]}>{label}</Text>
@@ -396,7 +407,7 @@ export function DetailScreen({ navigation, route }: Props) {
               ) : reviews.length === 0 ? (
                 <View style={[styles.comingSoonCard, { backgroundColor: t.bgAlt, borderColor: t.border }]}>
                   <Icon name="chat" size={28} color={t.textFaint} strokeWidth={1.5} />
-                  <Text style={[styles.comingSoonSub, { color: t.textMute }]}>No reviews yet</Text>
+                  <Text style={[styles.comingSoonSub, { color: t.textMute }]}>{tr('det_reviews_empty')}</Text>
                 </View>
               ) : (
                 reviews.map(r => (
@@ -408,7 +419,7 @@ export function DetailScreen({ navigation, route }: Props) {
                         </Text>
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={[styles.reviewAuthor, { color: t.text }]}>{r.author_name ?? 'Anonymous'}</Text>
+                        <Text style={[styles.reviewAuthor, { color: t.text }]}>{r.author_name ?? tr('det_review_anonymous')}</Text>
                         <Text style={[styles.reviewDate, { color: t.textMute }]}>
                           {new Date(r.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                         </Text>
@@ -590,6 +601,7 @@ const styles = StyleSheet.create({
   },
   timeGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
   moreTimesBtn: {

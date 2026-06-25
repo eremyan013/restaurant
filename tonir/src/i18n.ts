@@ -329,6 +329,14 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     det_similar:          'Նման վայրեր',
     det_book_btn:         'Ամրագրել',
     det_people_unit:      'հոգի',
+    det_reviews_empty:    'Կարծիք դեռ չկա',
+    det_review_anonymous: 'Անանուն',
+    det_back_btn:         'Ետ',
+    det_share_btn:        'Կիսվել',
+    det_fav_add:          'Ավելացնել նախընտ.',
+    det_fav_remove:       'Հեռ. նախընտ.',
+    det_party_minus:      'Նվ. հոգ.',
+    det_party_plus:       'Ավ. հոգ.',
   },
 
   // ─── Russian ──────────────────────────────────────────────────────────────────
@@ -646,6 +654,14 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     det_similar:          'Похожие места',
     det_book_btn:         'Забронировать',
     det_people_unit:      'чел.',
+    det_reviews_empty:    'Отзывов пока нет',
+    det_review_anonymous: 'Аноним',
+    det_back_btn:         'Назад',
+    det_share_btn:        'Поделиться',
+    det_fav_add:          'В избранное',
+    det_fav_remove:       'Из избранного',
+    det_party_minus:      'Уменьшить кол-во',
+    det_party_plus:       'Увеличить кол-во',
   },
 
   // ─── English ─────────────────────────────────────────────────────────────────
@@ -963,5 +979,13 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     det_similar:          'Similar places',
     det_book_btn:         'Book',
     det_people_unit:      'ppl',
+    det_reviews_empty:    'No reviews yet',
+    det_review_anonymous: 'Anonymous',
+    det_back_btn:         'Back',
+    det_share_btn:        'Share',
+    det_fav_add:          'Add to favourites',
+    det_fav_remove:       'Remove from favourites',
+    det_party_minus:      'Fewer guests',
+    det_party_plus:       'More guests',
   },
 };
