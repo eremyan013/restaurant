@@ -68,7 +68,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
       setStars(0);
       setComment('');
     } catch {
-      Alert.alert('Error', 'Could not submit review. Please try again.');
+      Alert.alert(tr('rate_err_title'), tr('rate_err'));
     } finally {
       setSubmitting(false);
     }
@@ -129,6 +129,8 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
               setTab('upcoming');
             }}
             style={[styles.switchBtn, tab === 'upcoming' && [styles.switchBtnActive, { backgroundColor: t.primary }]]}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: tab === 'upcoming' }}
           >
             <Text style={[styles.switchText, { color: tab === 'upcoming' ? '#FBF5E8' : t.text }]}>
               {tr('res_tab_upcoming')} · {upcoming.length}
@@ -140,6 +142,8 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
               setTab('past');
             }}
             style={[styles.switchBtn, tab === 'past' && [styles.switchBtnActive, { backgroundColor: t.primary }]]}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: tab === 'past' }}
           >
             <Text style={[styles.switchText, { color: tab === 'past' ? '#FBF5E8' : t.text }]}>
               {tr('res_tab_past')} · {past.length}
@@ -162,7 +166,29 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
           <View style={styles.cards}>
             {reservations.map((res) => {
               const venue = venues.find((v) => v.id === res.venue_id);
-              if (!venue) return null;
+              if (!venue) return (
+                <View key={res.id} style={[styles.card, { backgroundColor: t.surface, borderColor: t.border }]}>
+                  <View style={styles.cardTop}>
+                    <View style={[styles.statusBadge, { backgroundColor: t.border }]}>
+                      <View style={{ height: 12, width: 60, borderRadius: 4, backgroundColor: t.textFaint, opacity: 0.3 }} />
+                    </View>
+                  </View>
+                  <View style={styles.cardVenue}>
+                    <View style={[styles.venueThumb, { backgroundColor: t.border }]} />
+                    <View style={{ flex: 1, gap: 8 }}>
+                      <View style={{ height: 14, width: 120, borderRadius: 4, backgroundColor: t.textFaint, opacity: 0.3 }} />
+                      <View style={styles.metaRow}>
+                        <Icon name="calendar" size={12} color={t.textMute} strokeWidth={2} />
+                        <Text style={[styles.metaText, { color: t.textMute }]}>{res.date}</Text>
+                        <Icon name="clock" size={12} color={t.textMute} strokeWidth={2} />
+                        <Text style={[styles.metaText, { color: t.textMute }]}>{res.time}</Text>
+                        <Icon name="users" size={12} color={t.textMute} strokeWidth={2} />
+                        <Text style={[styles.metaText, { color: t.textMute }]}>{res.people}</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              );
               const statusInfo = statusLabels[res.status as keyof typeof statusLabels] ?? statusLabels.upcoming;
               return (
                 <Pressable
@@ -201,7 +227,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                     <View style={styles.actions}>
                       {tab === 'past' ? (
                         ratedIds.has(res.id) ? (
-                          <View style={[styles.actionBtn, { borderColor: t.border, opacity: 0.5 }]}>
+                          <View style={[styles.actionBtn, { borderColor: t.border, opacity: 0.5 }]} accessibilityRole="button" accessibilityState={{ disabled: true }}>
                             <Text style={[styles.actionText, { color: t.textMute }]}>
                               ⭐ {tr('rate_done')}
                             </Text>
@@ -210,6 +236,8 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                           <Pressable
                             onPress={() => openRating(res)}
                             style={[styles.actionBtn, { borderColor: t.border }]}
+                            accessibilityRole="button"
+                            accessibilityLabel={tr('res_action_rate')}
                           >
                             <Text style={[styles.actionText, { color: t.text }]}>
                               {tr('res_action_rate')}
@@ -219,7 +247,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                       ) : (() => {
                         const pastModifyDeadline = isPastCancelDeadline(res);
                         return pastModifyDeadline ? (
-                          <View style={[styles.actionBtn, styles.cancelDisabledBtn, { borderColor: t.border }]}>
+                          <View style={[styles.actionBtn, styles.cancelDisabledBtn, { borderColor: t.border }]} accessibilityRole="button" accessibilityState={{ disabled: true }}>
                             <Text style={[styles.actionText, { color: t.textFaint }]}>
                               {tr('res_action_modify')}
                             </Text>
@@ -240,6 +268,8 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                               });
                             }}
                             style={[styles.actionBtn, { borderColor: t.border }]}
+                            accessibilityRole="button"
+                            accessibilityLabel={tr('res_action_modify')}
                           >
                             <Text style={[styles.actionText, { color: t.text }]}>
                               {tr('res_action_modify')}
@@ -250,7 +280,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                       {tab === 'upcoming' && (() => {
                         const pastDeadline = isPastCancelDeadline(res);
                         return pastDeadline ? (
-                          <View style={[styles.actionBtn, styles.cancelDisabledBtn, { borderColor: t.border }]}>
+                          <View style={[styles.actionBtn, styles.cancelDisabledBtn, { borderColor: t.border }]} accessibilityRole="button" accessibilityState={{ disabled: true }}>
                             <Text style={[styles.actionText, { color: t.textFaint }]}>{tr('res_action_cancel')}</Text>
                             <Text style={[styles.cancelDeadlineLabel, { color: t.textFaint }]}>
                               {tr('res_cancel_deadline_passed')}
@@ -277,9 +307,11 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                                 ]
                               )
                             }
-                            style={[styles.actionBtn, { borderColor: '#9B233540' }]}
+                            style={[styles.actionBtn, { borderColor: `${statusLabels.cancelled.color}40` }]}
+                            accessibilityRole="button"
+                            accessibilityLabel={tr('res_action_cancel')}
                           >
-                            <Text style={[styles.actionText, { color: '#9B2335' }]}>{tr('res_action_cancel')}</Text>
+                            <Text style={[styles.actionText, { color: statusLabels.cancelled.color }]}>{tr('res_action_cancel')}</Text>
                           </Pressable>
                         );
                       })()}
@@ -304,7 +336,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setRatingRes(null)} />
-          <View style={[styles.modalSheet, { backgroundColor: t.surface }]}>
+          <View style={[styles.modalSheet, { backgroundColor: t.surface, paddingBottom: Math.max(insets.bottom, 16) }]}>
             {(() => {
               const venue = venues.find((v) => v.id === ratingRes?.venue_id);
               return (
@@ -324,6 +356,9 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                           setStars(n);
                         }}
                         hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel={trf('rate_star_label', { n })}
+                        accessibilityState={{ selected: n <= stars }}
                       >
                         <Text style={[styles.star, { opacity: n <= stars ? 1 : 0.25 }]}>⭐</Text>
                       </Pressable>
