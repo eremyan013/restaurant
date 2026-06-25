@@ -77,9 +77,9 @@ export function ConfirmationScreen({ navigation }: Props) {
     // Fallback: build date from today + offset is unreliable; use current date as base
     // The booking store has `date` (display) but not a raw ISO date.
     // Reconstruct from display string is fragile — default to tomorrow if parse fails.
-    const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0);
-    const endDate   = new Date(startDate.getTime() + 90 * 60 * 1000); // 90-min slot
+    const [isoYear, isoMonth, isoDay] = (booking.dateIso ?? '').split('-').map(Number);
+    const startDate = new Date(isoYear!, isoMonth! - 1, isoDay!, hour, minute, 0);
+    const endDate   = new Date(startDate.getTime() + 90 * 60 * 1000);
 
     if (Platform.OS === 'web') {
       Linking.openURL('https://calendar.google.com/calendar/r/eventedit').catch(() => {});

@@ -53,6 +53,13 @@ export function BookingScreen({ navigation, route }: Props) {
   const { tr, tra, language } = useTranslation();
   const { hoursMap, blockedDates } = useVenueAvailability(venueId);
 
+  const [people, setPeople] = useState(initialPeople ?? 2);
+  const [dateIndex, setDateIndex] = useState(0);
+  const [time, setTime] = useState(initialTime ?? '');
+  const [occasion, setOccasion] = useState<string | null>(null);
+  const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
   const OCCASIONS = tra('book_occasions');
   const DATES = useMemo(
     () => generateDates(tra('book_days'), tra('book_months'), tr('book_today'), tr('book_tomorrow')),
@@ -90,13 +97,6 @@ export function BookingScreen({ navigation, route }: Props) {
     return null;
   }, [venue, dateIndex, hoursMap, availableTimes.length, DATES.length, blockedDates, isoDates]);
 
-  const [people, setPeople] = useState(initialPeople ?? 2);
-  const [dateIndex, setDateIndex] = useState(0);
-  const [time, setTime] = useState(initialTime ?? '');
-  const [occasion, setOccasion] = useState<string | null>(null);
-  const [note, setNote] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
   if (!venue) {
     return <View style={{ flex: 1, backgroundColor: t.bg }} />;
   }
@@ -129,30 +129,18 @@ export function BookingScreen({ navigation, route }: Props) {
       const dateIso = isoDateObj.toISOString().split('T')[0];
 
       if (modifyReservationId) {
-        await cancel(modifyReservationId);
-        try {
-          await book({
-            venue_id: venueId,
-            people,
-            date: dateStr,
-            date_iso: dateIso,
-            time,
-            occasion,
-            note,
-            status: 'pending',
-            yel_earned: venue!.perk,
-          });
-        } catch (bookErr: unknown) {
-          if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          const message = bookErr instanceof Error ? bookErr.message : tr('book_error_sub');
-          Alert.alert(
-            tr('book_modify_partial_error_title'),
-            `${tr('book_modify_partial_error_body')} ${message}`,
-            [{ text: tr('book_error_back'), style: 'cancel' }]
-          );
-          setSubmitting(false);
-          return;
-        }
+        await book({
+          venue_id: venueId,
+          people,
+          date: dateStr,
+          date_iso: dateIso,
+          time,
+          occasion,
+          note,
+          status: 'pending',
+          yel_earned: venue!.perk,
+        });
+        await cancel(modifyReservationId).catch(() => {});
       } else {
         await book({
           venue_id: venueId,
@@ -172,6 +160,7 @@ export function BookingScreen({ navigation, route }: Props) {
         venueId,
         people,
         date: dateStr,
+        dateIso: dateIso!,
         time,
         occasion,
         splitWith: [],
@@ -254,6 +243,9 @@ export function BookingScreen({ navigation, route }: Props) {
                     setPeople(p as number);
                   }
                 }}
+                accessibilityRole="button"
+                accessibilityLabel={`${p} ${tr('book_people_unit')}`}
+                accessibilityState={{ selected: people === p }}
                 style={[
                   styles.peopleBtn,
                   {
@@ -296,6 +288,9 @@ export function BookingScreen({ navigation, route }: Props) {
                       setDateIndex(i);
                       setTime('');
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${d.day} ${d.date} ${d.month}${unavailable ? ', ' + tr('book_closed') : ''}`}
+                    accessibilityState={{ selected, disabled: unavailable }}
                     style={[
                       styles.dateCard,
                       {
@@ -361,6 +356,9 @@ export function BookingScreen({ navigation, route }: Props) {
                     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setTime(t2);
                   }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t2}
+                  accessibilityState={{ selected: time === t2 }}
                   style={[
                     styles.timeBtn,
                     {
@@ -437,6 +435,9 @@ export function BookingScreen({ navigation, route }: Props) {
         )}
         <Pressable
           onPress={time && !submitting ? confirm : undefined}
+          accessibilityRole="button"
+          accessibilityLabel={tr('book_cta')}
+          accessibilityState={{ disabled: !time || submitting, busy: submitting }}
           style={[styles.ctaBtn, { backgroundColor: t.primary, opacity: time && !submitting ? 1 : 0.45 }]}
         >
           {submitting ? (

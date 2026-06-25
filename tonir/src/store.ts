@@ -45,6 +45,7 @@ export interface BookingDraft {
   venueId: string;
   people: number;
   date: string;
+  dateIso: string;
   time: string;
   occasion: string | null;
   splitWith: string[];
