@@ -30,7 +30,7 @@ export function useReservations() {
     if (!userId) return;
 
     const channel = supabase
-      .channel(`reservations:${userId}`)
+      .channel(`reservations:${userId}:${Date.now()}`)
       .on(
         'postgres_changes',
         {
