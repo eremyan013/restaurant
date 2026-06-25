@@ -10,12 +10,18 @@ interface ChipProps {
   onPress?: () => void;
   size?: 'sm' | 'md' | 'lg';
   style?: ViewStyle;
+  accessibilityRole?: React.ComponentProps<typeof Pressable>['accessibilityRole'];
+  accessibilityLabel?: string;
+  accessibilityState?: React.ComponentProps<typeof Pressable>['accessibilityState'];
 }
 
-export function Chip({ label, active = false, t, onPress, size = 'md', style }: ChipProps) {
+export function Chip({ label, active = false, t, onPress, size = 'md', style, accessibilityRole, accessibilityLabel, accessibilityState }: ChipProps) {
   const sz = SIZES[size];
   return (
     <Pressable
+      accessibilityRole={accessibilityRole}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={accessibilityState}
       onPress={onPress ? () => {
         if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, Pressable, StyleSheet, StatusBar, ActivityIndicator, RefreshControl,
 } from 'react-native';
@@ -40,6 +40,8 @@ export function SearchScreen({ navigation }: { navigation: Nav }) {
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterId>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const FILTERS = tra('srch_filters');
 
@@ -58,6 +60,14 @@ export function SearchScreen({ navigation }: { navigation: Nav }) {
     if (!loading) setRefreshing(false);
   }, [loading]);
 
+  useEffect(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [query]);
+
   function onRefresh() {
     setRefreshing(true);
     retry();
@@ -65,8 +75,8 @@ export function SearchScreen({ navigation }: { navigation: Nav }) {
 
   const filtered = useMemo(() => {
     let list = [...venuesWithDist];
-    if (query) {
-      const q = query.toLowerCase();
+    if (debouncedQuery) {
+      const q = debouncedQuery.toLowerCase();
       list = list.filter(
         (v) =>
           v.name.toLowerCase().includes(q) ||
@@ -76,20 +86,16 @@ export function SearchScreen({ navigation }: { navigation: Nav }) {
     }
     if (activeFilter === 'tonight') list = list.filter((v) => v.heat !== 'low');
     if (activeFilter === 'best') list = list.sort((a, b) => b.rating - a.rating);
-    if (activeFilter === 'nearby') {
-      if (userLocation) {
-        list = list.sort((a, b) =>
-          haversineKm(userLocation.lat, userLocation.lng, a.coord_y, a.coord_x) -
-          haversineKm(userLocation.lat, userLocation.lng, b.coord_y, b.coord_x)
-        );
-      } else {
-        list = list.sort((a, b) => parseDistanceToKm(a.distance_km) - parseDistanceToKm(b.distance_km));
-      }
+    if (activeFilter === 'nearby' && userLocation) {
+      list = list.sort((a, b) =>
+        haversineKm(userLocation.lat, userLocation.lng, a.coord_y, a.coord_x) -
+        haversineKm(userLocation.lat, userLocation.lng, b.coord_y, b.coord_x)
+      );
     }
     if (activeFilter === 'wine') list = list.filter((v) => v.kind === 'bar');
     if (activeFilter === 'armenian') list = list.filter((v) => v.cuisine.includes('Հայկ'));
     return list;
-  }, [query, activeFilter, venuesWithDist, userLocation]);
+  }, [debouncedQuery, activeFilter, venuesWithDist, userLocation]);
 
   if (loading && !refreshing) {
     return (
@@ -132,6 +138,9 @@ export function SearchScreen({ navigation }: { navigation: Nav }) {
               active={activeFilter === id}
               t={t}
               onPress={() => setActiveFilter(id)}
+              accessibilityRole="button"
+              accessibilityLabel={FILTERS[idx] ?? id}
+              accessibilityState={{ selected: activeFilter === id }}
             />
           ))}
         </ScrollView>
@@ -142,6 +151,8 @@ export function SearchScreen({ navigation }: { navigation: Nav }) {
           <Pressable
             onPress={() => navigation.navigate('Map', {})}
             style={styles.mapLink}
+            accessibilityRole="button"
+            accessibilityLabel={tr('srch_map')}
           >
             <Icon name="map" size={14} color={t.primary} strokeWidth={2} />
             <Text style={[styles.mapLinkText, { color: t.primary }]}>{tr('srch_map')}</Text>
@@ -157,6 +168,14 @@ export function SearchScreen({ navigation }: { navigation: Nav }) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={t.primary} colors={[t.primary]} />
         }
       >
+        {activeFilter === 'nearby' && !userLocation && (
+          <View style={[styles.locationBanner, { backgroundColor: t.surface, borderColor: t.border }]}>
+            <Icon name="pin" size={16} color={t.textMute} />
+            <Text style={[styles.locationBannerText, { color: t.textMute }]}>
+              {tr('srch_nearby_no_location')}
+            </Text>
+          </View>
+        )}
         {filtered.length === 0 ? (
           <View style={styles.emptyState}>
             <Icon name="search" size={40} color={t.textFaint} />
@@ -240,4 +259,20 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   emptyBtnText: { color: '#FBF5E8', fontSize: 14, fontFamily: FONTS.semiBold, fontWeight: '600' },
+  locationBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  locationBannerText: {
+    fontSize: 13,
+    fontFamily: FONTS.medium,
+    fontWeight: '500',
+    flex: 1,
+  },
 });
