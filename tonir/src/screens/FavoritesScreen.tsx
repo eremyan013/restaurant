@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import {
-  View, Text, ScrollView, Pressable, Image, StyleSheet, StatusBar, RefreshControl, Platform,
+  View, Text, ScrollView, Pressable, Image, StyleSheet, StatusBar, RefreshControl, Platform, ActivityIndicator,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -51,6 +51,7 @@ export function FavoritesScreen({ navigation }: { navigation: Nav }) {
   const { venues, loading: venuesLoading, retry: retryVenues } = useVenues();
   const { favs, loading: favsLoading, toggleFav, retry: retryFavs } = useFavorites();
   const [refreshing, setRefreshing] = useState(false);
+  const isLoading = (venuesLoading || favsLoading) && !refreshing;
 
   const LISTS = tra('fav_lists');
 
@@ -119,7 +120,9 @@ export function FavoritesScreen({ navigation }: { navigation: Nav }) {
         </ScrollView>
 
         {/* List */}
-        {favVenues.length === 0 ? (
+        {isLoading ? (
+          <ActivityIndicator color={t.primary} style={{ marginTop: 40 }} />
+        ) : favVenues.length === 0 ? (
           <View style={styles.empty}>
             <Icon name="heart" size={40} color={t.textFaint} />
             <Text style={[styles.emptyText, { color: t.textMute }]}>
@@ -147,7 +150,7 @@ export function FavoritesScreen({ navigation }: { navigation: Nav }) {
                     <Text style={[styles.itemPrice, { color: t.textMute }]}>
                       {venue.price}
                     </Text>
-                    <Text style={[styles.itemPerk, { color: t.accent }]}>+{venue.perk}</Text>
+                    <Text style={[styles.itemPerk, { color: t.accent }]}>+{venue.perk} Yel</Text>
                   </View>
                 </View>
                 <Pressable
@@ -157,7 +160,7 @@ export function FavoritesScreen({ navigation }: { navigation: Nav }) {
                     toggleFav(venue.id);
                   }}
                 >
-                  <Icon name="dot3" size={20} color={t.textMute} />
+                  <Icon name="heartFill" size={20} color={t.accent} />
                 </Pressable>
               </Pressable>
             ))}
