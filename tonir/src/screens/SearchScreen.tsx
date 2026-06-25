@@ -78,6 +78,7 @@ export function SearchScreen({ navigation }: { navigation: Nav }) {
     let list = [...venuesWithDist];
     if (debouncedQuery) {
       const q = debouncedQuery.toLowerCase();
+      const tq = transliterate(q);
       list = list.filter((v) => {
         if (
           v.name.toLowerCase().includes(q) ||
@@ -85,7 +86,7 @@ export function SearchScreen({ navigation }: { navigation: Nav }) {
           v.area.toLowerCase().includes(q)
         ) return true;
         const nameVariants = [v.name_hy, v.name_ru, v.name_en].filter(Boolean) as string[];
-        return nameVariants.some((n) => transliterate(n).includes(q));
+        return nameVariants.some((n) => transliterate(n).includes(tq));
       });
     }
     if (activeFilter === 'tonight') list = list.filter((v) => v.heat !== 'low');
