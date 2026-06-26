@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, ScrollView, Pressable, TextInput, StyleSheet,
-  StatusBar, KeyboardAvoidingView, Platform, Animated, Alert,
+  StatusBar, KeyboardAvoidingView, Platform, Animated, Alert, Linking,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -241,6 +241,10 @@ export function ConciergeScreen({ navigation }: Props) {
   const dot3 = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: false }), 100);
+  }, []);
+
+  useEffect(() => {
     if (!typing) { dot1.setValue(0.3); dot2.setValue(0.3); dot3.setValue(0.3); return; }
     const makeAnim = (val: Animated.Value, delay: number) =>
       Animated.loop(Animated.sequence([
@@ -265,10 +269,16 @@ export function ConciergeScreen({ navigation }: Props) {
   }
 
   async function handleEscalate() {
-    if (escalated || !sessionId) return;
+    if (escalated) return;
     if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     setEscalated(true);
-    await escalateSession(sessionId);
+    if (!sessionId) {
+      // API offline — open support phone directly
+      const phone = process.env.EXPO_PUBLIC_SUPPORT_PHONE;
+      if (phone) Linking.openURL(`tel:${phone}`).catch(() => {});
+    } else {
+      await escalateSession(sessionId);
+    }
     const note: Message = {
       id: `e${Date.now()}`,
       role: 'concierge',
@@ -294,6 +304,7 @@ export function ConciergeScreen({ navigation }: Props) {
       text: matched.text, suggestions: matched.suggestions,
     }]);
     setTyping(false);
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 400);
   }
 
   function sendQuick(text: string) {
@@ -325,7 +336,7 @@ export function ConciergeScreen({ navigation }: Props) {
           <View style={styles.onlineDot} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.headerName}>Tonir Կոնսիerժ</Text>
+          <Text style={styles.headerName}>{tr('conc_header_name' as any)}</Text>
           <Text style={styles.headerSub}>{tr('conc_sub')}</Text>
         </View>
         {messages.length > 1 && (
@@ -352,7 +363,7 @@ export function ConciergeScreen({ navigation }: Props) {
         ref={scrollRef}
         contentContainerStyle={[styles.messages, { paddingBottom: 20 }]}
         showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+        onContentSizeChange={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 400)}
       >
         {!quickUsed && messages.length === 1 && (
           <ScrollView
@@ -432,7 +443,7 @@ export function ConciergeScreen({ navigation }: Props) {
 
       {/* Composer */}
       <View style={[styles.composer, { backgroundColor: t.bg, borderTopColor: t.border, paddingBottom: insets.bottom + 8 }]}>
-        {sessionId && !escalated && messages.filter(m => m.role === 'user').length >= 3 && (
+        {(sessionId || apiOffline) && !escalated && messages.filter(m => m.role === 'user').length >= 3 && (
           <Pressable onPress={handleEscalate} style={styles.escalateBtn}>
             <Text style={[styles.escalateText, { color: t.textMute }]}>{tr('conc_need_help')}</Text>
           </Pressable>
@@ -447,8 +458,15 @@ export function ConciergeScreen({ navigation }: Props) {
             returnKeyType="send"
             onSubmitEditing={send}
             editable={!typing}
+            accessibilityLabel={tr('conc_input_label' as any)}
           />
-          <Pressable onPress={send} style={[styles.sendBtn, { backgroundColor: typing ? t.border : t.primary }]} disabled={typing}>
+          <Pressable
+            onPress={send}
+            style={[styles.sendBtn, { backgroundColor: typing ? t.border : t.primary }]}
+            disabled={typing}
+            accessibilityRole="button"
+            accessibilityLabel={tr('conc_send_label' as any)}
+          >
             <Icon name="arrow" size={18} color="#FBF5E8" strokeWidth={2} />
           </Pressable>
         </View>

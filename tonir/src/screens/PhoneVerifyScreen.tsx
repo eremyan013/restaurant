@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TextInput, Pressable, StyleSheet, StatusBar,
-  KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
+  KeyboardAvoidingView, Platform, ActivityIndicator, Alert, useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -37,6 +37,9 @@ export function PhoneVerifyScreen({ navigation, route }: Props) {
   const { phone, userId } = route.params;
   const { theme: t } = useStore();
   const { tr } = useTranslation();
+  const { width: screenWidth } = useWindowDimensions();
+  const BOX_GAP = 8;
+  const BOX_WIDTH = Math.min(48, Math.floor((screenWidth - 48 - BOX_GAP * 5) / 6));
   const { setPendingPhoneVerification } = useStore();
   const insets = useSafeAreaInsets();
 
@@ -155,11 +158,11 @@ export function PhoneVerifyScreen({ navigation, route }: Props) {
   async function handleCancel() {
     Alert.alert(
       tr('otp_cancel'),
-      tr('otp_cancel_confirm') || 'Cancel registration and go back?',
+      tr('otp_cancel_confirm'),
       [
-        { text: tr('no') || 'No', style: 'cancel' },
+        { text: tr('no'), style: 'cancel' },
         {
-          text: tr('yes') || 'Yes',
+          text: tr('yes'),
           style: 'destructive',
           onPress: async () => {
             await (supabase as any).auth.signOut();
@@ -203,7 +206,7 @@ export function PhoneVerifyScreen({ navigation, route }: Props) {
           </View>
 
           {/* Digit boxes */}
-          <View style={styles.boxRow}>
+          <View style={[styles.boxRow, { columnGap: BOX_GAP }]}>
             {digits.map((digit, i) => (
               <TextInput
                 key={i}
@@ -217,6 +220,7 @@ export function PhoneVerifyScreen({ navigation, route }: Props) {
                 style={[
                   styles.digitBox,
                   {
+                    width: BOX_WIDTH,
                     backgroundColor: t.surface,
                     borderColor: digit ? t.primary : t.border,
                     color: t.text,
@@ -330,7 +334,6 @@ const styles = StyleSheet.create({
   boxRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 10,
   },
   digitBox: {
     width: 48,

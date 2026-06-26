@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, Pressable, StyleSheet, StatusBar,
-  ActivityIndicator, Modal, Image, Alert, Platform,
+  ActivityIndicator, Modal, Image, Alert, Platform, RefreshControl,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
@@ -39,17 +40,44 @@ export function MarketScreen({ navigation }: Props) {
 
   const [prizes, setPrizes]         = useState<Prize[]>([]);
   const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter]         = useState<string>('all');
   const [confirming, setConfirming] = useState<Prize | null>(null);
   const [redeeming, setRedeeming]   = useState(false);
   const [successCode, setSuccessCode] = useState<{ code: string; prize: Prize } | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
+
+  async function loadPrizes() {
+    setError(false);
+    setLoading(true);
+    try {
+      const data = await fetchMarketPrizes();
+      setPrizes(data);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    fetchMarketPrizes()
-      .then(setPrizes)
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    loadPrizes();
   }, []);
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    setError(false);
+    try {
+      const data = await fetchMarketPrizes();
+      setPrizes(data);
+      await refetchProfile();
+    } catch {
+      setError(true);
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   const filtered = useMemo(
     () => filter === 'all' ? prizes : prizes.filter(p => p.type === filter),
@@ -77,6 +105,7 @@ export function MarketScreen({ navigation }: Props) {
       return;
     }
     refetchProfile();
+    setCodeCopied(false);
     setSuccessCode({ code: result.code, prize: confirming });
     if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }
@@ -127,6 +156,14 @@ export function MarketScreen({ navigation }: Props) {
         <View style={styles.center}>
           <ActivityIndicator color={t.primary} />
         </View>
+      ) : error ? (
+        <View style={styles.center}>
+          <Icon name="wifi-off" size={32} color={t.textMute} strokeWidth={1.5} />
+          <Text style={[styles.empty, { color: t.textMute, marginTop: 12 }]}>{tr('market_err_api' as any)}</Text>
+          <Pressable onPress={loadPrizes} style={[styles.retryBtn, { backgroundColor: t.primary }]}>
+            <Text style={[styles.retryText, { color: '#FBF5E8' }]}>{tr('err_retry')}</Text>
+          </Pressable>
+        </View>
       ) : filtered.length === 0 ? (
         <View style={styles.center}>
           <Text style={[styles.empty, { color: t.textMute }]}>{tr('market_empty')}</Text>
@@ -135,6 +172,14 @@ export function MarketScreen({ navigation }: Props) {
         <ScrollView
           contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 100 }]}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={t.primary}
+              colors={[t.primary]}
+            />
+          }
         >
           {filtered.map(prize => {
             const canAfford  = balance >= (prize.points_cost ?? 0);
@@ -226,9 +271,21 @@ export function MarketScreen({ navigation }: Props) {
             {successCode && (
               <>
                 <Text style={[styles.successPrizeName, { color: t.textMute }]}>{successCode.prize.name}</Text>
-                <View style={[styles.codeBox, { backgroundColor: `${t.primary}12`, borderColor: `${t.primary}30` }]}>
+                <Pressable
+                  onPress={async () => {
+                    await Clipboard.setStringAsync(successCode.code);
+                    setCodeCopied(true);
+                    setTimeout(() => setCodeCopied(false), 2000);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={tr('market_copy_code' as any)}
+                  style={[styles.codeBox, { backgroundColor: `${t.primary}12`, borderColor: `${t.primary}30` }]}
+                >
                   <Text style={[styles.codeText, { color: t.primary }]}>{successCode.code}</Text>
-                </View>
+                </Pressable>
+                <Text style={[styles.sheetLine, { color: t.textFaint }]}>
+                  {codeCopied ? tr('market_copied' as any) : tr('market_tap_to_copy' as any)}
+                </Text>
                 <Text style={[styles.sheetLine, { color: t.textFaint }]}>{tr('market_success_sub')}</Text>
               </>
             )}
@@ -258,7 +315,9 @@ const styles = StyleSheet.create({
   filterChip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999, borderWidth: 1 },
   filterText: { fontSize: 13, fontFamily: FONTS.medium, fontWeight: '500' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  empty: { fontSize: 14 },
+  empty: { fontSize: 14, textAlign: 'center', paddingHorizontal: 24 },
+  retryBtn: { marginTop: 16, paddingVertical: 10, paddingHorizontal: 24, borderRadius: 999 },
+  retryText: { fontSize: 14, fontFamily: FONTS.semiBold, fontWeight: '600' },
   list: { padding: 16, gap: 12 },
   card: {
     flexDirection: 'row', borderRadius: 18, borderWidth: 1, overflow: 'hidden',

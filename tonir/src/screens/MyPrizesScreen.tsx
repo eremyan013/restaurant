@@ -25,25 +25,39 @@ const TYPE_ICONS: Record<string, string> = {
 const haptic = () => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); };
 
 export function MyPrizesScreen({ navigation }: Props) {
-  const { theme: t } = useStore();
+  const { theme: t, lang } = useStore();
   const insets = useSafeAreaInsets();
   const { profile } = useProfile();
   const { tr } = useTranslation();
 
+  const LOCALE_MAP: Record<string, string> = { hy: 'hy-AM', ru: 'ru-RU', en: 'en-GB' };
+
   const [prizes, setPrizes] = useState<UserPrize[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [tab, setTab] = useState<'active' | 'used' | 'all'>('active');
 
   useFocusEffect(
     useCallback(() => {
       if (!profile?.id) return;
       setLoading(true);
+      setError(false);
       fetchUserPrizes(profile.id)
         .then(setPrizes)
-        .catch(() => {})
+        .catch(() => { setError(true); })
         .finally(() => setLoading(false));
     }, [profile?.id]),
   );
+
+  const activeCount = prizes.filter(p => p.status === 'active').length;
+  const usedCount   = prizes.filter(p => p.status === 'used').length;
+
+  const tabLabel = (key: string) => {
+    const base = tr(`prizes_tab_${key}` as any);
+    if (loading || error) return base;
+    const count = key === 'active' ? activeCount : key === 'used' ? usedCount : prizes.length;
+    return count > 0 ? `${base} (${count})` : base;
+  };
 
   const filtered = useMemo(() => {
     if (tab === 'all') return prizes;
@@ -74,7 +88,7 @@ export function MyPrizesScreen({ navigation }: Props) {
             style={[styles.tab, tab === key && [styles.tabActive, { borderBottomColor: t.primary }]]}
           >
             <Text style={[styles.tabText, { color: tab === key ? t.primary : t.textMute }]}>
-              {tr(`prizes_tab_${key}` as any)}
+              {tabLabel(key)}
             </Text>
           </Pressable>
         ))}
@@ -83,6 +97,25 @@ export function MyPrizesScreen({ navigation }: Props) {
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator color={t.primary} />
+        </View>
+      ) : error ? (
+        <View style={styles.center}>
+          <Icon name="wifi-off" size={32} color={t.textMute} strokeWidth={1.5} />
+          <Text style={[styles.empty, { color: t.textMute, marginTop: 12 }]}>{tr('prizes_err_api' as any)}</Text>
+          <Pressable
+            onPress={() => {
+              if (!profile?.id) return;
+              setLoading(true);
+              setError(false);
+              fetchUserPrizes(profile.id)
+                .then(setPrizes)
+                .catch(() => { setError(true); })
+                .finally(() => setLoading(false));
+            }}
+            style={[styles.retryBtn, { backgroundColor: t.primary }]}
+          >
+            <Text style={[styles.retryText, { color: '#FBF5E8' }]}>{tr('err_retry')}</Text>
+          </Pressable>
         </View>
       ) : filtered.length === 0 ? (
         <View style={styles.center}>
@@ -139,8 +172,8 @@ export function MyPrizesScreen({ navigation }: Props) {
 
                 {/* Footer */}
                 <Text style={[styles.claimedAt, { color: t.textFaint }]}>
-                  {tr('prizes_claimed')}: {new Date(up.claimed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  {up.used_at ? `  ·  ${tr('prizes_used')}: ${new Date(up.used_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}
+                  {tr('prizes_claimed')}: {new Date(up.claimed_at).toLocaleDateString(LOCALE_MAP[lang] ?? 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {up.used_at ? `  ·  ${tr('prizes_used')}: ${new Date(up.used_at).toLocaleDateString(LOCALE_MAP[lang] ?? 'en-GB', { day: 'numeric', month: 'short' })}` : ''}
                 </Text>
               </View>
             );
@@ -163,7 +196,9 @@ const styles = StyleSheet.create({
   tabActive: {},
   tabText: { fontSize: 14, fontFamily: FONTS.semiBold, fontWeight: '600' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  empty: { fontSize: 14 },
+  empty: { fontSize: 14, textAlign: 'center', paddingHorizontal: 24 },
+  retryBtn: { marginTop: 16, paddingVertical: 10, paddingHorizontal: 24, borderRadius: 999 },
+  retryText: { fontSize: 14, fontFamily: FONTS.semiBold, fontWeight: '600' },
   list: { padding: 16, gap: 12 },
   card: { borderRadius: 18, borderWidth: 1, padding: 16, gap: 10 },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },

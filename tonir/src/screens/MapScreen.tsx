@@ -8,8 +8,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 
 import * as Haptics from 'expo-haptics';
+import * as Location from 'expo-location';
 import { RootStackParamList } from '../navigation';
 import { useStore } from '../store';
+import { useTranslation } from '../hooks/useTranslation';
 import { useVenues } from '../hooks/useVenues';
 import { VenueRow } from '../lib/database.types';
 import { Icon } from '../components/Icon';
@@ -19,7 +21,7 @@ import { FONTS } from '../theme';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Obtain a free key at https://developer.tech.yandex.ru
-const YANDEX_MAPS_API_KEY = 'eb45c40c-7901-46fc-81cd-1c9f6feba4c6';
+const YANDEX_MAPS_API_KEY = process.env.EXPO_PUBLIC_YANDEX_MAPS_KEY ?? '';
 // ─────────────────────────────────────────────────────────────────────────────
 
 type Props = {
@@ -34,7 +36,8 @@ const KIND_COLORS: Record<string, string> = {
   club: '#E8743B',
 };
 
-const FILTER_CHIPS = ['Բոլորը', 'Ռեստորաններ', 'Բարեր · լաունջ', 'Այս երեկո'];
+const MAP_FILTER_KEYS = ['all', 'restaurants', 'bars', 'tonight'] as const;
+type MapFilterKey = typeof MAP_FILTER_KEYS[number];
 
 const MAP_HTML = `<!DOCTYPE html>
 <html>
@@ -91,6 +94,8 @@ const MAP_HTML = `<!DOCTYPE html>
         mi.addChild(new ymaps3.YMapDefaultSchemeLayer({}));
         mi.addChild(new ymaps3.YMapDefaultFeaturesLayer({}));
         venues.forEach(addMarker);
+        window.panToLocation=function(lat,lng){mi.setLocation({center:[lng,lat],duration:300});};
+        window.zoomIn=function(){var loc=mi.location;mi.setLocation({zoom:(loc.zoom||14)+1,duration:200});};
         post({type:'map_ready'});
       }).catch(function(e){post({type:'map_error',msg:String(e)});});
     };
@@ -143,6 +148,8 @@ const LEAFLET_HTML = `<!DOCTYPE html>
     var kc={restaurant:'#1F4D3E',bar:'#C9A961',lounge:'#9B59B6',club:'#E8743B'};
     var map=L.map('map',{zoomControl:false}).setView([40.1872,44.5152],14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+    function panToLocation(lat,lng){map.panTo([lat,lng]);}
+    function zoomIn(){map.setZoom(map.getZoom()+1);}
     function makeIcon(v){
       var color=kc[v.kind]||'#1F4D3E';
       var hd=v.heat==='high'?'<div class="lh"></div>':'';
@@ -182,10 +189,11 @@ function buildLeafletHtml(venues: VenueRow[]): string {
 export function MapScreen({ navigation, route }: Props) {
   const { focusVenueId } = route.params ?? {};
   const { theme: t } = useStore();
+  const { tr } = useTranslation();
   const insets = useSafeAreaInsets();
 
   const [selectedId, setSelectedId] = useState<string | null>(focusVenueId ?? null);
-  const [activeFilter, setActiveFilter] = useState(FILTER_CHIPS[0]);
+  const [activeFilter, setActiveFilter] = useState<MapFilterKey>('all');
   const [mapReady, setMapReady] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
@@ -202,9 +210,9 @@ export function MapScreen({ navigation, route }: Props) {
     : [];
 
   const filteredVenues = venues.filter((v) => {
-    if (activeFilter === FILTER_CHIPS[1]) return v.kind === 'restaurant';
-    if (activeFilter === FILTER_CHIPS[2]) return v.kind === 'bar' || v.kind === 'lounge';
-    if (activeFilter === FILTER_CHIPS[3]) return v.heat !== 'low';
+    if (activeFilter === 'restaurants') return v.kind === 'restaurant';
+    if (activeFilter === 'bars') return v.kind === 'bar' || v.kind === 'lounge';
+    if (activeFilter === 'tonight') return v.heat !== 'low';
     return true;
   });
 
@@ -214,13 +222,39 @@ export function MapScreen({ navigation, route }: Props) {
     const ref = webViewRef.current;
     if (!ref) return;
     if (typeof ref.injectJavaScript === 'function') {
-      const code = type === 'updateVisible'
-        ? `updateVisible(${JSON.stringify(payload.ids)}); true;`
-        : `selectMarker(${JSON.stringify(payload.id)}); true;`;
+      let code: string;
+      if (type === 'updateVisible') {
+        code = `updateVisible(${JSON.stringify(payload.ids)}); true;`;
+      } else if (type === 'selectMarker') {
+        code = `selectMarker(${JSON.stringify(payload.id)}); true;`;
+      } else if (type === 'panToLocation') {
+        code = `panToLocation(${payload.lat}, ${payload.lng}); true;`;
+      } else if (type === 'zoomIn') {
+        code = `zoomIn(); true;`;
+      } else {
+        code = `true;`;
+      }
       ref.injectJavaScript(code);
     } else if (ref.contentWindow) {
       ref.contentWindow.postMessage(JSON.stringify({ type, ...payload }), '*');
     }
+  }
+
+  async function locateUser() {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') return;
+    const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+    sendToMap('panToLocation', { lat: pos.coords.latitude, lng: pos.coords.longitude });
+  }
+
+  function getAvailableTimes(times: string[]): string[] {
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    return times.filter((time) => {
+      const [h, m] = time.split(':').map(Number);
+      if (isNaN(h) || isNaN(m)) return true;
+      return h * 60 + m > currentMinutes;
+    });
   }
 
   useEffect(() => {
@@ -272,7 +306,7 @@ export function MapScreen({ navigation, route }: Props) {
               onChangeText={setSearchQuery}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => { if (!searchQuery) setSearchFocused(false); }}
-              placeholder='Փնտրել վայրեր…'
+              placeholder={tr('map_search_placeholder' as any)}
               placeholderTextColor={t.textMute}
               style={[styles.searchInput, { color: t.text }]}
             />
@@ -289,7 +323,7 @@ export function MapScreen({ navigation, route }: Props) {
           contentContainerStyle={styles.filterChips}
           style={{ marginTop: 10 }}
         >
-          {FILTER_CHIPS.map((f) => (
+          {MAP_FILTER_KEYS.map((f) => (
             <Pressable
               key={f}
               onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveFilter(f); }}
@@ -302,7 +336,7 @@ export function MapScreen({ navigation, route }: Props) {
               ]}
             >
               <Text style={[styles.filterChipText, { color: activeFilter === f ? '#FBF5E8' : t.text }]}>
-                {f}
+                {tr(`map_filter_${f}` as any)}
               </Text>
             </Pressable>
           ))}
@@ -315,7 +349,7 @@ export function MapScreen({ navigation, route }: Props) {
                 onPress={() => {
                   if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   setSelectedId(v.id);
-                  setActiveFilter(FILTER_CHIPS[0]);
+                  setActiveFilter('all');
                   setSearchQuery('');
                   setSearchFocused(false);
                 }}
@@ -344,7 +378,8 @@ export function MapScreen({ navigation, route }: Props) {
             key={c.label}
             onPress={() => {
               if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              if (c.icon === 'pin') { setSelectedId(null); setActiveFilter(FILTER_CHIPS[0]); }
+              if (c.icon === 'pin') { locateUser(); }
+              if (c.icon === 'plus') { sendToMap('zoomIn', {}); }
               if (c.icon === 'sliders') navigation.goBack();
             }}
             style={[styles.rightBtn, { backgroundColor: t.surface }]}
@@ -362,7 +397,7 @@ export function MapScreen({ navigation, route }: Props) {
             style={[styles.listCtaBtn, { backgroundColor: t.primaryDeep }]}
           >
             <Icon name="search" size={16} color="#FBF5E8" strokeWidth={2} />
-            <Text style={styles.listCtaText}>Ցուցակ</Text>
+            <Text style={styles.listCtaText}>{tr('map_list_view' as any)}</Text>
           </Pressable>
         </View>
       )}
@@ -383,7 +418,7 @@ export function MapScreen({ navigation, route }: Props) {
               <Stars rating={selectedVenue.rating} t={t} size={12} compact />
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
-                  {selectedVenue.times.slice(0, 4).map((time) => (
+                  {getAvailableTimes(selectedVenue.times).slice(0, 4).map((time) => (
                     <TimePill key={time} time={time} t={t} size="sm" />
                   ))}
                 </View>

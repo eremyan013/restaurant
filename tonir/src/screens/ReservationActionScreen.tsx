@@ -14,6 +14,7 @@ import { RouteProp } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { RootStackParamList } from '../navigation';
 import { useStore } from '../store';
+import { useTranslation } from '../hooks/useTranslation';
 import { Icon } from '../components/Icon';
 import { FONTS } from '../theme';
 import { confirmReservationByToken, cancelReservationByToken } from '../lib/api';
@@ -28,6 +29,7 @@ type ScreenState = 'loading' | 'success' | 'already_done' | 'error';
 export function ReservationActionScreen({ navigation, route }: Props) {
   const { token, action } = route.params;
   const { theme: t } = useStore();
+  const { tr } = useTranslation();
   const insets = useSafeAreaInsets();
 
   const [screenState, setScreenState] = useState<ScreenState>('loading');
@@ -77,23 +79,23 @@ export function ReservationActionScreen({ navigation, route }: Props) {
   }[screenState];
 
   const heroTitle = {
-    loading: isConfirm ? 'Confirming your reservation…' : 'Cancelling your reservation…',
-    success: isConfirm ? 'Reservation Confirmed!' : 'Reservation Cancelled',
-    already_done: isConfirm ? 'Already Confirmed' : 'Already Cancelled',
-    error: 'Something Went Wrong',
+    loading: isConfirm ? tr('resact_loading_confirm') : tr('resact_loading_cancel'),
+    success: isConfirm ? tr('resact_success_confirm_title') : tr('resact_success_cancel_title'),
+    already_done: isConfirm ? tr('resact_already_confirm_title') : tr('resact_already_cancel_title'),
+    error: tr('resact_error_title'),
   }[screenState];
 
   const heroSub = {
-    loading: 'This will only take a moment.',
-    success: isConfirm ? 'You are all set. See you soon!' : 'Your reservation has been cancelled. We hope to see you another time.',
-    already_done: isConfirm ? 'This reservation is already confirmed.' : 'This reservation has already been cancelled.',
-    error: errorMessage || 'Please try again or contact the restaurant directly.',
+    loading: tr('resact_loading_sub'),
+    success: isConfirm ? tr('resact_success_confirm_sub') : tr('resact_success_cancel_sub'),
+    already_done: isConfirm ? tr('resact_already_confirm_sub') : tr('resact_already_cancel_sub'),
+    error: errorMessage || tr('resact_error_sub'),
   }[screenState];
 
   // All three names are confirmed present in Icon.tsx
   const heroIconName = screenState === 'loading'
     ? 'clock'
-    : (screenState === 'error' || (!isConfirm && screenState !== 'loading'))
+    : screenState === 'error'
       ? 'x'
       : 'check';
 
@@ -130,12 +132,10 @@ export function ReservationActionScreen({ navigation, route }: Props) {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.cardRowLabel, { color: t.text }]}>
-                  {isConfirm ? 'View your reservations' : 'Book again anytime'}
+                  {isConfirm ? tr('resact_view_confirm') : tr('resact_book_again')}
                 </Text>
                 <Text style={[styles.cardRowSub, { color: t.textMute }]}>
-                  {isConfirm
-                    ? 'Open the app to see all your upcoming bookings.'
-                    : 'Find and reserve your next table from the home screen.'}
+                  {isConfirm ? tr('resact_view_confirm_sub') : tr('resact_book_again_sub')}
                 </Text>
               </View>
             </View>
@@ -153,7 +153,7 @@ export function ReservationActionScreen({ navigation, route }: Props) {
             style={[styles.doneBtn, { backgroundColor: t.primary, marginHorizontal: 20 }]}
           >
             <Text style={styles.doneBtnText}>
-              {screenState === 'error' ? 'Go to app' : 'View my reservations'}
+              {screenState === 'error' ? tr('resact_done_error') : tr('resact_done_view')}
             </Text>
           </Pressable>
         )}
