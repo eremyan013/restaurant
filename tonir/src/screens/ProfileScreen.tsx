@@ -60,35 +60,6 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
     }
   }, [profile?.tier_level]);
 
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-
-  async function pickAndUploadAvatar() {
-    if (!userId || !profile) return;
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (result.canceled || !result.assets[0]) return;
-    const asset = result.assets[0];
-    if (asset.fileSize !== undefined && asset.fileSize > 5 * 1024 * 1024) {
-      Alert.alert('', tr('prof_edit_photo_too_large'));
-      return;
-    }
-    haptic();
-    setUploadingAvatar(true);
-    try {
-      const avatar_url = await uploadAvatar(userId, asset.uri);
-      await updateProfile(userId, { name: profile.name, avatar_url });
-      refetch();
-    } catch {
-      Alert.alert('', 'Failed to upload photo');
-    } finally {
-      setUploadingAvatar(false);
-    }
-  }
-
   const [editVisible, setEditVisible] = useState(false);
   const [editName, setEditName] = useState('');
   const [editAvatarUri, setEditAvatarUri] = useState<string | null>(null);
@@ -139,7 +110,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
       setEditVisible(false);
       refetch();
     } catch (e: any) {
-      setEditError(e?.message ?? 'Failed to save');
+      setEditError(e?.message ?? tr('prof_edit_save_err'));
     } finally {
       setEditSaving(false);
     }
@@ -181,9 +152,9 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
 
   const SETTINGS: Array<{ icon: IconName; label: string; onPress: () => void }> = [
     { icon: 'user',    label: tr('prof_settings_personal'), onPress: openEdit },
-    { icon: 'pin',     label: tr('prof_settings_address'),  onPress: haptic },
-    { icon: 'sparkle', label: tr('prof_settings_notifs'),   onPress: haptic },
-    { icon: 'chat',    label: tr('prof_settings_help'),     onPress: haptic },
+    { icon: 'pin',     label: tr('prof_settings_address'),  onPress: () => { haptic(); Alert.alert(tr('prof_soon_title'), trf('prof_soon_sub', { section: tr('prof_settings_address') })); } },
+    { icon: 'sparkle', label: tr('prof_settings_notifs'),   onPress: () => { haptic(); Alert.alert(tr('prof_soon_title'), trf('prof_soon_sub', { section: tr('prof_settings_notifs') })); } },
+    { icon: 'chat',    label: tr('prof_settings_help'),     onPress: () => { haptic(); Alert.alert(tr('prof_soon_title'), trf('prof_soon_sub', { section: tr('prof_settings_help') })); } },
   ];
 
   const tierNames = tra('prof_tier_names');
@@ -212,7 +183,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
       >
         {/* User card */}
         <View style={[styles.userCard, { backgroundColor: t.surface, borderColor: t.border }]}>
-          <Pressable onPress={pickAndUploadAvatar} disabled={uploadingAvatar} style={styles.avatarOuter} hitSlop={4}>
+          <Pressable onPress={openEdit} style={styles.avatarOuter} hitSlop={4}>
             <View style={[styles.avatarWrap, { borderColor: t.accent }]}>
               {user.avatar_url ? (
                 <Image source={{ uri: user.avatar_url }} style={styles.avatar} />
@@ -221,11 +192,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
                   <Icon name="user" size={28} color={t.textMute} />
                 </View>
               )}
-              {uploadingAvatar && (
-                <View style={styles.avatarUploadingOverlay}>
-                  <ActivityIndicator color="#FBF5E8" size="small" />
-                </View>
-              )}
+
             </View>
             <View style={[styles.cameraBadge, { backgroundColor: t.primary, borderColor: t.surface }]}>
               <Icon name="camera" size={10} color="#FBF5E8" strokeWidth={2} />
