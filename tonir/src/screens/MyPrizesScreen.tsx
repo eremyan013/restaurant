@@ -25,7 +25,7 @@ const TYPE_ICONS: Record<string, string> = {
 const haptic = () => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); };
 
 export function MyPrizesScreen({ navigation }: Props) {
-  const { theme: t, lang } = useStore();
+  const { theme: t, language } = useStore();
   const insets = useSafeAreaInsets();
   const { profile } = useProfile();
   const { tr } = useTranslation();
@@ -172,8 +172,8 @@ export function MyPrizesScreen({ navigation }: Props) {
 
                 {/* Footer */}
                 <Text style={[styles.claimedAt, { color: t.textFaint }]}>
-                  {tr('prizes_claimed')}: {new Date(up.claimed_at).toLocaleDateString(LOCALE_MAP[lang] ?? 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  {up.used_at ? `  ·  ${tr('prizes_used')}: ${new Date(up.used_at).toLocaleDateString(LOCALE_MAP[lang] ?? 'en-GB', { day: 'numeric', month: 'short' })}` : ''}
+                  {tr('prizes_claimed')}: {new Date(up.claimed_at).toLocaleDateString(LOCALE_MAP[language] ?? 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {up.used_at ? `  ·  ${tr('prizes_used')}: ${new Date(up.used_at).toLocaleDateString(LOCALE_MAP[language] ?? 'en-GB', { day: 'numeric', month: 'short' })}` : ''}
                 </Text>
               </View>
             );
