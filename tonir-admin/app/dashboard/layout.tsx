@@ -20,7 +20,7 @@ export default async function DashboardLayout({
       <div className="flex h-screen overflow-hidden bg-zinc-50">
         <PushSubscriber />
         <Sidebar adminName={admin.name} role={admin.role} managedVenueIds={admin.managed_venue_ids} />
-        <main className="flex-1 overflow-y-auto p-8">{children}</main>
+        <main className="flex-1 overflow-y-auto p-8 pt-12 lg:pt-8">{children}</main>
       </div>
     </ToastProvider>
   )
