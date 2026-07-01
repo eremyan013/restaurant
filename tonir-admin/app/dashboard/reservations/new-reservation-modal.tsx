@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useState, useEffect } from 'react'
+import { useActionState, useState, useEffect, useRef } from 'react'
 import { createReservationAdmin, searchUsersAction, ActionState } from './actions'
 import { useToast } from '@/components/toast-provider'
 
@@ -22,18 +22,45 @@ const INIT_SEARCH: { results: UserResult[] } = { results: [] as UserResult[] }
 
 const TODAY = new Date().toISOString().split('T')[0]
 
+function UserSearch({ onSelect }: { onSelect: (u: UserResult) => void }) {
+  const [searchState, searchAction, searching] = useActionState(searchUsersAction, INIT_SEARCH)
+  return (
+    <>
+      <form action={searchAction} className="flex gap-2">
+        <input name="q" type="text" placeholder="Search by name, email or player ID…" className="flex-1 px-3 py-2 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900" />
+        <button type="submit" disabled={searching} className="px-3 py-2 bg-zinc-900 text-white rounded-lg text-sm hover:bg-zinc-700 disabled:opacity-50 transition-colors">{searching ? '…' : 'Search'}</button>
+      </form>
+      {searchState.results.length > 0 && (
+        <div className="mt-1.5 border border-zinc-200 rounded-lg overflow-hidden">
+          {searchState.results.map((u: UserResult) => (
+            <button key={u.id} type="button" onClick={() => onSelect(u)} className="w-full text-left px-3 py-2.5 hover:bg-zinc-50 transition-colors border-b border-zinc-100 last:border-0">
+              <p className="text-sm font-medium text-zinc-900">{u.name}</p>
+              <p className="text-xs text-zinc-400">{u.email} · #{u.player_id}</p>
+            </button>
+          ))}
+        </div>
+      )}
+      {searchState.results.length === 0 && !searching && (
+        <p className="text-xs text-zinc-400 mt-1.5">Search above to find a user.</p>
+      )}
+    </>
+  )
+}
+
 export function NewReservationModal({ venues, defaultVenueId }: Props) {
   const [open, setOpen] = useState(false)
   const [createState, createAction, creating] = useActionState(createReservationAdmin, INIT_CREATE)
-  const [searchState, searchAction, searching] = useActionState(searchUsersAction, INIT_SEARCH)
   const [selectedUser, setSelectedUser] = useState<UserResult | null>(null)
+  const [searchKey, setSearchKey] = useState(0)
   const toast = useToast()
+  const modalRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (createState.ok) {
       toast.success('Reservation created')
       setOpen(false)
       setSelectedUser(null)
+      setSearchKey(k => k + 1)
     } else if (createState.error) {
       toast.error(createState.error ?? 'Failed to create reservation')
     }
@@ -43,7 +70,42 @@ export function NewReservationModal({ venues, defaultVenueId }: Props) {
   function handleClose() {
     setOpen(false)
     setSelectedUser(null)
+    setSearchKey(k => k + 1)
   }
+
+  // Escape key
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') handleClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  // Focus trap
+  useEffect(() => {
+    if (!open || !modalRef.current) return
+    const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    const modal = modalRef.current
+    const els = modal.querySelectorAll<HTMLElement>(FOCUSABLE)
+    els[0]?.focus()
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Tab') return
+      const focusable = Array.from(modal.querySelectorAll<HTMLElement>(FOCUSABLE))
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus() }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
 
   return (
     <>
@@ -55,8 +117,8 @@ export function NewReservationModal({ venues, defaultVenueId }: Props) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={handleClose}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto" ref={modalRef} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-base font-semibold text-zinc-900">New Reservation</h2>
               <button onClick={handleClose} className="text-zinc-400 hover:text-zinc-600 text-xl leading-none">×</button>
@@ -76,37 +138,7 @@ export function NewReservationModal({ venues, defaultVenueId }: Props) {
                   <button onClick={() => setSelectedUser(null)} className="text-xs text-zinc-400 hover:text-zinc-600">Change</button>
                 </div>
               ) : (
-                <>
-                  <form action={searchAction} className="flex gap-2">
-                    <input
-                      name="q"
-                      type="text"
-                      placeholder="Search by name, email or player ID…"
-                      className="flex-1 px-3 py-2 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                    />
-                    <button type="submit" disabled={searching} className="px-3 py-2 bg-zinc-900 text-white rounded-lg text-sm hover:bg-zinc-700 disabled:opacity-50 transition-colors">
-                      {searching ? '…' : 'Search'}
-                    </button>
-                  </form>
-                  {searchState.results.length > 0 && (
-                    <div className="mt-1.5 border border-zinc-200 rounded-lg overflow-hidden">
-                      {searchState.results.map((u: UserResult) => (
-                        <button
-                          key={u.id}
-                          type="button"
-                          onClick={() => setSelectedUser(u)}
-                          className="w-full text-left px-3 py-2.5 hover:bg-zinc-50 transition-colors border-b border-zinc-100 last:border-0"
-                        >
-                          <p className="text-sm font-medium text-zinc-900">{u.name}</p>
-                          <p className="text-xs text-zinc-400">{u.email} · #{u.player_id}</p>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {searchState.results.length === 0 && !searching && (
-                    <p className="text-xs text-zinc-400 mt-1.5">Search above to find a user.</p>
-                  )}
-                </>
+                <UserSearch key={searchKey} onSelect={setSelectedUser} />
               )}
             </div>
 

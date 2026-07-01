@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 export function ReservationFilters({
@@ -9,6 +10,26 @@ export function ReservationFilters({
 }) {
   const router = useRouter()
   const params = useSearchParams()
+
+  const [from,      setFrom]      = useState(params.get('from')       ?? '')
+  const [to,        setTo]        = useState(params.get('to')         ?? '')
+  const [venue,     setVenue]     = useState(params.get('venue')      ?? '')
+  const [guest,     setGuest]     = useState(params.get('guest')      ?? '')
+  const [peopleMin, setPeopleMin] = useState(params.get('people_min') ?? '')
+  const [peopleMax, setPeopleMax] = useState(params.get('people_max') ?? '')
+  const [note,      setNote]      = useState(params.get('note')       ?? '')
+
+  useEffect(() => {
+    setFrom(params.get('from')       ?? '')
+    setTo(params.get('to')           ?? '')
+    setVenue(params.get('venue')     ?? '')
+    setGuest(params.get('guest')     ?? '')
+    setPeopleMin(params.get('people_min') ?? '')
+    setPeopleMax(params.get('people_max') ?? '')
+    setNote(params.get('note')       ?? '')
+  }, [params])
+
+  const hasFilters = !!(from || to || venue || guest || peopleMin || peopleMax || note)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -33,15 +54,6 @@ export function ReservationFilters({
     router.push(`/dashboard/reservations${status ? `?status=${status}` : ''}`)
   }
 
-  const from       = params.get('from')       ?? ''
-  const to         = params.get('to')         ?? ''
-  const venue      = params.get('venue')      ?? ''
-  const guest      = params.get('guest')      ?? ''
-  const peopleMin  = params.get('people_min') ?? ''
-  const peopleMax  = params.get('people_max') ?? ''
-  const note       = params.get('note')       ?? ''
-  const hasFilters = !!(from || to || venue || guest || peopleMin || peopleMax || note)
-
   return (
     <form
       onSubmit={handleSubmit}
@@ -54,7 +66,8 @@ export function ReservationFilters({
           <input
             type="date"
             name="from"
-            defaultValue={from}
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
             className="h-9 px-3 rounded-lg border border-zinc-200 text-sm bg-white"
           />
         </div>
@@ -63,7 +76,8 @@ export function ReservationFilters({
           <input
             type="date"
             name="to"
-            defaultValue={to}
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
             className="h-9 px-3 rounded-lg border border-zinc-200 text-sm bg-white"
           />
         </div>
@@ -74,7 +88,8 @@ export function ReservationFilters({
             <label className="text-xs font-medium text-zinc-500">Venue</label>
             <select
               name="venue"
-              defaultValue={venue}
+              value={venue}
+              onChange={(e) => setVenue(e.target.value)}
               className="h-9 px-3 rounded-lg border border-zinc-200 text-sm bg-white"
             >
               <option value="">All venues</option>
@@ -91,7 +106,8 @@ export function ReservationFilters({
           <input
             type="text"
             name="guest"
-            defaultValue={guest}
+            value={guest}
+            onChange={(e) => setGuest(e.target.value)}
             placeholder="Search guest…"
             className="h-9 px-3 rounded-lg border border-zinc-200 text-sm"
           />
@@ -103,7 +119,8 @@ export function ReservationFilters({
           <input
             type="number"
             name="people_min"
-            defaultValue={peopleMin}
+            value={peopleMin}
+            onChange={(e) => setPeopleMin(e.target.value)}
             min="1"
             placeholder="Any"
             className="h-9 px-3 rounded-lg border border-zinc-200 text-sm"
@@ -114,7 +131,8 @@ export function ReservationFilters({
           <input
             type="number"
             name="people_max"
-            defaultValue={peopleMax}
+            value={peopleMax}
+            onChange={(e) => setPeopleMax(e.target.value)}
             min="1"
             placeholder="Any"
             className="h-9 px-3 rounded-lg border border-zinc-200 text-sm"
@@ -127,7 +145,8 @@ export function ReservationFilters({
           <input
             type="text"
             name="note"
-            defaultValue={note}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
             placeholder="Search notes…"
             className="h-9 px-3 rounded-lg border border-zinc-200 text-sm"
           />

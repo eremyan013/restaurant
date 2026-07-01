@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useState, useEffect } from 'react'
+import { useActionState, useState, useEffect, useRef } from 'react'
 import { editReservation, ActionState } from './actions'
 import { useToast } from '@/components/toast-provider'
 
@@ -27,6 +27,7 @@ export function ReservationEditModal({ reservation: r }: Props) {
   const [open, setOpen] = useState(false)
   const [state, action, pending] = useActionState(editReservation, INIT)
   const toast = useToast()
+  const modalRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (state.ok) {
@@ -37,6 +38,39 @@ export function ReservationEditModal({ reservation: r }: Props) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state])
+
+  // Escape key
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
+  // Focus trap
+  useEffect(() => {
+    if (!open || !modalRef.current) return
+    const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    const modal = modalRef.current
+    const els = modal.querySelectorAll<HTMLElement>(FOCUSABLE)
+    els[0]?.focus()
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Tab') return
+      const focusable = Array.from(modal.querySelectorAll<HTMLElement>(FOCUSABLE))
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus() }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
 
   const defaultDate = r.date_iso ?? new Date().toISOString().split('T')[0]
 
@@ -50,8 +84,8 @@ export function ReservationEditModal({ reservation: r }: Props) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6" ref={modalRef} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-base font-semibold text-zinc-900">Edit Reservation</h2>
               <button onClick={() => setOpen(false)} className="text-zinc-400 hover:text-zinc-600 text-xl leading-none">×</button>
@@ -125,7 +159,7 @@ export function ReservationEditModal({ reservation: r }: Props) {
               )}
 
               <div className="flex gap-3 pt-1">
-                <button type="button" onClick={() => setOpen(false)} className="flex-1 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors">
+                <button type="button" onClick={() => setOpen(false)} className="flex-1 px-4 py-2 rounded-lg border border-zinc-200 text-zinc-600 text-sm font-medium hover:bg-zinc-50 transition-colors">
                   Cancel
                 </button>
                 <button type="submit" disabled={pending} className="flex-1 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-50 transition-colors">

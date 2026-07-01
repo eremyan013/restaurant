@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
@@ -262,7 +263,7 @@ export default async function ReservationsPage({
           const count = tab === 'all' ? total : (countMap[tab] ?? 0)
           const isActive = activeTab === tab
           return (
-            <a
+            <Link
               key={tab}
               href={tabHref(tab)}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
@@ -273,7 +274,7 @@ export default async function ReservationsPage({
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-zinc-100 text-zinc-600' : 'bg-zinc-200 text-zinc-500'}`}>
                 {count}
               </span>
-            </a>
+            </Link>
           )
         })}
       </div>
@@ -284,7 +285,8 @@ export default async function ReservationsPage({
         </div>
       ) : (
         <>
-        <div className="bg-white rounded-xl border border-zinc-200 overflow-x-auto">
+        <div className="relative">
+          <div className="bg-white rounded-xl border border-zinc-200 overflow-x-auto">
           <table className="w-full text-sm min-w-[860px]">
             <thead>
               <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
@@ -356,6 +358,8 @@ export default async function ReservationsPage({
               })}
             </tbody>
           </table>
+          </div>
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 rounded-r-xl bg-gradient-to-l from-white/80 to-transparent" />
         </div>
         <Pagination
           page={page}
