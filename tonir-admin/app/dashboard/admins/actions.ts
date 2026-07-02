@@ -95,21 +95,25 @@ export async function updateAdmin(
   return { ok: true }
 }
 
-export async function deleteAdmin(_prev: unknown, formData: FormData): Promise<void> {
+export async function removeAdmin(formData: FormData): Promise<{ ok: boolean; error?: string }> {
   const actor = await getCurrentAdmin()
-  if (actor?.role !== 'super_admin') return
+  if (actor?.role !== 'super_admin') return { ok: false, error: 'Unauthorized' }
 
   const id = formData.get('id') as string
-  if (!id) return
+  if (!id) return { ok: false, error: 'Missing admin ID' }
 
   const supabase = createSupabaseAdminClient()
   const { data: target } = await supabase.from('profiles').select('role').eq('id', id).single()
-  if (target?.role !== 'admin') return
-  await supabase
+  if (target?.role !== 'admin') return { ok: false, error: 'Target is not an admin' }
+
+  const { error: profileError } = await supabase
     .from('profiles')
     .update({ role: 'user', managed_venue_ids: [], managed_venue_id: null, is_admin: false })
     .eq('id', id)
+  if (profileError) return { ok: false, error: profileError.message }
+
   await supabase.auth.admin.updateUserById(id, { ban_duration: '87600h' }).catch(() => {})
 
   revalidatePath('/dashboard/admins')
+  return { ok: true }
 }

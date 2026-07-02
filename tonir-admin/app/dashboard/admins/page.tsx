@@ -1,33 +1,13 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { removeAdmin } from './actions'
+import { CreateAdminForm } from './CreateAdminForm'
+import { RemoveAdminButton } from './remove-admin-button'
 
 export const metadata: Metadata = { title: 'Admins — Tonir Admin' }
-import { CreateAdminForm } from './CreateAdminForm'
-import { ConfirmButton } from '@/components/confirm-button'
-
-async function removeAdmin(formData: FormData) {
-  'use server'
-  const actor = await getCurrentAdmin()
-  if (actor?.role !== 'super_admin') return
-
-  const id = formData.get('id') as string
-  if (!id) return
-
-  const supabase = createSupabaseAdminClient()
-  const { data: target } = await supabase.from('profiles').select('role').eq('id', id).single()
-  if (target?.role !== 'admin') return  // never demote super_admins via this action
-  await supabase
-    .from('profiles')
-    .update({ role: 'user', managed_venue_ids: [], managed_venue_id: null, is_admin: false })
-    .eq('id', id)
-  await supabase.auth.admin.updateUserById(id, { ban_duration: '87600h' }).catch(() => {})
-
-  revalidatePath('/dashboard/admins')
-}
 
 export default async function AdminsPage() {
   const admin = await getCurrentAdmin()
@@ -101,15 +81,11 @@ export default async function AdminsPage() {
                           >
                             Edit
                           </Link>
-                          <form action={removeAdmin}>
-                            <input type="hidden" name="id" value={a.id} />
-                            <ConfirmButton
-                              message={`Remove ${a.name} as admin? Their account will be banned.`}
-                              className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
-                            >
-                              Remove
-                            </ConfirmButton>
-                          </form>
+                          <RemoveAdminButton
+                            adminId={a.id}
+                            adminName={a.name}
+                            action={removeAdmin}
+                          />
                         </div>
                       </td>
                     </tr>
