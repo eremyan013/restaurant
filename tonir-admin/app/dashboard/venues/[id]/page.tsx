@@ -120,6 +120,14 @@ async function deleteVenue(id: string) {
   const admin = await getCurrentAdmin()
   if (admin?.role !== 'super_admin') return
   const supabase = createSupabaseAdminClient()
+  const { count } = await supabase
+    .from('reservations')
+    .select('*', { count: 'exact', head: true })
+    .eq('venue_id', id)
+    .in('status', ['pending', 'confirmed'])
+  if ((count ?? 0) > 0) {
+    redirect(`/dashboard/venues/${id}?deleteError=1`)
+  }
   await supabase.from('venues').delete().eq('id', id)
   revalidatePath('/dashboard/venues')
   redirect('/dashboard/venues')
@@ -127,10 +135,14 @@ async function deleteVenue(id: string) {
 
 export default async function EditVenuePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ deleteError?: string }>
 }) {
   const { id } = await params
+  const sp = await searchParams
+  const deleteError = sp?.deleteError
   const supabase = createSupabaseAdminClient()
 
   const todayISO = new Date().toISOString().split('T')[0]
@@ -224,6 +236,11 @@ export default async function EditVenuePage({
         />
       </div>
 
+      {deleteError === '1' && (
+        <div className="mt-6 bg-red-50 border border-red-200 rounded-xl px-5 py-3 text-sm text-red-700">
+          Cannot delete: this venue has pending or confirmed reservations. Cancel or complete them first.
+        </div>
+      )}
       <form action={deleteVenue.bind(null, id)} className="mt-6">
         <DeleteButton
           label="Delete venue"

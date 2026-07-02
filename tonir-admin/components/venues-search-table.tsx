@@ -21,7 +21,7 @@ type Venue = {
 
 type Props = {
   venues: Venue[]
-  toggleActive: (id: string, current: boolean) => Promise<void>
+  toggleActive: (id: string, current: boolean) => Promise<{ ok: boolean; error?: string }>
   isSuperAdmin: boolean
 }
 
@@ -53,7 +53,7 @@ function VenueActiveToggle({
   venueId: string
   isActive: boolean
   venueName: string
-  toggleActive: (id: string, current: boolean) => Promise<void>
+  toggleActive: (id: string, current: boolean) => Promise<{ ok: boolean; error?: string }>
 }) {
   const toast = useToast()
   const [pending, startTransition] = useTransition()
@@ -63,7 +63,11 @@ function VenueActiveToggle({
       onClick={() => {
         startTransition(async () => {
           try {
-            await toggleActive(venueId, isActive)
+            const result = await toggleActive(venueId, isActive)
+            if (!result.ok) {
+              toast.error(result.error ?? 'Failed to update venue status')
+              return
+            }
             toast.success(isActive ? `${venueName} deactivated` : `${venueName} activated`)
           } catch {
             toast.error('Failed to update venue status')

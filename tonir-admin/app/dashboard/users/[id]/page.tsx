@@ -35,8 +35,8 @@ export default async function UserProfilePage({
 }) {
   const { id } = await params
   const sp = await searchParams
-  const page = Math.max(0, parseInt(sp.page ?? '0', 10) || 0)
-  const from = page * RES_PAGE_SIZE
+  const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)
+  const from = (page - 1) * RES_PAGE_SIZE
   const to   = from + RES_PAGE_SIZE - 1
 
   const admin = await getCurrentAdmin()
@@ -236,12 +236,12 @@ export default async function UserProfilePage({
               </table>
             )}
             <Pagination
-              page={page + 1}
+              page={page}
               total={reservationTotal}
-              prevHref={page > 0
+              prevHref={page > 1
                 ? `/dashboard/users/${id}?page=${page - 1}`
                 : null}
-              nextHref={(page + 1) * RES_PAGE_SIZE < reservationTotal
+              nextHref={page * RES_PAGE_SIZE < reservationTotal
                 ? `/dashboard/users/${id}?page=${page + 1}`
                 : null}
             />

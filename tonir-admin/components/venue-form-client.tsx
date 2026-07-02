@@ -189,6 +189,7 @@ export function VenueFormClient({
   const [coordX, setCoordX] = useState(defaults.coord_x ?? '44')
   const [coordY, setCoordY] = useState(defaults.coord_y ?? '40')
   const [validErr, setValidErr] = useState<string | null>(null)
+  const [isDirty, setIsDirty] = useState(false)
 
   // Computed cuisine strings per language from selected IDs
   const cuisineHy = selectedCuisines.map(id => CUISINES.find(c => c.id === id)?.hy ?? id).join(', ')
@@ -198,7 +199,16 @@ export function VenueFormClient({
   function upd(field: keyof LangFields, value: string) {
     setLf(prev => ({ ...prev, [lang]: { ...prev[lang], [field]: value } }))
     setValidErr(null)
+    setIsDirty(true)
   }
+
+  useEffect(() => {
+    function onBeforeUnload(e: BeforeUnloadEvent) {
+      if (isDirty) { e.preventDefault(); e.returnValue = '' }
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [isDirty])
 
   function onAddressSelect(result: NominatimResult) {
     const shortName = [
@@ -224,7 +234,9 @@ export function VenueFormClient({
     if (!timesInput?.value.trim()) {
       e.preventDefault()
       setValidErr('At least one time slot is required (e.g. 12:00, 14:00)')
+      return
     }
+    setIsDirty(false)
   }
 
   return (
@@ -258,7 +270,7 @@ export function VenueFormClient({
 
         {/* Cuisine multi-select — spans full width */}
         <div className="sm:col-span-2">
-          <CuisineSelect selected={selectedCuisines} onChange={setSelectedCuisines} />
+          <CuisineSelect selected={selectedCuisines} onChange={(ids) => { setSelectedCuisines(ids); setIsDirty(true) }} />
         </div>
 
         {/* Address field with autocomplete — spans full width */}
@@ -269,8 +281,8 @@ export function VenueFormClient({
             onSelect={onAddressSelect}
             coordX={coordX}
             coordY={coordY}
-            onCoordXChange={setCoordX}
-            onCoordYChange={setCoordY}
+            onCoordXChange={(v) => { setCoordX(v); setIsDirty(true) }}
+            onCoordYChange={(v) => { setCoordY(v); setIsDirty(true) }}
           />
         </div>
 
@@ -346,6 +358,9 @@ export function VenueFormClient({
       {validErr && <p className="text-sm text-red-500">{validErr}</p>}
 
       <div className="pt-2 border-t border-zinc-100">
+        {isDirty && (
+          <p className="text-xs text-amber-600 mb-2">You have unsaved changes.</p>
+        )}
         <button type="submit" className="px-5 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors">
           {isNew ? 'Create venue' : 'Save changes'}
         </button>

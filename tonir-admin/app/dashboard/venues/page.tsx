@@ -8,14 +8,16 @@ import { getCurrentAdmin } from '@/lib/current-admin'
 export const metadata: Metadata = { title: 'Venues — Tonir Admin' }
 import { VenuesSearchTable } from '@/components/venues-search-table'
 
-async function toggleActive(id: string, current: boolean) {
+async function toggleActive(id: string, current: boolean): Promise<{ ok: boolean; error?: string }> {
   'use server'
   const admin = await getCurrentAdmin()
-  if (!admin) return
-  if (admin.role === 'admin' && !admin.managed_venue_ids.includes(id)) return
+  if (!admin) return { ok: false, error: 'Unauthorized' }
+  if (admin.role === 'admin' && !admin.managed_venue_ids.includes(id)) return { ok: false, error: 'Unauthorized' }
   const supabase = createSupabaseAdminClient()
-  await supabase.from('venues').update({ is_active: !current }).eq('id', id)
+  const { error: dbError } = await supabase.from('venues').update({ is_active: !current }).eq('id', id)
+  if (dbError) return { ok: false, error: dbError.message }
   revalidatePath('/dashboard/venues')
+  return { ok: true }
 }
 
 export default async function VenuesPage() {
