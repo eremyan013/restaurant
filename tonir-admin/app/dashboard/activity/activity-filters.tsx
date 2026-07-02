@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
 
 type AdminOption = {
   id: string
@@ -29,6 +30,13 @@ export function ActivityFilters({
 }: Props) {
   const router = useRouter()
 
+  const [adminVal,  setAdminVal]  = useState(defaultAdmin)
+  const [actionVal, setActionVal] = useState(defaultAction)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => { setAdminVal(defaultAdmin)   }, [defaultAdmin])
+  useEffect(() => { setActionVal(defaultAction) }, [defaultAction])
+
   function navigate(admin: string, action: string) {
     const params = new URLSearchParams()
     if (admin)  params.set('admin',  admin)
@@ -37,11 +45,16 @@ export function ActivityFilters({
     router.push(`/dashboard/activity${qs ? '?' + qs : ''}`)
   }
 
+  function debouncedNavigate(admin: string, action: string) {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => navigate(admin, action), 300)
+  }
+
   return (
     <div className="flex gap-3 mb-6 flex-wrap">
       <select
-        value={defaultAdmin || ''}
-        onChange={(e) => navigate(e.target.value, defaultAction)}
+        value={adminVal}
+        onChange={(e) => { setAdminVal(e.target.value); debouncedNavigate(e.target.value, actionVal) }}
         className="border border-zinc-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900"
       >
         <option value="">All admins</option>
@@ -51,8 +64,8 @@ export function ActivityFilters({
       </select>
 
       <select
-        value={defaultAction || ''}
-        onChange={(e) => navigate(defaultAdmin, e.target.value)}
+        value={actionVal}
+        onChange={(e) => { setActionVal(e.target.value); debouncedNavigate(adminVal, e.target.value) }}
         className="border border-zinc-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900"
       >
         <option value="">All actions</option>
