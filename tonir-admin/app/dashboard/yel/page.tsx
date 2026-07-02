@@ -119,10 +119,10 @@ async function adjustPoints(formData: FormData): Promise<{ ok: boolean; error?: 
   return { ok: true }
 }
 
-async function saveTierSettings(formData: FormData) {
+async function saveTierSettings(formData: FormData): Promise<{ ok: boolean; error?: string }> {
   'use server'
   const actor = await getCurrentAdmin()
-  if (actor?.role !== 'super_admin') return
+  if (actor?.role !== 'super_admin') return { ok: false, error: 'Unauthorized' }
 
   const supabase = createSupabaseAdminClient()
 
@@ -139,9 +139,10 @@ async function saveTierSettings(formData: FormData) {
   const t2 = parseInt(upserts.find(u => u.key === 'tier_2_min')?.value ?? '0')
   const t3 = parseInt(upserts.find(u => u.key === 'tier_3_min')?.value ?? '0')
   const t4 = parseInt(upserts.find(u => u.key === 'tier_4_min')?.value ?? '0')
-  if (!(t2 > 0 && t3 > t2 && t4 > t3)) return
+  if (!(t2 > 0 && t3 > t2 && t4 > t3)) return { ok: false, error: 'Invalid thresholds' }
 
-  await supabase.from('settings').upsert(upserts, { onConflict: 'key' })
+  const { error: upsertError } = await supabase.from('settings').upsert(upserts, { onConflict: 'key' })
+  if (upsertError) return { ok: false, error: 'Failed to save settings' }
 
   const names = Object.fromEntries(upserts.filter(u => u.key.endsWith('_name')).map(u => [
     parseInt(u.key[5]), u.value,
@@ -163,6 +164,7 @@ async function saveTierSettings(formData: FormData) {
   }
 
   revalidatePath('/dashboard/yel')
+  return { ok: true }
 }
 
 export default async function YelPage() {

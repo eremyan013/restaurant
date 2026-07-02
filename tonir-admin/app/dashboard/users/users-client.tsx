@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 type User = {
@@ -45,6 +45,10 @@ export default function UsersClient({
   const router = useRouter()
   const [inputValue, setInputValue] = useState(defaultQ)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    setInputValue(defaultQ)
+  }, [defaultQ])
 
   const q = defaultQ
   const tier = defaultTier

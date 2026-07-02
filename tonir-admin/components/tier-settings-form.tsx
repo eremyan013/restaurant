@@ -13,7 +13,7 @@ const TIER_COLORS: Record<number, string> = {
 type Props = {
   tierNames: Record<number, string>
   tierMins:  Record<number, number>
-  saveTierSettings: (fd: FormData) => Promise<void>
+  saveTierSettings: (fd: FormData) => Promise<{ ok: boolean; error?: string }>
 }
 
 export function TierSettingsForm({ tierNames, tierMins, saveTierSettings }: Props) {
@@ -47,9 +47,15 @@ export function TierSettingsForm({ tierNames, tierMins, saveTierSettings }: Prop
     fd.set('tier_3_min', String(mins[3]))
     fd.set('tier_4_min', String(mins[4]))
     try {
-      await saveTierSettings(fd)
-      setSaved(true)
-      toast.success('Tier settings saved')
+      const result = await saveTierSettings(fd)
+      if (!result.ok) {
+        const msg = result.error ?? 'Failed to save tier settings'
+        setError(msg)
+        toast.error(msg)
+      } else {
+        setSaved(true)
+        toast.success('Tier settings saved')
+      }
     } catch {
       toast.error('Failed to save tier settings')
     } finally {
