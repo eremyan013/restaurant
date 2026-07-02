@@ -34,6 +34,8 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
   const [userResults, setUserResults] = useState<UserResult[]>([])
   const [selectedUser, setSelectedUser] = useState<UserResult | null>(null)
   const [searchLoading, setSearchLoading] = useState(false)
+  // Issue 15: track whether a search has completed (distinguishes "not yet searched" from "no results")
+  const [hasSearched, setHasSearched] = useState(false)
 
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
@@ -44,6 +46,9 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState<{ sent: number; failed: number; total: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Issue 14: controls the inline broadcast-confirm panel
+  const [confirmPending, setConfirmPending] = useState(false)
 
   // Fetch recipient preview count whenever target changes
   const fetchCount = useCallback(async () => {
@@ -72,6 +77,8 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
   useEffect(() => {
     if (targetType !== 'user' || userSearch.trim().length < 2) {
       setUserResults([])
+      // Issue 15: reset hasSearched when the query becomes too short or mode changes
+      setHasSearched(false)
       return
     }
     const t = setTimeout(async () => {
@@ -84,6 +91,8 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
         setUserResults([])
       } finally {
         setSearchLoading(false)
+        // Issue 15: mark that at least one search attempt has completed
+        setHasSearched(true)
       }
     }, 300)
     return () => clearTimeout(t)
@@ -94,6 +103,15 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
     setBody(t.body)
   }
 
+  // Issue 14: switching audience clears the pending confirm state
+  function handleSetTargetType(t: TargetType) {
+    setTargetType(t)
+    setSelectedUser(null)
+    setUserSearch('')
+    setHasSearched(false)
+    setConfirmPending(false)
+  }
+
   async function send() {
     if (!title.trim() || !body.trim()) {
       setError('Title and body are required.')
@@ -101,6 +119,12 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
     }
     if (targetType === 'user' && !selectedUser) {
       setError('Select a user to send to.')
+      return
+    }
+
+    // Issue 14: intercept the first click when broadcasting to all users
+    if (targetType === 'all' && !confirmPending) {
+      setConfirmPending(true)
       return
     }
 
@@ -125,12 +149,24 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
       if (!res.ok) throw new Error(data.error ?? 'Send failed')
       setResult(data)
       toast.success(`Sent ${data.sent} of ${data.total} notifications`)
+
+      // Issue 16: reset form to defaults after a successful send
+      setTitle('')
+      setBody('')
+      setTargetType('all')
+      setTier(1)
+      setSelectedUser(null)
+      setUserSearch('')
+      setUserResults([])
+      setHasSearched(false)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Failed to send notifications'
       setError(msg)
       toast.error(msg)
     } finally {
       setSending(false)
+      // Issue 14: always clear confirm state after send attempt (success or error)
+      setConfirmPending(false)
     }
   }
 
@@ -191,7 +227,7 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
             {(['all', 'tier', 'user'] as TargetType[]).map((t) => (
               <button
                 key={t}
-                onClick={() => { setTargetType(t); setSelectedUser(null); setUserSearch('') }}
+                onClick={() => handleSetTargetType(t)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
                   targetType === t
                     ? 'bg-zinc-900 text-white border-zinc-900'
@@ -231,7 +267,7 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
                     )}
                   </div>
                   <button
-                    onClick={() => { setSelectedUser(null); setUserSearch('') }}
+                    onClick={() => { setSelectedUser(null); setUserSearch(''); setHasSearched(false) }}
                     className="text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                   >
                     Change
@@ -254,7 +290,7 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
                       {userResults.map((u) => (
                         <button
                           key={u.id}
-                          onClick={() => { setSelectedUser(u); setUserSearch(''); setUserResults([]) }}
+                          onClick={() => { setSelectedUser(u); setUserSearch(''); setUserResults([]); setHasSearched(false) }}
                           className="w-full text-left px-3 py-2.5 hover:bg-zinc-50 border-b border-zinc-100 last:border-0 transition-colors"
                         >
                           <p className="text-sm font-medium text-zinc-900">{u.name}</p>
@@ -264,6 +300,12 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
                           )}
                         </button>
                       ))}
+                    </div>
+                  )}
+                  {/* Issue 15: empty state — only shown after a real search returned nothing */}
+                  {!searchLoading && hasSearched && userResults.length === 0 && userSearch.trim().length >= 2 && (
+                    <div className="mt-1 border border-zinc-200 rounded-lg px-3 py-2.5 text-sm text-zinc-500">
+                      No users found for &ldquo;{userSearch.trim()}&rdquo;
                     </div>
                   )}
                 </>
@@ -327,14 +369,47 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
           <p className="text-xs text-zinc-400 mt-1">users with push token</p>
         </div>
 
-        {/* Send button */}
-        <button
-          onClick={send}
-          disabled={sending || !title.trim() || !body.trim() || (targetType === 'user' && !selectedUser)}
-          className="w-full px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          {sending ? 'Sending…' : `Send Notification${recipientCount !== null ? ` (${recipientCount})` : ''}`}
-        </button>
+        {/* Issue 14: inline broadcast confirmation panel — replaces the send button */}
+        {confirmPending ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+            <div className="flex items-start gap-2.5">
+              <svg className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Send to all users?</p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  This will send to{' '}
+                  <strong>{recipientCount !== null ? recipientCount : '…'}</strong>{' '}
+                  users with push tokens. This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmPending(false)}
+                className="flex-1 px-3 py-2 rounded-lg border border-amber-200 bg-white text-sm font-medium text-zinc-700 hover:border-zinc-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={send}
+                disabled={sending}
+                className="flex-1 px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {sending ? 'Sending…' : 'Yes, send to all'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={send}
+            disabled={sending || !title.trim() || !body.trim() || (targetType === 'user' && !selectedUser)}
+            className="w-full px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {sending ? 'Sending…' : `Send Notification${recipientCount !== null ? ` (${recipientCount})` : ''}`}
+          </button>
+        )}
 
         <p className="text-xs text-zinc-400 text-center">
           Delivered via Expo Push Service to iOS and Android.
