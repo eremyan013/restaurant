@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { logActivity } from '@/lib/log-activity'
+import { RedemptionSearch } from '@/app/dashboard/redemption/redemption-search'
 
 const TYPE_LABELS: Record<string, string> = {
   discount:   'Discount',
@@ -41,20 +42,21 @@ async function markUsed(formData: FormData) {
     .eq('status', 'active')
   await logActivity(actor, 'mark_prize_used', 'user_prize', id, code)
 
-  revalidatePath(`/dashboard/redemption?code=${encodeURIComponent(code)}`)
-  redirect(`/dashboard/redemption?code=${encodeURIComponent(code)}`)
+  revalidatePath(`/dashboard/redemption?code=${encodeURIComponent(code)}&marked=1`)
+  redirect(`/dashboard/redemption?code=${encodeURIComponent(code)}&marked=1`)
 }
 
 export default async function RedemptionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ code?: string }>
+  searchParams: Promise<{ code?: string; marked?: string }>
 }) {
   const admin = await getCurrentAdmin()
   if (!admin) redirect('/login')
 
-  const { code: rawCode } = await searchParams
+  const { code: rawCode, marked } = await searchParams
   const code = rawCode?.trim().toUpperCase() ?? ''
+  const showSuccessBanner = marked === '1'
 
   const supabase = createSupabaseAdminClient()
 
@@ -102,24 +104,14 @@ export default async function RedemptionPage({
       <h1 className="text-2xl font-semibold text-zinc-900 mb-2">Prize Redemption</h1>
       <p className="text-sm text-zinc-500 mb-8">Enter a YEL-XXXXXX code to look up and mark a prize as used.</p>
 
-      {/* Search form */}
-      <form method="GET" action="/dashboard/redemption" className="flex gap-2 mb-8">
-        <input
-          type="text"
-          name="code"
-          defaultValue={code}
-          placeholder="YEL-XXXXXX"
-          autoComplete="off"
-          autoFocus
-          className="flex-1 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-mono uppercase tracking-widest placeholder:normal-case placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-zinc-900 bg-white"
-        />
-        <button
-          type="submit"
-          className="px-5 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
-        >
-          Look up
-        </button>
-      </form>
+      <RedemptionSearch initialCode={code} />
+
+      {showSuccessBanner && result && (
+        <div className="bg-green-600 text-white rounded-xl px-5 py-3 text-sm font-semibold flex items-center gap-2 mb-4">
+          <span className="text-base">✓</span>
+          Prize marked as used successfully.
+        </div>
+      )}
 
       {/* Not found */}
       {notFound && (
