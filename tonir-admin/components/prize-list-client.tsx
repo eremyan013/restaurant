@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useTransition, useState } from 'react'
 import { useToast } from '@/components/toast-provider'
 
 export function PrizeActiveToggle({
@@ -45,30 +45,69 @@ export function PrizeDeleteButton({
   deleteAction,
 }: {
   prizeName:    string
-  deleteAction: () => Promise<void>
+  deleteAction: () => Promise<{ ok: boolean; error?: string }>
 }) {
   const toast = useToast()
   const [pending, startTransition] = useTransition()
+  const [confirming, setConfirming] = useState(false)
+
+  function handleConfirm() {
+    setConfirming(true)
+  }
 
   function handleDelete() {
-    if (!confirm(`Delete "${prizeName}"?`)) return
+    setConfirming(false)
     startTransition(async () => {
       try {
-        await deleteAction()
-        toast.success('Prize deleted')
+        const result = await deleteAction()
+        if (!result.ok) {
+          toast.error(result.error ?? 'Failed to delete prize')
+        } else {
+          toast.success('Prize deleted')
+        }
       } catch {
         toast.error('Failed to delete prize')
       }
     })
   }
 
+  if (pending) {
+    return (
+      <button
+        disabled
+        className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-medium opacity-50"
+      >
+        Deleting…
+      </button>
+    )
+  }
+
+  if (confirming) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={handleDelete}
+          className="px-2 py-1 rounded text-xs bg-red-600 text-white hover:bg-red-700"
+        >
+          Yes, delete
+        </button>
+        <button
+          onClick={() => setConfirming(false)}
+          type="button"
+          className="px-2 py-1 rounded text-xs border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+        >
+          Cancel
+        </button>
+      </div>
+    )
+  }
+
   return (
     <button
-      onClick={handleDelete}
-      disabled={pending}
-      className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors disabled:opacity-50"
+      onClick={handleConfirm}
+      className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
     >
-      {pending ? 'Deleting…' : 'Delete'}
+      Delete
     </button>
   )
 }
