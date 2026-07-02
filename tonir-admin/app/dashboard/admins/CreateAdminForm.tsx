@@ -1,16 +1,19 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createAdmin } from './actions'
 import { zCreateAdminSchema, type CreateAdminInput } from '@/lib/schemas'
+import { PERMISSION_SECTIONS } from '@/lib/permissions'
 import { FieldError } from '@/components/field-error'
 import { useToast } from '@/components/toast-provider'
+import { PermissionPicker } from '@/components/permission-picker'
 
 export function CreateAdminForm({ venues }: { venues: { id: string; name: string }[] }) {
   const [state, action, pending] = useActionState(createAdmin, { ok: false })
   const toast = useToast()
+  const formRef = useRef<HTMLFormElement>(null)
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateAdminInput>({
     resolver: zodResolver(zCreateAdminSchema),
@@ -32,6 +35,17 @@ export function CreateAdminForm({ venues }: { venues: { id: string; name: string
     fd.set('email',    data.email)
     fd.set('password', data.password)
     for (const id of data.managed_venue_ids) fd.append('venue_id', id)
+
+    // Collect permission radio values from the native form element
+    if (formRef.current) {
+      for (const section of PERMISSION_SECTIONS) {
+        const radio = formRef.current.querySelector<HTMLInputElement>(
+          `input[name="perm_${section}"]:checked`,
+        )
+        fd.set(`perm_${section}`, radio?.value ?? '')
+      }
+    }
+
     ;(action as unknown as (fd: FormData) => void)(fd)
     reset()
   }
@@ -51,7 +65,7 @@ export function CreateAdminForm({ venues }: { venues: { id: string; name: string
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onValid)} className="flex flex-col gap-3" noValidate>
+      <form ref={formRef} onSubmit={handleSubmit(onValid)} className="flex flex-col gap-3" noValidate>
         <div>
           <label className="text-xs font-medium text-zinc-500 mb-1 block">Name</label>
           <input
@@ -109,6 +123,8 @@ export function CreateAdminForm({ venues }: { venues: { id: string; name: string
             <FieldError message={state.fieldErrors.managed_venue_ids as string} />
           )}
         </div>
+
+        <PermissionPicker />
 
         <button
           type="submit"

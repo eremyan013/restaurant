@@ -7,6 +7,7 @@ import { getCurrentAdmin } from '@/lib/current-admin'
 import type { ProfileRow, ReservationRow } from '@/lib/database.types'
 import { UserEditForm } from './user-edit-form'
 import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
+import { requirePagePermission } from '@/lib/permissions'
 
 export const metadata: Metadata = { title: 'User Profile — Tonir Admin' }
 
@@ -40,7 +41,8 @@ export default async function UserProfilePage({
   const to   = from + RES_PAGE_SIZE - 1
 
   const admin = await getCurrentAdmin()
-  if (admin?.role !== 'super_admin') redirect('/dashboard')
+  if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'users', 'view')
 
   const supabase = createSupabaseAdminClient()
 

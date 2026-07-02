@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { requirePagePermission, assertPermission } from '@/lib/permissions'
 
 export const metadata: Metadata = { title: 'YEL Points — Tonir Admin' }
 import { YelAdjustForm } from '@/components/yel-adjust-form'
@@ -51,7 +52,11 @@ async function loadTierSettings(): Promise<TierSettings> {
 async function adjustPoints(formData: FormData): Promise<{ ok: boolean; error?: string }> {
   'use server'
   const actor = await getCurrentAdmin()
-  if (actor?.role !== 'super_admin') return { ok: false, error: 'Unauthorized' }
+  if (!actor) return { ok: false, error: 'Unauthorized' }
+  if (actor.role !== 'super_admin') {
+    const granted = await assertPermission(actor, 'yel', 'adjust')
+    if (!granted) return { ok: false, error: 'Unauthorized' }
+  }
 
   const { zYelAdjustSchema, parseYelFormData } = await import('@/lib/schemas')
   const { validateAction } = await import('@/lib/validate-action')
@@ -169,7 +174,8 @@ async function saveTierSettings(formData: FormData): Promise<{ ok: boolean; erro
 
 export default async function YelPage() {
   const admin = await getCurrentAdmin()
-  if (admin?.role !== 'super_admin') redirect('/dashboard')
+  if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'yel', 'view')
 
   const supabase = createSupabaseAdminClient()
 

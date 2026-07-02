@@ -7,11 +7,16 @@ import { GuidesManager } from './guides-manager'
 
 export const metadata: Metadata = { title: 'Guides — Tonir Admin' }
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { requirePagePermission, assertPermission } from '@/lib/permissions'
 
 async function toggleActive(id: string, current: boolean) {
   'use server'
   const actor = await getCurrentAdmin()
-  if (actor?.role !== 'super_admin') return
+  if (!actor) return
+  if (actor.role !== 'super_admin') {
+    const granted = await assertPermission(actor, 'guides', 'manage')
+    if (!granted) return
+  }
   const supabase = createSupabaseAdminClient()
   await supabase.from('guides').update({ is_active: !current }).eq('id', id)
   revalidatePath('/dashboard/guides')
@@ -19,7 +24,8 @@ async function toggleActive(id: string, current: boolean) {
 
 export default async function GuidesPage() {
   const admin = await getCurrentAdmin()
-  if (admin?.role !== 'super_admin') redirect('/dashboard')
+  if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'guides', 'view')
 
   const supabase = createSupabaseAdminClient()
   const [{ data: guides, error }, { data: venues }] = await Promise.all([

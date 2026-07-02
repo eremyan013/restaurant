@@ -8,6 +8,7 @@ import ConciergeSearch from './concierge-search'
 
 export const metadata: Metadata = { title: 'Concierge Inbox — Tonir Admin' }
 import type { ConciergeSessionRow } from '@/lib/database.types'
+import { requirePagePermission } from '@/lib/permissions'
 
 type StatusFilter = 'all' | 'escalated' | 'active' | 'resolved'
 
@@ -23,7 +24,8 @@ export default async function ConciergePage({
   searchParams: Promise<{ status?: string; page?: string; q?: string }>
 }) {
   const admin = await getCurrentAdmin()
-  if (admin?.role !== 'super_admin') redirect('/dashboard')
+  if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'concierge', 'view')
 
   const { status: rawStatus, page: rawPage, q: rawQ } = await searchParams
   const filter: StatusFilter =
@@ -37,12 +39,34 @@ export default async function ConciergePage({
 
   const supabase = createSupabaseAdminClient()
 
-  // Counts per tab (fast head queries)
+  // For admin-role users, scope sessions to users who have reservations at their managed venues.
+  // concierge_sessions has no venue_id, so we derive the allowed user_ids from reservations.
+  let venueUserIds: string[] | null = null
+  if (admin.role === 'admin' && admin.managed_venue_ids.length) {
+    const { data: venueResv } = await supabase
+      .from('reservations')
+      .select('user_id')
+      .in('venue_id', admin.managed_venue_ids)
+    venueUserIds = [...new Set((venueResv ?? []).map((r: { user_id: string }) => r.user_id))]
+  }
+
+  // Helper: apply venue scope to any query builder
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function applyVenueScope(q: any) {
+    if (venueUserIds !== null) {
+      q = venueUserIds.length > 0
+        ? q.in('user_id', venueUserIds)
+        : q.eq('user_id', '00000000-0000-0000-0000-000000000000') // no matches
+    }
+    return q
+  }
+
+  // Counts per tab (fast head queries) — scoped for admin role
   const [totalRes, activeRes, escalatedRes, resolvedRes] = await Promise.all([
-    supabase.from('concierge_sessions').select('*', { count: 'exact', head: true }),
-    supabase.from('concierge_sessions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-    supabase.from('concierge_sessions').select('*', { count: 'exact', head: true }).eq('status', 'escalated'),
-    supabase.from('concierge_sessions').select('*', { count: 'exact', head: true }).eq('status', 'resolved'),
+    applyVenueScope(supabase.from('concierge_sessions').select('*', { count: 'exact', head: true })),
+    applyVenueScope(supabase.from('concierge_sessions').select('*', { count: 'exact', head: true }).eq('status', 'active')),
+    applyVenueScope(supabase.from('concierge_sessions').select('*', { count: 'exact', head: true }).eq('status', 'escalated')),
+    applyVenueScope(supabase.from('concierge_sessions').select('*', { count: 'exact', head: true }).eq('status', 'resolved')),
   ])
 
   const counts = {
@@ -62,12 +86,14 @@ export default async function ConciergePage({
     filteredUserIds = (matchingProfiles ?? []).map((p: { id: string }) => p.id)
   }
 
-  // Paginated sessions for the current tab
-  let sessionsQuery = supabase
-    .from('concierge_sessions')
-    .select('id, status, started_at, last_message_at, profiles(name, player_id)', { count: 'exact' })
-    .order('last_message_at', { ascending: false })
-    .range(from, to)
+  // Paginated sessions for the current tab — apply both venue scope and search filter
+  let sessionsQuery = applyVenueScope(
+    supabase
+      .from('concierge_sessions')
+      .select('id, status, started_at, last_message_at, profiles(name, player_id)', { count: 'exact' })
+      .order('last_message_at', { ascending: false })
+      .range(from, to)
+  )
 
   if (filter !== 'all') sessionsQuery = sessionsQuery.eq('status', filter)
   if (filteredUserIds !== null) {

@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { logActivity } from '@/lib/log-activity'
 import { RedemptionSearch } from '@/app/dashboard/redemption/redemption-search'
+import { requirePagePermission, assertPermission } from '@/lib/permissions'
 
 const TYPE_LABELS: Record<string, string> = {
   discount:   'Discount',
@@ -30,6 +31,11 @@ const TIER_COLORS: Record<number, string> = {
 async function markUsed(formData: FormData) {
   'use server'
   const actor = await getCurrentAdmin()
+  if (!actor) return
+  if (actor.role !== 'super_admin') {
+    const granted = await assertPermission(actor, 'redemption', 'redeem')
+    if (!granted) return
+  }
   const id    = formData.get('id')   as string
   const code  = formData.get('code') as string
   if (!id) return
@@ -53,6 +59,7 @@ export default async function RedemptionPage({
 }) {
   const admin = await getCurrentAdmin()
   if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'redemption', 'view')
 
   const { code: rawCode, marked } = await searchParams
   const code = rawCode?.trim().toUpperCase() ?? ''

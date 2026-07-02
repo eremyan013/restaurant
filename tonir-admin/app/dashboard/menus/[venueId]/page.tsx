@@ -7,6 +7,7 @@ import type { MenuCategoryRow, MenuItemRow } from '@/lib/database.types'
 import { AddItemForm } from '@/components/add-item-form'
 import { EditItemRow } from '@/components/edit-item-row'
 import { AddCategoryForm } from '@/components/add-category-form'
+import { requirePagePermission } from '@/lib/permissions'
 
 // ── Server Actions ────────────────────────────────────────────────────────────
 
@@ -43,7 +44,9 @@ export default async function MenuPage({
   const { venueId } = await params
 
   const admin = await getCurrentAdmin()
-  if (admin?.role === 'admin' && !admin.managed_venue_ids.includes(venueId)) {
+  if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'menus', 'view')
+  if (admin.role === 'admin' && !admin.managed_venue_ids.includes(venueId)) {
     redirect(admin.managed_venue_ids.length ? '/dashboard/venues' : '/dashboard')
   }
 

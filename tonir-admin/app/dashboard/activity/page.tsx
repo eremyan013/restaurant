@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
 import type { AdminActivityRow } from '@/lib/database.types'
+import { requirePagePermission } from '@/lib/permissions'
 
 export const metadata: Metadata = { title: 'Activity Log — Tonir Admin' }
 import { ActivityFilters } from './activity-filters'
@@ -49,11 +50,16 @@ export default async function ActivityPage({
   searchParams: Promise<{ admin?: string; action?: string; page?: string }>
 }) {
   const admin = await getCurrentAdmin()
-  if (admin?.role !== 'super_admin') redirect('/dashboard')
+  if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'activity_log', 'view')
 
   const params        = await searchParams
-  const filterAdmin   = params.admin  ?? ''
   const filterAction  = params.action ?? ''
+
+  // admin-role users can only see their own activity
+  const filterAdmin = admin.role === 'admin'
+    ? admin.id
+    : (params.admin ?? '')
 
   const page = Math.max(1, parseInt(params.page ?? '1', 10) || 1)
   const from = (page - 1) * PAGINATION_SIZE
@@ -74,14 +80,17 @@ export default async function ActivityPage({
   const entries: AdminActivityRow[] = logs ?? []
   const total = totalCount ?? 0
 
-  // Load admin options from profiles instead of activity log
+  // Load admin options from profiles — only super_admin sees the dropdown filter
   type AdminOption = { id: string; name: string | null }
-  const { data: adminsData } = await supabase
-    .from('profiles')
-    .select('id, name')
-    .in('role', ['admin', 'super_admin'])
-    .order('name', { ascending: true })
-  const adminOptions: AdminOption[] = adminsData ?? []
+  let adminOptions: AdminOption[] = []
+  if (admin.role === 'super_admin') {
+    const { data: adminsData } = await supabase
+      .from('profiles')
+      .select('id, name')
+      .in('role', ['admin', 'super_admin'])
+      .order('name', { ascending: true })
+    adminOptions = adminsData ?? []
+  }
 
   // Build a URL for a given page number, preserving current filters
   function pageHref(p: number): string {

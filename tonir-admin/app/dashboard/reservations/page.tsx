@@ -14,6 +14,7 @@ import { ReservationEditModal } from './reservation-edit-modal'
 import { NewReservationModal } from './new-reservation-modal'
 import { NoteForm } from './note-form'
 import { ReservationStatusButtons } from '@/components/reservation-status-buttons'
+import { requirePagePermission } from '@/lib/permissions'
 
 const STATUS_CLASSES: Record<string, string> = {
   pending:   'bg-amber-100 text-amber-800',
@@ -119,6 +120,7 @@ export default async function ReservationsPage({
 }) {
   const admin = await getCurrentAdmin()
   if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'reservations', 'view')
 
   const sp = await searchParams
   const activeTab: Tab = (TABS.includes(sp.status as Tab) ? sp.status : 'all') as Tab

@@ -10,6 +10,7 @@ export const metadata: Metadata = { title: 'Prizes — Tonir Admin' }
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { logActivity } from '@/lib/log-activity'
 import type { PrizeRow, UserPrizeRow, VenueRow, SettingRow } from '@/lib/database.types'
+import { requirePagePermission } from '@/lib/permissions'
 
 const TYPE_LABELS: Record<string, string> = {
   discount:   'Discount',
@@ -54,7 +55,8 @@ async function deletePrize(id: string): Promise<{ ok: boolean; error?: string }>
 
 export default async function PrizesPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const admin = await getCurrentAdmin()
-  if (admin?.role !== 'super_admin') redirect('/dashboard')
+  if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'prizes', 'view')
 
   const sp   = await searchParams
   const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)

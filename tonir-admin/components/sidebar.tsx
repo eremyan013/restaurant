@@ -5,33 +5,18 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import type { AdminRole } from '@/lib/current-admin'
-
-const SUPER_ADMIN_NAV = [
-  { href: '/dashboard', label: 'Dashboard', exact: true },
-  { href: '/dashboard/analytics', label: 'Analytics', exact: false },
-  { href: '/dashboard/venues', label: 'Venues', exact: false },
-  { href: '/dashboard/reservations', label: 'Reservations', exact: false },
-  { href: '/dashboard/users', label: 'Users', exact: false },
-  { href: '/dashboard/yel', label: 'Yel Points', exact: false },
-  { href: '/dashboard/prizes', label: 'Prizes', exact: false },
-  { href: '/dashboard/guides', label: 'Guides', exact: false },
-  { href: '/dashboard/home-sections', label: 'Home Sections', exact: false },
-  { href: '/dashboard/reviews', label: 'Reviews', exact: false },
-  { href: '/dashboard/concierge', label: 'Concierge', exact: false },
-  { href: '/dashboard/redemption', label: 'Redeem', exact: false },
-  { href: '/dashboard/notifications', label: 'Notifications', exact: false },
-  { href: '/dashboard/admins', label: 'Admins', exact: false },
-  { href: '/dashboard/activity', label: 'Activity Log', exact: false },
-]
+import type { AdminPermissions } from '@/lib/permissions'
 
 export function Sidebar({
   adminName,
   role,
   managedVenueIds,
+  permissions,
 }: {
   adminName: string
   role: AdminRole
   managedVenueIds: string[]
+  permissions: AdminPermissions | null
 }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -42,22 +27,66 @@ export function Sidebar({
     setIsMobileOpen(false)
   }, [pathname])
 
-  const nav =
-    role === 'super_admin'
-      ? SUPER_ADMIN_NAV
-      : [
-          { href: '/dashboard', label: 'Dashboard', exact: true },
-          { href: '/dashboard/reservations', label: 'Reservations', exact: false },
-          { href: '/dashboard/redemption', label: 'Redeem', exact: false },
-          ...(managedVenueIds.length === 1
-            ? [
-                { href: `/dashboard/menus/${managedVenueIds[0]}`, label: 'Menu', exact: false },
-                { href: `/dashboard/venues/${managedVenueIds[0]}`, label: 'My Venue', exact: false },
-              ]
-            : managedVenueIds.length > 1
-            ? [{ href: '/dashboard/venues', label: 'My Venues', exact: false }]
-            : []),
+  // null = super admin (show everything); object = granular admin (show permitted items only)
+  const isSuperAdmin = permissions === null
+
+  type NavItem = { href: string; label: string; exact: boolean }
+
+  const nav: NavItem[] = [
+    // Always visible
+    { href: '/dashboard', label: 'Dashboard', exact: true },
+
+    // Super-admin-only items
+    ...(isSuperAdmin
+      ? [
+          { href: '/dashboard/analytics', label: 'Analytics', exact: false },
+          { href: '/dashboard/home-sections', label: 'Home Sections', exact: false },
+          { href: '/dashboard/notifications', label: 'Notifications', exact: false },
+          { href: '/dashboard/admins', label: 'Admins', exact: false },
         ]
+      : []),
+
+    // Permission-gated items
+    ...(isSuperAdmin || permissions.reservations != null
+      ? [{ href: '/dashboard/reservations', label: 'Reservations', exact: false }]
+      : []),
+    ...(isSuperAdmin || permissions.reviews != null
+      ? [{ href: '/dashboard/reviews', label: 'Reviews', exact: false }]
+      : []),
+    ...(isSuperAdmin || permissions.yel != null
+      ? [{ href: '/dashboard/yel', label: 'Yel Points', exact: false }]
+      : []),
+    ...(isSuperAdmin || permissions.users != null
+      ? [{ href: '/dashboard/users', label: 'Users', exact: false }]
+      : []),
+    ...(isSuperAdmin || permissions.venues != null
+      ? managedVenueIds.length === 1 && !isSuperAdmin
+        ? [{ href: `/dashboard/venues/${managedVenueIds[0]}`, label: 'My Venue', exact: false }]
+        : managedVenueIds.length > 1 && !isSuperAdmin
+        ? [{ href: '/dashboard/venues', label: 'My Venues', exact: false }]
+        : [{ href: '/dashboard/venues', label: 'Venues', exact: false }]
+      : []),
+    ...(isSuperAdmin || permissions.prizes != null
+      ? [{ href: '/dashboard/prizes', label: 'Prizes', exact: false }]
+      : []),
+    ...(isSuperAdmin || permissions.concierge != null
+      ? [{ href: '/dashboard/concierge', label: 'Concierge', exact: false }]
+      : []),
+    ...(isSuperAdmin || permissions.redemption != null
+      ? [{ href: '/dashboard/redemption', label: 'Redeem', exact: false }]
+      : []),
+    ...(isSuperAdmin || permissions.activity_log != null
+      ? [{ href: '/dashboard/activity', label: 'Activity Log', exact: false }]
+      : []),
+    ...(isSuperAdmin || permissions.guides != null
+      ? [{ href: '/dashboard/guides', label: 'Guides', exact: false }]
+      : []),
+    ...(isSuperAdmin || permissions.menus != null
+      ? managedVenueIds.length === 1 && !isSuperAdmin
+        ? [{ href: `/dashboard/menus/${managedVenueIds[0]}`, label: 'Menu', exact: false }]
+        : [{ href: '/dashboard/menus', label: 'Menus', exact: false }]
+      : []),
+  ]
 
   return (
     <>

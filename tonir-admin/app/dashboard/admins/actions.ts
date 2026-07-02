@@ -9,6 +9,7 @@ import {
   zUpdateAdminSchema, parseUpdateAdminFormData,
   type CreateAdminInput, type UpdateAdminInput,
 } from '@/lib/schemas'
+import { parsePermissionsFromFormData } from '@/lib/permissions'
 
 export type CreateAdminState =
   | { ok: false; error?: string; fieldErrors?: Partial<Record<keyof CreateAdminInput, string>> }
@@ -56,6 +57,10 @@ export async function createAdmin(
     return { ok: false, error: profileError.message }
   }
 
+  // Insert permissions row — non-fatal if it fails (admin account still created)
+  const permissions = parsePermissionsFromFormData(formData)
+  await supabase.from('admin_permissions').insert({ admin_id: created.user.id, ...permissions }).catch(() => {})
+
   revalidatePath('/dashboard/admins')
   return { ok: true }
 }
@@ -91,6 +96,12 @@ export async function updateAdmin(
 
   if (profileError) return { ok: false, error: profileError.message }
 
+  const permissions = parsePermissionsFromFormData(formData)
+  const { error: permError } = await supabase
+    .from('admin_permissions')
+    .upsert({ admin_id: id, ...permissions }, { onConflict: 'admin_id' })
+  if (permError) return { ok: false, error: 'Admin updated but permissions could not be saved.' }
+
   revalidatePath('/dashboard/admins')
   return { ok: true }
 }
@@ -113,6 +124,9 @@ export async function removeAdmin(formData: FormData): Promise<{ ok: boolean; er
   if (profileError) return { ok: false, error: profileError.message }
 
   await supabase.auth.admin.updateUserById(id, { ban_duration: '87600h' }).catch(() => {})
+
+  // ON DELETE CASCADE handles hard-deletes; this cleans up soft-demoted admins
+  await supabase.from('admin_permissions').delete().eq('admin_id', id)
 
   revalidatePath('/dashboard/admins')
   return { ok: true }

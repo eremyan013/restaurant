@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { getAdminPermissions } from '@/lib/permissions'
 import { EditAdminForm } from './EditAdminForm'
 
 export default async function EditAdminPage({
@@ -16,7 +17,7 @@ export default async function EditAdminPage({
 
   const supabase = createSupabaseAdminClient()
 
-  const [{ data: profile }, { data: venues }] = await Promise.all([
+  const [{ data: profile }, { data: venues }, permissions] = await Promise.all([
     supabase
       .from('profiles')
       .select('id, name, email, managed_venue_ids')
@@ -27,6 +28,7 @@ export default async function EditAdminPage({
       .from('venues')
       .select('id, name')
       .order('name'),
+    getAdminPermissions(id),
   ])
 
   if (!profile) notFound()
@@ -43,7 +45,7 @@ export default async function EditAdminPage({
         <h1 className="text-2xl font-semibold text-zinc-900">Edit Admin</h1>
       </div>
 
-      <EditAdminForm admin={profile} venues={venues ?? []} />
+      <EditAdminForm admin={profile} venues={venues ?? []} permissions={permissions} />
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { logActivity } from '@/lib/log-activity'
 import { calcTierLevel, genYelCode } from '@/lib/yel-logic'
+import { requirePagePermission, assertPermission } from '@/lib/permissions'
 
 export const metadata: Metadata = { title: 'Bulk Adjustment — Tonir Admin' }
 
@@ -89,7 +90,11 @@ async function fetchMatchingUsers(
 async function applyBulk(formData: FormData) {
   'use server'
   const actor = await getCurrentAdmin()
-  if (actor?.role !== 'super_admin') return
+  if (!actor) return
+  if (actor.role !== 'super_admin') {
+    const granted = await assertPermission(actor, 'yel', 'bulk')
+    if (!granted) return
+  }
 
   const filterType = (formData.get('filter_type') as FilterType) || 'all'
   const fromDate   = formData.get('from_date') as string ?? ''
@@ -146,7 +151,8 @@ export default async function BulkYelPage({
   searchParams: Promise<Record<string, string>>
 }) {
   const admin = await getCurrentAdmin()
-  if (admin?.role !== 'super_admin') redirect('/dashboard')
+  if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'yel', 'bulk')
 
   const params = await searchParams
   const filterType = (params.filter_type ?? 'all') as FilterType

@@ -6,6 +6,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 
 export const metadata: Metadata = { title: 'Edit Venue — Tonir Admin' }
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { requirePagePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/log-activity'
 import { DeleteButton } from '@/components/delete-button'
 import { VenueFormClient, type VenueFormDefaults } from '@/components/venue-form-client'
@@ -143,6 +144,11 @@ export default async function EditVenuePage({
   const { id } = await params
   const sp = await searchParams
   const deleteError = sp?.deleteError
+
+  const admin = await getCurrentAdmin()
+  if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'venues', 'view')
+
   const supabase = createSupabaseAdminClient()
 
   const todayISO = new Date().toISOString().split('T')[0]

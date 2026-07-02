@@ -10,10 +10,12 @@ export const metadata: Metadata = { title: 'New Prize — Tonir Admin' }
 import { validateAction } from '@/lib/validate-action'
 import { zPrizeSchema, parsePrizeFormData } from '@/lib/schemas'
 import type { VenueRow, SettingRow } from '@/lib/database.types'
+import { requirePagePermission } from '@/lib/permissions'
 
 export default async function NewPrizePage() {
   const admin = await getCurrentAdmin()
-  if (admin?.role !== 'super_admin') redirect('/dashboard')
+  if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'prizes', 'manage')
 
   const supabase = createSupabaseAdminClient()
   const [venuesRes, settingsRes] = await Promise.all([

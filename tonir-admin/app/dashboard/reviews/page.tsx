@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { type SupabaseClient } from '@supabase/supabase-js'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { requirePagePermission, assertPermission } from '@/lib/permissions'
 
 export const metadata: Metadata = { title: 'Reviews — Tonir Admin' }
 import { logActivity } from '@/lib/log-activity'
@@ -39,7 +40,11 @@ async function recalcVenueRating(supabase: SupabaseClient<Database>, venueId: st
 async function approveReview(id: string, venueId: string) {
   'use server'
   const actor = await getCurrentAdmin()
-  if (actor?.role !== 'super_admin') return
+  if (!actor) return
+  if (actor.role !== 'super_admin') {
+    const granted = await assertPermission(actor, 'reviews', 'moderate')
+    if (!granted) return
+  }
   const supabase = createSupabaseAdminClient()
   await supabase.from('reviews').update({ status: 'approved' }).eq('id', id)
   await recalcVenueRating(supabase, venueId)
@@ -51,7 +56,11 @@ async function approveReview(id: string, venueId: string) {
 async function hideReview(id: string, venueId: string) {
   'use server'
   const actor = await getCurrentAdmin()
-  if (actor?.role !== 'super_admin') return
+  if (!actor) return
+  if (actor.role !== 'super_admin') {
+    const granted = await assertPermission(actor, 'reviews', 'moderate')
+    if (!granted) return
+  }
   const supabase = createSupabaseAdminClient()
   await supabase.from('reviews').update({ status: 'hidden' }).eq('id', id)
   await recalcVenueRating(supabase, venueId)
@@ -63,7 +72,11 @@ async function hideReview(id: string, venueId: string) {
 async function deleteReview(id: string, venueId: string) {
   'use server'
   const actor = await getCurrentAdmin()
-  if (actor?.role !== 'super_admin') return
+  if (!actor) return
+  if (actor.role !== 'super_admin') {
+    const granted = await assertPermission(actor, 'reviews', 'moderate')
+    if (!granted) return
+  }
   const supabase = createSupabaseAdminClient()
   await supabase.from('reviews').delete().eq('id', id)
   await recalcVenueRating(supabase, venueId)
@@ -78,7 +91,8 @@ export default async function ReviewsPage({
   searchParams: Promise<{ status?: string; page?: string }>
 }) {
   const admin = await getCurrentAdmin()
-  if (admin?.role !== 'super_admin') redirect('/dashboard')
+  if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'reviews', 'view')
 
   const { status: rawStatus, page: rawPage } = await searchParams
   const filter: StatusFilter =
@@ -91,12 +105,21 @@ export default async function ReviewsPage({
 
   const supabase = createSupabaseAdminClient()
 
-  // Count per status tab (4 fast head queries)
+  // Count per status tab (4 fast head queries) — scoped to managed venues for admin role
+  let totalQ     = supabase.from('reviews').select('*', { count: 'exact', head: true })
+  let pendingQ   = supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+  let approvedQ  = supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'approved')
+  let hiddenQ    = supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'hidden')
+
+  if (admin.role === 'admin') {
+    totalQ    = totalQ.in('venue_id', admin.managed_venue_ids)
+    pendingQ  = pendingQ.in('venue_id', admin.managed_venue_ids)
+    approvedQ = approvedQ.in('venue_id', admin.managed_venue_ids)
+    hiddenQ   = hiddenQ.in('venue_id', admin.managed_venue_ids)
+  }
+
   const [totalRes, pendingRes, approvedRes, hiddenRes] = await Promise.all([
-    supabase.from('reviews').select('*', { count: 'exact', head: true }),
-    supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-    supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
-    supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'hidden'),
+    totalQ, pendingQ, approvedQ, hiddenQ,
   ])
 
   const counts = {
@@ -113,6 +136,9 @@ export default async function ReviewsPage({
     .order('created_at', { ascending: false })
     .range(from, to)
 
+  if (admin.role === 'admin') {
+    reviewsQuery = reviewsQuery.in('venue_id', admin.managed_venue_ids)
+  }
   if (filter !== 'all') reviewsQuery = reviewsQuery.eq('status', filter)
 
   const { data: rawReviews, count: tabCount } = await reviewsQuery

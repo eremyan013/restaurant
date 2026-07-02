@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { PrizeForm } from '@/components/prize-form'
 import { PrizeClaimMarkUsed } from '@/components/prize-claim-mark-used'
+import { requirePagePermission } from '@/lib/permissions'
 
 const STATUS_COLORS: Record<string, string> = {
   active:  'bg-green-50 text-green-700',
@@ -16,7 +17,8 @@ export default async function EditPrizePage({ params }: { params: Promise<{ id: 
   const { id } = await params
 
   const admin = await getCurrentAdmin()
-  if (admin?.role !== 'super_admin') redirect('/dashboard')
+  if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'prizes', 'view')
 
   const supabase = createSupabaseAdminClient()
 

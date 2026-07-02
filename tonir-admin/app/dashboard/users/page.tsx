@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
 import UsersClient from './users-client'
+import { requirePagePermission } from '@/lib/permissions'
 
 export const metadata: Metadata = { title: 'Users — Tonir Admin' }
 
@@ -13,7 +14,8 @@ export default async function UsersPage({
   searchParams: Promise<{ q?: string; tier?: string; sort?: string; page?: string }>
 }) {
   const admin = await getCurrentAdmin()
-  if (admin?.role !== 'super_admin') redirect('/dashboard')
+  if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'users', 'view')
 
   const { q: rawQ, tier: rawTier, sort: rawSort, page: rawPage } = await searchParams
 

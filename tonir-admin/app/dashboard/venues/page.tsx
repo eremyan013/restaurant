@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { requirePagePermission } from '@/lib/permissions'
 
 export const metadata: Metadata = { title: 'Venues — Tonir Admin' }
 import { VenuesSearchTable } from '@/components/venues-search-table'
@@ -23,6 +24,7 @@ async function toggleActive(id: string, current: boolean): Promise<{ ok: boolean
 export default async function VenuesPage() {
   const admin = await getCurrentAdmin()
   if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'venues', 'view')
 
   const supabase = createSupabaseAdminClient()
   let venuesQuery = supabase

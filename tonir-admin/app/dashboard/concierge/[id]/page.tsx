@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import { requirePagePermission, assertPermission } from '@/lib/permissions'
 
 export const metadata: Metadata = { title: 'Concierge Session — Tonir Admin' }
 import ConciergeReplyForm from './reply-form'
@@ -14,7 +15,11 @@ import type { ConciergeMessageRow, ConciergeSessionRow } from '@/lib/database.ty
 async function setSessionStatus(id: string, status: 'escalated' | 'resolved' | 'active') {
   'use server'
   const actor = await getCurrentAdmin()
-  if (actor?.role !== 'super_admin') return
+  if (!actor) return
+  if (actor.role !== 'super_admin') {
+    const granted = await assertPermission(actor, 'concierge', 'reply')
+    if (!granted) return
+  }
   const supabase = createSupabaseAdminClient()
   await supabase.from('concierge_sessions').update({ status }).eq('id', id)
   revalidatePath(`/dashboard/concierge/${id}`)
@@ -24,7 +29,11 @@ async function setSessionStatus(id: string, status: 'escalated' | 'resolved' | '
 async function sendAdminReply(sessionId: string, text: string) {
   'use server'
   const actor = await getCurrentAdmin()
-  if (!actor || actor.role !== 'super_admin') return
+  if (!actor) return
+  if (actor.role !== 'super_admin') {
+    const granted = await assertPermission(actor, 'concierge', 'reply')
+    if (!granted) return
+  }
   const trimmed = text.trim().slice(0, 4000)
   if (!trimmed) return
   const supabase = createSupabaseAdminClient()
@@ -76,7 +85,8 @@ export default async function ConciergeSessionPage({
   params: Promise<{ id: string }>
 }) {
   const admin = await getCurrentAdmin()
-  if (admin?.role !== 'super_admin') redirect('/dashboard')
+  if (!admin) redirect('/login')
+  await requirePagePermission(admin, 'concierge', 'view')
 
   const { id } = await params
   const supabase = createSupabaseAdminClient()

@@ -4,14 +4,18 @@ import { useActionState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { updateAdmin } from '../../actions'
+import type { AdminPermissions } from '@/lib/permissions'
 import { useToast } from '@/components/toast-provider'
+import { PermissionPicker } from '@/components/permission-picker'
 
 export function EditAdminForm({
   admin,
   venues,
+  permissions,
 }: {
   admin: { id: string; name: string; email: string; managed_venue_ids: string[] }
   venues: { id: string; name: string }[]
+  permissions?: AdminPermissions
 }) {
   const router = useRouter()
   const toast = useToast()
@@ -95,6 +99,8 @@ export function EditAdminForm({
             ))}
           </div>
         </div>
+
+        <PermissionPicker defaultPermissions={permissions} />
 
         <div className="flex gap-3 pt-2 border-t border-zinc-100">
           <button
