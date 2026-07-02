@@ -48,16 +48,16 @@ async function loadTierSettings(): Promise<TierSettings> {
   return { names, mins }
 }
 
-async function adjustPoints(formData: FormData) {
+async function adjustPoints(formData: FormData): Promise<{ ok: boolean; error?: string }> {
   'use server'
   const actor = await getCurrentAdmin()
-  if (actor?.role !== 'super_admin') return
+  if (actor?.role !== 'super_admin') return { ok: false, error: 'Unauthorized' }
 
   const { zYelAdjustSchema, parseYelFormData } = await import('@/lib/schemas')
   const { validateAction } = await import('@/lib/validate-action')
 
   const parsed = validateAction(zYelAdjustSchema, parseYelFormData(formData))
-  if (!parsed.success) return
+  if (!parsed.success) return { ok: false, error: 'Invalid input' }
 
   const userId = parsed.data.user_id
   const amount = parsed.data.amount
@@ -67,7 +67,7 @@ async function adjustPoints(formData: FormData) {
     supabase.from('profiles').select('yel_points, tier_level').eq('id', userId).single(),
     supabase.from('settings').select('key, value').in('key', ALL_SETTING_KEYS),
   ])
-  if (!profileRes.data) return
+  if (!profileRes.data) return { ok: false, error: 'User not found' }
 
   const names: Record<number, string> = { 1: 'Tonir', 2: 'Pandok', 3: 'Areni', 4: 'Master' }
   const mins:  Record<number, number> = { 1: 0, 2: 1000, 3: 2000, 4: 3000 }
@@ -116,6 +116,7 @@ async function adjustPoints(formData: FormData) {
   const { data: profile } = await supabase.from('profiles').select('name').eq('id', userId).single()
   await logActivity(actor, 'adjust_yel', 'profile', userId, profile?.name ?? userId, { amount })
   revalidatePath('/dashboard/yel')
+  return { ok: true }
 }
 
 async function saveTierSettings(formData: FormData) {

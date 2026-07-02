@@ -8,7 +8,7 @@ type SearchResult = { id: string; name: string; email: string; player_id: number
 const INIT_SEARCH: { results: SearchResult[] } = { results: [] }
 
 type Props = {
-  adjustPoints: (fd: FormData) => Promise<void>
+  adjustPoints: (fd: FormData) => Promise<{ ok: boolean; error?: string }>
 }
 
 export function YelAdjustForm({ adjustPoints }: Props) {
@@ -28,7 +28,11 @@ export function YelAdjustForm({ adjustPoints }: Props) {
     fd.set('user_id', selected.id)
     fd.set('amount',  amount)
     try {
-      await adjustPoints(fd)
+      const result = await adjustPoints(fd)
+      if (!result.ok) {
+        toast.error(result.error ?? 'Failed to apply adjustment')
+        return
+      }
       const pts = parseInt(amount)
       const msg = `${pts > 0 ? '+' : ''}${pts} points applied to ${selected.name}`
       setSuccess(msg)

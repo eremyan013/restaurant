@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ConfirmButton } from '@/components/confirm-button'
+import { BulkAmountInput } from './bulk-amount-input'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
@@ -234,16 +235,7 @@ export default async function BulkYelPage({
         {/* Amount */}
         <div>
           <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Points to add / subtract</p>
-          <div className="flex gap-2 flex-wrap">
-            <input type="number" name="amount" defaultValue={amount} placeholder="e.g. 100 or -50"
-              className="w-40 border border-zinc-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900" />
-            {[50, 100, 250, 500].map(n => (
-              <button key={n} type="submit" name="amount" value={String(n)}
-                className="px-3 py-2 rounded-lg bg-[#F0AB0C] hover:bg-[#d99a0b] text-zinc-900 text-xs font-medium transition-colors">
-                +{n}
-              </button>
-            ))}
-          </div>
+          <BulkAmountInput initialAmount={amount} />
         </div>
 
         <button type="submit" className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
