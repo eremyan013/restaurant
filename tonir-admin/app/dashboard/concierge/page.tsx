@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { Pagination, PAGINATION_SIZE } from '@/components/pagination'
+import ConciergeSearch from './concierge-search'
 
 export const metadata: Metadata = { title: 'Concierge Inbox — Tonir Admin' }
 import type { ConciergeSessionRow } from '@/lib/database.types'
@@ -19,17 +20,18 @@ const STATUS_STYLES: Record<string, string> = {
 export default async function ConciergePage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string }>
+  searchParams: Promise<{ status?: string; page?: string; q?: string }>
 }) {
   const admin = await getCurrentAdmin()
   if (admin?.role !== 'super_admin') redirect('/dashboard')
 
-  const { status: rawStatus, page: rawPage } = await searchParams
+  const { status: rawStatus, page: rawPage, q: rawQ } = await searchParams
   const filter: StatusFilter =
     rawStatus === 'escalated' || rawStatus === 'active' || rawStatus === 'resolved'
       ? rawStatus
       : 'all'
   const page = Math.max(1, parseInt(rawPage ?? '1', 10) || 1)
+  const q = rawQ?.trim() ?? ''
   const from = (page - 1) * PAGINATION_SIZE
   const to   = from + PAGINATION_SIZE - 1
 
@@ -50,6 +52,16 @@ export default async function ConciergePage({
     resolved:  resolvedRes.count   ?? 0,
   }
 
+  // Two-step search: resolve matching user IDs from profiles first
+  let filteredUserIds: string[] | null = null
+  if (q) {
+    const { data: matchingProfiles } = await supabase
+      .from('profiles')
+      .select('id')
+      .ilike('name', `%${q}%`)
+    filteredUserIds = (matchingProfiles ?? []).map((p: { id: string }) => p.id)
+  }
+
   // Paginated sessions for the current tab
   let sessionsQuery = supabase
     .from('concierge_sessions')
@@ -58,6 +70,9 @@ export default async function ConciergePage({
     .range(from, to)
 
   if (filter !== 'all') sessionsQuery = sessionsQuery.eq('status', filter)
+  if (filteredUserIds !== null) {
+    sessionsQuery = sessionsQuery.in('user_id', filteredUserIds.length > 0 ? filteredUserIds : [''])
+  }
 
   const { data: sessionsData, count: tabCount } = await sessionsQuery
   type SessionWithJoins = ConciergeSessionRow & {
@@ -100,6 +115,7 @@ export default async function ConciergePage({
     const params = new URLSearchParams()
     if (key !== 'all') params.set('status', key)
     if (p > 1) params.set('page', String(p))
+    if (q) params.set('q', q)
     const qs = params.toString()
     return `/dashboard/concierge${qs ? '?' + qs : ''}`
   }
@@ -125,7 +141,7 @@ export default async function ConciergePage({
       {/* Filter tabs */}
       <div className="flex gap-1 mb-6 bg-zinc-100 p-1 rounded-xl w-fit">
         {tabs.map(({ key, label }) => (
-          <a
+          <Link
             key={key}
             href={tabHref(key)}
             className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -135,9 +151,12 @@ export default async function ConciergePage({
             }`}
           >
             {label}
-          </a>
+          </Link>
         ))}
       </div>
+
+      {/* Search */}
+      <ConciergeSearch initialQ={q || undefined} />
 
       {sessions.length === 0 ? (
         <div className="bg-white rounded-xl border border-zinc-200 py-16 text-center">
