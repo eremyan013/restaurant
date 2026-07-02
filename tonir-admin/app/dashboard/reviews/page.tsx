@@ -220,9 +220,10 @@ export default async function ReviewsPage({
                     </td>
                     <td className="px-4 py-3 text-zinc-700">{r.venues?.name ?? '—'}</td>
                     <td className="px-4 py-3">
-                      <span className="text-base tracking-tight">
+                      <span className="text-base tracking-tight" aria-hidden="true">
                         {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
                       </span>
+                      <span className="sr-only">{r.rating} out of 5 stars</span>
                     </td>
                     <td className="px-4 py-3 text-zinc-600 max-w-xs">
                       {r.comment ? (
