@@ -118,11 +118,11 @@ export default async function ActivityPage({
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-zinc-50 border-b border-zinc-100 text-left">
-                  <th className="px-4 py-3 font-medium text-zinc-500">When</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Admin</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Action</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Subject</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Details</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">When</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Admin</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Action</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Subject</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Details</th>
                 </tr>
               </thead>
               <tbody>

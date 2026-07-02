@@ -74,7 +74,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div
         aria-live="polite"
         aria-atomic="false"
-        className="fixed bottom-5 right-5 z-[9999] flex flex-col-reverse gap-2 w-80 pointer-events-none"
+        className="fixed bottom-5 right-5 z-[9999] flex flex-col-reverse gap-2 w-80"
       >
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onDismiss={dismiss} />

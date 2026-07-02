@@ -290,13 +290,13 @@ export default async function ReservationsPage({
           <table className="w-full text-sm min-w-[860px]">
             <thead>
               <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
-                <th className="px-4 py-3 font-medium text-zinc-500">Date / Time</th>
-                {showVenueCol && <th className="px-4 py-3 font-medium text-zinc-500">Venue</th>}
-                <th className="px-4 py-3 font-medium text-zinc-500">Guest</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Ppl</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Status</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Note</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Actions</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Date / Time</th>
+                {showVenueCol && <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Venue</th>}
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Guest</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Ppl</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Status</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Note</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Actions</th>
               </tr>
             </thead>
             <tbody>

@@ -208,11 +208,11 @@ export default async function UserProfilePage({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-zinc-50 text-left">
-                    <th className="px-4 py-3 font-medium text-zinc-500">Venue</th>
-                    <th className="px-4 py-3 font-medium text-zinc-500">Date</th>
-                    <th className="px-4 py-3 font-medium text-zinc-500">Guests</th>
-                    <th className="px-4 py-3 font-medium text-zinc-500">Status</th>
-                    <th className="px-4 py-3 font-medium text-zinc-500">YEL</th>
+                    <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Venue</th>
+                    <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Date</th>
+                    <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Guests</th>
+                    <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Status</th>
+                    <th scope="col" className="px-4 py-3 font-medium text-zinc-500">YEL</th>
                   </tr>
                 </thead>
                 <tbody>

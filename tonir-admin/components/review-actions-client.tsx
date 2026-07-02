@@ -25,14 +25,9 @@ export function ReviewActionButtons({
   const toast = useToast()
   const [pending, startTransition] = useTransition()
   const [pendingAction, setPendingAction] = useState<ActionKey | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
-  function handle(
-    key: ActionKey,
-    action: () => Promise<void>,
-    successMsg: string,
-    confirmMsg?: string,
-  ) {
-    if (confirmMsg && !confirm(confirmMsg)) return
+  function handle(key: ActionKey, action: () => Promise<void>, successMsg: string) {
     setPendingAction(key)
     startTransition(async () => {
       try {
@@ -68,14 +63,33 @@ export function ReviewActionButtons({
           Hide
         </button>
       )}
-      <button
-        onClick={() => handle('delete', onDelete, 'Review deleted', 'Delete this review permanently?')}
-        disabled={pending}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors disabled:opacity-50"
-      >
-        {pendingAction === 'delete' && <Spinner />}
-        Delete
-      </button>
+      {confirmingDelete ? (
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => { setConfirmingDelete(false); handle('delete', onDelete, 'Review deleted') }}
+            disabled={pending}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors disabled:opacity-50"
+          >
+            {pendingAction === 'delete' && <Spinner />}
+            Yes, delete
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmingDelete(false)}
+            className="px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-medium transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setConfirmingDelete(true)}
+          disabled={pending}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors disabled:opacity-50"
+        >
+          Delete
+        </button>
+      )}
     </div>
   )
 }

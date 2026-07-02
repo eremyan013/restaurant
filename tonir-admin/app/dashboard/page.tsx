@@ -339,12 +339,12 @@ function TodayReservationsList({
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-zinc-50 border-b border-zinc-100 text-left">
-            <th className="px-4 py-3 font-medium text-zinc-500">Time</th>
-            <th className="px-4 py-3 font-medium text-zinc-500">Guest</th>
-            {showVenueCol && <th className="px-4 py-3 font-medium text-zinc-500">Venue</th>}
-            <th className="px-4 py-3 font-medium text-zinc-500">People</th>
-            <th className="px-4 py-3 font-medium text-zinc-500">Occasion</th>
-            <th className="px-4 py-3 font-medium text-zinc-500">Status</th>
+            <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Time</th>
+            <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Guest</th>
+            {showVenueCol && <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Venue</th>}
+            <th scope="col" className="px-4 py-3 font-medium text-zinc-500">People</th>
+            <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Occasion</th>
+            <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Status</th>
           </tr>
         </thead>
         <tbody>

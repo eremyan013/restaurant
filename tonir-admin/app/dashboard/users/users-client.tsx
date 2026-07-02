@@ -132,14 +132,14 @@ export default function UsersClient({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
-              <th className="px-4 py-3 font-medium text-zinc-500">Player ID</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Name</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Email</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Phone</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Tier</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">YEL</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Visits</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Joined</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Player ID</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Name</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Email</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Phone</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Tier</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">YEL</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Visits</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Joined</th>
             </tr>
           </thead>
           <tbody>

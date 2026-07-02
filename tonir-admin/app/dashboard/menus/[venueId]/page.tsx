@@ -103,12 +103,12 @@ export default async function MenuPage({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-zinc-100 text-left">
-                        <th className="px-4 py-2 font-medium text-zinc-500 w-12"></th>
-                        <th className="px-4 py-2 font-medium text-zinc-500">Name</th>
-                        <th className="px-4 py-2 font-medium text-zinc-500">Price</th>
-                        <th className="px-4 py-2 font-medium text-zinc-500">Available</th>
-                        <th className="px-4 py-2 font-medium text-zinc-500">Popular</th>
-                        <th className="px-4 py-2"></th>
+                        <th scope="col" className="px-4 py-2 font-medium text-zinc-500 w-12"></th>
+                        <th scope="col" className="px-4 py-2 font-medium text-zinc-500">Name</th>
+                        <th scope="col" className="px-4 py-2 font-medium text-zinc-500">Price</th>
+                        <th scope="col" className="px-4 py-2 font-medium text-zinc-500">Available</th>
+                        <th scope="col" className="px-4 py-2 font-medium text-zinc-500">Popular</th>
+                        <th scope="col" className="px-4 py-2"></th>
                       </tr>
                     </thead>
                     <tbody>

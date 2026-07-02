@@ -284,11 +284,11 @@ export default async function YelPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-zinc-50 text-left">
-              <th className="px-4 py-3 font-medium text-zinc-500 w-8">#</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Player</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Tier</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Points</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Visits</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500 w-8">#</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Player</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Tier</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Points</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Visits</th>
             </tr>
           </thead>
           <tbody>
@@ -328,10 +328,10 @@ export default async function YelPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-zinc-50 text-left">
-                <th className="px-4 py-3 font-medium text-zinc-500">User</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Venue</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Date</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Points earned</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">User</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Venue</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Date</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Points earned</th>
               </tr>
             </thead>
             <tbody>

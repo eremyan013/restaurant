@@ -151,14 +151,14 @@ export function VenuesSearchTable({ venues, toggleActive, isSuperAdmin }: Props)
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
-              <th className="px-4 py-3 font-medium text-zinc-500">Name</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Cuisine</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Area</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Kind</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Rating</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Active</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Menu</th>
-              <th className="px-4 py-3"></th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Name</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Cuisine</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Area</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Kind</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Rating</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Active</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Menu</th>
+              <th scope="col" className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>

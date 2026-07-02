@@ -129,17 +129,20 @@ export default async function PrizesPage({ searchParams }: { searchParams: Promi
       ) : (
         <>
           <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-zinc-100">
+              <h2 className="text-sm font-medium text-zinc-900">Prize List</h2>
+            </div>
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-zinc-50 text-left border-b border-zinc-100">
-                  <th className="px-4 py-3 font-medium text-zinc-500">Prize</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Type</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Unlock</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Venue</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Stock</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Claimed</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Active</th>
-                  <th className="px-4 py-3"></th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Prize</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Type</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Unlock</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Venue</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Stock</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Claimed</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Active</th>
+                  <th scope="col" className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody>

@@ -73,13 +73,13 @@ export function GuidesManager({ guides, venues, toggleActive }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
-                <th className="px-4 py-3 font-medium text-zinc-500">Cover</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Title</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Tag</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Order</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Venues</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Active</th>
-                <th className="px-4 py-3 font-medium text-zinc-500"></th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Cover</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Title</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Tag</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Order</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Venues</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Active</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500"></th>
               </tr>
             </thead>
             <tbody>

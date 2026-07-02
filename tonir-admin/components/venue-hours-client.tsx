@@ -38,10 +38,10 @@ export function VenueHoursClient({
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-zinc-50 border-b border-zinc-100 text-left">
-              <th className="px-4 py-3 font-medium text-zinc-500 w-32">Day</th>
-              <th className="px-4 py-3 font-medium text-zinc-500 w-24">Open?</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Opens at</th>
-              <th className="px-4 py-3 font-medium text-zinc-500">Closes at</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500 w-32">Day</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500 w-24">Open?</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Opens at</th>
+              <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Closes at</th>
             </tr>
           </thead>
           <tbody>

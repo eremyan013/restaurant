@@ -188,7 +188,7 @@ export default async function BulkYelPage({
       <form method="GET" action="/dashboard/yel/bulk" className="bg-white rounded-xl border border-zinc-200 p-5 space-y-5">
         {/* Criteria */}
         <div>
-          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-3">Criteria</p>
+          <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-3">Criteria</h2>
           <div className="flex gap-2 flex-wrap">
             {([
               { key: 'all',     label: 'All users' },
@@ -211,7 +211,7 @@ export default async function BulkYelPage({
 
         {/* Visited date range */}
         <div className={filterType === 'visited' ? '' : 'opacity-40 pointer-events-none'}>
-          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Date range</p>
+          <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Date range</h2>
           <div className="flex items-center gap-3">
             <input type="date" name="from_date" defaultValue={fromDate}
               className="border border-zinc-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900" />
@@ -223,7 +223,7 @@ export default async function BulkYelPage({
 
         {/* Tier selector */}
         <div className={filterType === 'tier' ? '' : 'opacity-40 pointer-events-none'}>
-          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Tier level</p>
+          <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Tier level</h2>
           <select name="tier_level" defaultValue={tierLevel}
             className="border border-zinc-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900">
             {([1,2,3,4] as const).map(l => (
@@ -234,7 +234,7 @@ export default async function BulkYelPage({
 
         {/* Amount */}
         <div>
-          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Points to add / subtract</p>
+          <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Points to add / subtract</h2>
           <BulkAmountInput initialAmount={amount} />
         </div>
 
@@ -247,11 +247,11 @@ export default async function BulkYelPage({
       {hasPreview && (
         <div className="mt-6">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-medium text-zinc-700">
+            <h2 className="text-sm font-medium text-zinc-700">
               {matchingUsers.length === 0
                 ? 'No users match this filter'
                 : `${matchingUsers.length} user${matchingUsers.length !== 1 ? 's' : ''} affected`}
-            </p>
+            </h2>
             {!isNaN(amountNum) && amountNum !== 0 && matchingUsers.length > 0 && (
               <span className={`text-sm font-semibold ${amountNum > 0 ? 'text-green-700' : 'text-red-600'}`}>
                 {amountNum > 0 ? '+' : ''}{amountNum} pts each
@@ -265,10 +265,10 @@ export default async function BulkYelPage({
                 <table className="w-full text-sm">
                   <thead className="sticky top-0">
                     <tr className="bg-zinc-50 border-b border-zinc-100 text-left">
-                      <th className="px-4 py-3 font-medium text-zinc-500">User</th>
-                      <th className="px-4 py-3 font-medium text-zinc-500">Tier</th>
-                      <th className="px-4 py-3 font-medium text-zinc-500">Now</th>
-                      <th className="px-4 py-3 font-medium text-zinc-500">After</th>
+                      <th scope="col" className="px-4 py-3 font-medium text-zinc-500">User</th>
+                      <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Tier</th>
+                      <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Now</th>
+                      <th scope="col" className="px-4 py-3 font-medium text-zinc-500">After</th>
                     </tr>
                   </thead>
                   <tbody>

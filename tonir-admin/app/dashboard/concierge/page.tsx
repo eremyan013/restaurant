@@ -168,12 +168,12 @@ export default async function ConciergePage({
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-zinc-50 border-b border-zinc-100 text-left">
-                  <th className="px-4 py-3 font-medium text-zinc-500">User</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Last message</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Messages</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Last activity</th>
-                  <th className="px-4 py-3 font-medium text-zinc-500">Status</th>
-                  <th className="px-4 py-3" />
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">User</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Last message</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Messages</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Last activity</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Status</th>
+                  <th scope="col" className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody>

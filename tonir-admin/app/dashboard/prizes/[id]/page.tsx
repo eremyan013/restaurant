@@ -140,11 +140,11 @@ export default async function EditPrizePage({ params }: { params: Promise<{ id: 
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-zinc-50 text-left">
-                <th className="px-4 py-3 font-medium text-zinc-500">User</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Code</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Claimed</th>
-                <th className="px-4 py-3 font-medium text-zinc-500">Status</th>
-                <th className="px-4 py-3"></th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">User</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Code</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Claimed</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Status</th>
+                <th scope="col" className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
