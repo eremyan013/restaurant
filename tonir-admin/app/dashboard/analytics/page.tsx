@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { AnalyticsCharts } from './analytics-charts'
+import Link from 'next/link'
 
 export const metadata: Metadata = { title: 'Analytics — Tonir Admin' }
 
@@ -150,7 +151,7 @@ export default async function AnalyticsPage({
         </div>
         <div className="flex gap-1 bg-zinc-100 p-1 rounded-lg">
           {([7, 30, 90] as const).map((r) => (
-            <a
+            <Link
               key={r}
               href={`/dashboard/analytics?range=${r}`}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
@@ -160,7 +161,7 @@ export default async function AnalyticsPage({
               }`}
             >
               {r}d
-            </a>
+            </Link>
           ))}
         </div>
       </div>

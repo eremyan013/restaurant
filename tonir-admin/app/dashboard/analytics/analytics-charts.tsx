@@ -67,6 +67,8 @@ export function AnalyticsCharts({
   const maxVenueBookings = Math.max(...venueData.map(v => v.bookings), 1)
   const totalStatus = Object.values(statusCount).reduce((a, b) => a + b, 0)
   const trendChange = kpiTrend(trendData, 'bookings')
+  const allTrendZero = trendData.every(d => d.bookings === 0)
+  const allSignupsZero = userGrowthData.every(d => d.signups === 0)
 
   const kpis = [
     {
@@ -97,7 +99,7 @@ export function AnalyticsCharts({
       label: 'Registered Users',
       value: allTimeUsers.toLocaleString(),
       sub: 'all time',
-      trend: null,
+      trend: kpiTrend(userGrowthData, 'signups'),
     },
   ]
 
@@ -126,56 +128,64 @@ export function AnalyticsCharts({
         {/* Reservations trend */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-zinc-200 p-5">
           <p className="text-sm font-medium text-zinc-700 mb-4">Reservations Over Time</p>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={trendData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 11, fill: '#a1a1aa' }}
-                tickLine={false}
-                axisLine={false}
-                interval={range === 7 ? 0 : range === 30 ? 4 : 13}
-              />
-              <YAxis tick={{ fontSize: 11, fill: '#a1a1aa' }} tickLine={false} axisLine={false} allowDecimals={false} />
-              <Tooltip
-                contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e4e4e7' }}
-                labelStyle={{ color: '#52525b' }}
-              />
-              <Line
-                type="monotone"
-                dataKey="bookings"
-                stroke="#18181b"
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, fill: '#18181b' }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          {allTrendZero ? (
+            <p className="text-sm text-zinc-400 text-center py-8">No bookings for this period.</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={trendData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11, fill: '#a1a1aa' }}
+                  tickLine={false}
+                  axisLine={false}
+                  interval={range === 7 ? 0 : range === 30 ? 4 : 13}
+                />
+                <YAxis tick={{ fontSize: 11, fill: '#a1a1aa' }} tickLine={false} axisLine={false} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e4e4e7' }}
+                  labelStyle={{ color: '#52525b' }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="bookings"
+                  stroke="#18181b"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4, fill: '#18181b' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         {/* Status breakdown */}
         <div className="bg-white rounded-xl border border-zinc-200 p-5">
           <p className="text-sm font-medium text-zinc-700 mb-4">Status Breakdown</p>
-          <div className="space-y-3">
-            {(['confirmed', 'visited', 'pending', 'cancelled'] as const).map(s => {
-              const count = statusCount[s] ?? 0
-              const pct = totalStatus > 0 ? (count / totalStatus) * 100 : 0
-              return (
-                <div key={s}>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-zinc-600 font-medium">{STATUS_LABEL[s]}</span>
-                    <span className="text-zinc-400 tabular-nums">{count}</span>
+          {totalStatus === 0 ? (
+            <p className="text-sm text-zinc-400 text-center py-8">No reservations for this period.</p>
+          ) : (
+            <div className="space-y-3">
+              {(['confirmed', 'visited', 'pending', 'cancelled'] as const).map(s => {
+                const count = statusCount[s] ?? 0
+                const pct = (count / totalStatus) * 100
+                return (
+                  <div key={s}>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-zinc-600 font-medium">{STATUS_LABEL[s]}</span>
+                      <span className="text-zinc-400 tabular-nums">{count}</span>
+                    </div>
+                    <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${pct}%`, backgroundColor: STATUS_COLOR[s] }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${pct}%`, backgroundColor: STATUS_COLOR[s] }}
-                    />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
           <div className="mt-4 pt-4 border-t border-zinc-100 text-xs text-zinc-400 text-center">
             {totalStatus} total reservations
           </div>
@@ -258,31 +268,35 @@ export function AnalyticsCharts({
         <div className="bg-white rounded-xl border border-zinc-200 p-5">
           <p className="text-sm font-medium text-zinc-700 mb-1">New Users</p>
           <p className="text-xs text-zinc-400 mb-4">Last 90 days</p>
-          <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={userGrowthData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 10, fill: '#a1a1aa' }}
-                tickLine={false}
-                axisLine={false}
-                interval={29}
-              />
-              <YAxis tick={{ fontSize: 10, fill: '#a1a1aa' }} tickLine={false} axisLine={false} allowDecimals={false} />
-              <Tooltip
-                contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e4e4e7' }}
-                labelStyle={{ color: '#52525b' }}
-              />
-              <Line
-                type="monotone"
-                dataKey="signups"
-                stroke="#18181b"
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 3, fill: '#18181b' }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          {allSignupsZero ? (
+            <p className="text-sm text-zinc-400 text-center py-8">No sign-ups for this period.</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={180}>
+              <LineChart data={userGrowthData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 10, fill: '#a1a1aa' }}
+                  tickLine={false}
+                  axisLine={false}
+                  interval={29}
+                />
+                <YAxis tick={{ fontSize: 10, fill: '#a1a1aa' }} tickLine={false} axisLine={false} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e4e4e7' }}
+                  labelStyle={{ color: '#52525b' }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="signups"
+                  stroke="#18181b"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 3, fill: '#18181b' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
     </div>
