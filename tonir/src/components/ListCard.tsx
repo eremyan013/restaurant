@@ -56,11 +56,15 @@ export function ListCard({ venue, t, onOpen, onFav, isFav }: ListCardProps) {
       </ScrollView>
       <View style={styles.heatRow}>
         <HeatDot level={venue.heat} t={t} withLabel size={6} />
-        <Text style={{ color: t.textMute, fontSize: 11 }}>·</Text>
-        <Text style={[styles.bookedText, { color: t.textMute }]}>
-          <Text style={{ color: t.text, fontFamily: FONTS.bold, fontWeight: '700' }}>{venue.booked_today}</Text>{' '}
-          {tr('card_booked_today')}
-        </Text>
+        {venue.booked_today >= 10 && (
+          <>
+            <Text style={{ color: t.textMute, fontSize: 11 }}>·</Text>
+            <Text style={[styles.bookedText, { color: t.textMute }]}>
+              <Text style={{ color: t.text, fontFamily: FONTS.bold, fontWeight: '700' }}>{venue.booked_today}</Text>{' '}
+              {tr('card_booked_today')}
+            </Text>
+          </>
+        )}
       </View>
     </Pressable>
   );

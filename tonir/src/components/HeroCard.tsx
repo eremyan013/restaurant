@@ -34,10 +34,12 @@ export function HeroCard({ venue, t, onOpen, onFav, isFav, onBook }: HeroCardPro
     >
       <View style={styles.imageWrap}>
         <Image source={{ uri: venue.photo_url }} style={styles.image} />
-        <View style={styles.bookedBadge}>
-          <HeatDot level={venue.heat} t={t} size={6} />
-          <Text style={styles.bookedText}>{venue.booked_today} {tr('card_booked_short')}</Text>
-        </View>
+        {venue.booked_today >= 10 && (
+          <View style={styles.bookedBadge}>
+            <HeatDot level={venue.heat} t={t} size={6} />
+            <Text style={styles.bookedText}>{venue.booked_today} {tr('card_booked_short')}</Text>
+          </View>
+        )}
         <Pressable
           onPress={() => {
             if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
