@@ -53,7 +53,8 @@ export async function POST(request: NextRequest) {
 
   for (const admin of (admins ?? [])) {
     // Web push (browser)
-    if (admin.web_push_sub?.endpoint) {
+    const webPushSub = admin.web_push_sub as { endpoint?: string } | null
+    if (webPushSub?.endpoint) {
       notifications.push(
         webpush.sendNotification(
           admin.web_push_sub as unknown as Parameters<typeof webpush.sendNotification>[0],
