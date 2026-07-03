@@ -35,6 +35,7 @@ export interface Database {
           description_ru: string | null;
           description_en: string | null;
           times: string[];
+          time_yel_map: Json | null;
           perk: string;
           perk_hy: string | null;
           perk_ru: string | null;
@@ -77,6 +78,7 @@ export interface Database {
           description_ru?: string | null;
           description_en?: string | null;
           times: string[];
+          time_yel_map?: Json | null;
           perk: string;
           perk_hy?: string | null;
           perk_ru?: string | null;
