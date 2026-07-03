@@ -59,8 +59,7 @@ export async function createAdmin(
 
   // Insert permissions row — non-fatal if it fails (admin account still created)
   const permissions = parsePermissionsFromFormData(formData)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase.from('admin_permissions') as any).insert({ admin_id: created.user.id, ...permissions }).catch(() => {})
+  await supabase.from('admin_permissions').insert({ admin_id: created.user.id, ...permissions }).catch(() => {})
 
   revalidatePath('/dashboard/admins')
   return { ok: true }
@@ -98,8 +97,8 @@ export async function updateAdmin(
   if (profileError) return { ok: false, error: profileError.message }
 
   const permissions = parsePermissionsFromFormData(formData)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: permError } = await (supabase.from('admin_permissions') as any)
+  const { error: permError } = await supabase
+    .from('admin_permissions')
     .upsert({ admin_id: id, ...permissions }, { onConflict: 'admin_id' })
   if (permError) return { ok: false, error: 'Admin updated but permissions could not be saved.' }
 
@@ -127,8 +126,7 @@ export async function removeAdmin(formData: FormData): Promise<{ ok: boolean; er
   await supabase.auth.admin.updateUserById(id, { ban_duration: '87600h' }).catch(() => {})
 
   // ON DELETE CASCADE handles hard-deletes; this cleans up soft-demoted admins
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase.from('admin_permissions') as any).delete().eq('admin_id', id)
+  await supabase.from('admin_permissions').delete().eq('admin_id', id)
 
   revalidatePath('/dashboard/admins')
   return { ok: true }
