@@ -314,8 +314,8 @@ export default async function ReservationsPage({
                     <td className="px-4 py-3 tabular-nums text-xs text-zinc-400 whitespace-nowrap">
                       {r.created_at ? (
                         <>
-                          <p>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                          <p>{new Date(r.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</p>
+                          <p>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Yerevan' })}</p>
+                          <p>{new Date(r.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Yerevan' })}</p>
                         </>
                       ) : '—'}
                     </td>
