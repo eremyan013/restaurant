@@ -238,22 +238,25 @@ export function DetailScreen({ navigation, route }: Props) {
             </View>
           </View>
           <View style={styles.timeGrid}>
-            {(showAllTimes ? timesToShow : timesToShow.slice(0, 4)).map((time, i) => (
-              <View key={time} style={availabilityLoading ? { opacity: 0.45 } : undefined}>
-                <TimePill
-                  time={time}
-                  t={t}
-                  size="md"
-                  dark
-                  active={selectedTime === time}
-                  perk={i < 2 ? venue.perk : undefined}
-                  onPress={() => {
-                    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setSelectedTime(time);
-                  }}
-                />
-              </View>
-            ))}
+            {(() => {
+              const yelMap = (venue.time_yel_map as Record<string, number> | null) ?? {};
+              return (showAllTimes ? timesToShow : timesToShow.slice(0, 4)).map((time) => (
+                <View key={time} style={availabilityLoading ? { opacity: 0.45 } : undefined}>
+                  <TimePill
+                    time={time}
+                    t={t}
+                    size="md"
+                    dark
+                    active={selectedTime === time}
+                    perk={yelMap[time] > 0 ? `+${yelMap[time]}` : undefined}
+                    onPress={() => {
+                      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setSelectedTime(time);
+                    }}
+                  />
+                </View>
+              ));
+            })()}
             {timesToShow.length === 0 && !availabilityLoading && (
               <Text style={[styles.noTimesText, { color: 'rgba(251,245,232,0.5)' }]}>
                 {tr('det_no_times_today')}

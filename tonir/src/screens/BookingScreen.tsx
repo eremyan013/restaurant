@@ -138,7 +138,7 @@ export function BookingScreen({ navigation, route }: Props) {
           occasion,
           note,
           status: 'pending',
-          yel_earned: venue!.perk,
+          yel_earned: String((venue!.time_yel_map as Record<string, number> | null)?.[time] ?? 0),
         });
         await cancel(modifyReservationId).catch(() => {});
       } else {
@@ -151,7 +151,7 @@ export function BookingScreen({ navigation, route }: Props) {
           occasion,
           note,
           status: 'pending',
-          yel_earned: venue!.perk,
+          yel_earned: String((venue!.time_yel_map as Record<string, number> | null)?.[time] ?? 0),
         });
       }
 
