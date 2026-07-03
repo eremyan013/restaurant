@@ -228,9 +228,9 @@ export default async function ConciergePage({
                       </td>
                       <td className="px-4 py-3 text-zinc-500 tabular-nums">{msgCount}</td>
                       <td className="px-4 py-3 text-zinc-400 text-xs whitespace-nowrap">
-                        {new Date(s.last_message_at).toLocaleDateString('en-GB', {
+                        {s.last_message_at ? new Date(s.last_message_at).toLocaleDateString('en-GB', {
                           day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-                        })}
+                        }) : '—'}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[s.status] ?? ''}`}>
