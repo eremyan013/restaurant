@@ -59,7 +59,7 @@ export async function createAdmin(
 
   // Insert permissions row — non-fatal if it fails (admin account still created)
   const permissions = parsePermissionsFromFormData(formData)
-  await supabase.from('admin_permissions').insert({ admin_id: created.user.id, ...permissions }).catch(() => {})
+  try { await supabase.from('admin_permissions').insert({ admin_id: created.user.id, ...permissions }) } catch { /* non-fatal */ }
 
   revalidatePath('/dashboard/admins')
   return { ok: true }
