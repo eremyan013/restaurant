@@ -392,7 +392,7 @@ function PendingReviewsList({ reviews }: { reviews: PendingReview[] }) {
               )}
             </div>
             <span className="text-xs text-zinc-400 whitespace-nowrap shrink-0 mt-0.5">
-              {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+              {r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}
             </span>
           </div>
         </li>
