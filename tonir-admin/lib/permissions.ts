@@ -77,8 +77,8 @@ export function hasPermission(
 
 export async function getAdminPermissions(adminId: string): Promise<AdminPermissions> {
   const supabase = createSupabaseAdminClient()
-  const { data } = await supabase
-    .from('admin_permissions')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabase.from('admin_permissions') as any)
     .select('*')
     .eq('admin_id', adminId)
     .maybeSingle()
