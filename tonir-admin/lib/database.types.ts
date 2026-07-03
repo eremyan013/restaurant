@@ -1176,3 +1176,21 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
+// ── Convenience row/update aliases ───────────────────────────────────────────
+type T = Database['public']['Tables']
+export type AdminActivityRow    = T['admin_activity_log']['Row']
+export type ConciergeMessageRow = T['concierge_messages']['Row']
+export type ConciergeSessionRow = T['concierge_sessions']['Row']
+export type GuideRow            = T['guides']['Row']
+export type MenuCategoryRow     = T['menu_categories']['Row']
+export type MenuItemRow         = T['menu_items']['Row']
+export type MenuItemUpdate      = T['menu_items']['Update']
+export type PrizeRow            = T['prizes']['Row']
+export type ProfileRow          = T['profiles']['Row']
+export type ReservationRow      = T['reservations']['Row']
+export type ReviewRow           = T['reviews']['Row']
+export type SettingRow          = T['settings']['Row']
+export type UserPrizeRow        = T['user_prizes']['Row']
+export type VenueBlockedDateRow = T['venue_blocked_dates']['Row']
+export type VenueRow            = T['venues']['Row']
