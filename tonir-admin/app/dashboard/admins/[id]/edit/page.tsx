@@ -45,7 +45,7 @@ export default async function EditAdminPage({
         <h1 className="text-2xl font-semibold text-zinc-900">Edit Admin</h1>
       </div>
 
-      <EditAdminForm admin={profile} venues={venues ?? []} permissions={permissions} />
+      <EditAdminForm admin={{ ...profile, managed_venue_ids: profile.managed_venue_ids ?? [] }} venues={venues ?? []} permissions={permissions} />
     </div>
   )
 }
