@@ -157,7 +157,7 @@ export default async function ConciergeSessionPage({
       <ConciergeThread messages={messages} />
 
       <p className="text-xs text-zinc-400 text-center mt-6">
-        Session started {new Date(session.started_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+        Session started {session.started_at ? new Date(session.started_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
         {' · '}{messages.length} messages
       </p>
 
