@@ -39,9 +39,9 @@ export default function ConciergeThread({ messages }: Props) {
                 <p className="text-xs font-medium text-blue-200 mb-1">Staff</p>
               )}
               <p className="text-sm leading-relaxed">{msg.text}</p>
-              {msg.suggestions && msg.suggestions.length > 0 && (
+              {Array.isArray(msg.suggestions) && msg.suggestions.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {msg.suggestions.map((s: string) => (
+                  {(msg.suggestions as string[]).map((s: string) => (
                     <span key={s} className="px-2 py-0.5 rounded-full text-xs bg-zinc-100 text-zinc-500">
                       {s}
                     </span>
