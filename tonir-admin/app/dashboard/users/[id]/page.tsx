@@ -212,6 +212,7 @@ export default async function UserProfilePage({
                   <tr className="bg-zinc-50 text-left">
                     <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Venue</th>
                     <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Date</th>
+                    <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Created</th>
                     <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Guests</th>
                     <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Status</th>
                     <th scope="col" className="px-4 py-3 font-medium text-zinc-500">YEL</th>
@@ -224,6 +225,14 @@ export default async function UserProfilePage({
                       <tr key={r.id} className="odd:bg-white even:bg-zinc-100 hover:bg-zinc-200 transition-colors">
                         <td className="px-4 py-3 text-zinc-900">{venue?.name ?? '—'}</td>
                         <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">{r.date} {r.time}</td>
+                        <td className="px-4 py-3 tabular-nums text-xs text-zinc-400 whitespace-nowrap">
+                          {r.created_at ? (
+                            <>
+                              <p>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Yerevan' })}</p>
+                              <p>{new Date(r.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Yerevan' })}</p>
+                            </>
+                          ) : '—'}
+                        </td>
                         <td className="px-4 py-3 text-zinc-600">{r.people}</td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-0.5 rounded-full text-xs capitalize ${STATUS_STYLES[r.status] ?? 'bg-zinc-100 text-zinc-600'}`}>
