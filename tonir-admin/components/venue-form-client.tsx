@@ -165,7 +165,107 @@ export interface VenueFormDefaults {
   price?: string
   heat?: string; kind?: string; photo_url?: string; dish_url?: string
   distance_km?: string; coord_x?: string; coord_y?: string
-  times?: string; is_active?: string
+  times?: string; time_yel_map?: string; is_active?: string
+}
+
+// ── Time slot types & helpers ──────────────────────────────────────────────────
+
+type TimeSlot = { time: string; yel: number }
+
+function parseDefaultSlots(defaults: VenueFormDefaults): TimeSlot[] {
+  const times = (defaults.times ?? '').split(',').map(s => s.trim()).filter(Boolean)
+  const map: Record<string, number> = defaults.time_yel_map
+    ? (() => { try { return JSON.parse(defaults.time_yel_map) } catch { return {} } })()
+    : {}
+  return times.map(t => ({ time: t, yel: map[t] ?? 0 }))
+}
+
+interface TimeYelEditorProps {
+  defaultSlots?: TimeSlot[]
+  onChange?: () => void
+}
+
+function TimeYelEditor({ defaultSlots, onChange }: TimeYelEditorProps) {
+  const [slots, setSlots] = useState<TimeSlot[]>(defaultSlots ?? [])
+
+  function mutate(next: TimeSlot[]) {
+    setSlots(next)
+    onChange?.()
+  }
+
+  function addSlot() {
+    mutate([...slots, { time: '', yel: 0 }])
+  }
+
+  function removeSlot(index: number) {
+    mutate(slots.filter((_, i) => i !== index))
+  }
+
+  function updateTime(index: number, value: string) {
+    mutate(slots.map((s, i) => i === index ? { ...s, time: value } : s))
+  }
+
+  function updateYel(index: number, value: string) {
+    mutate(slots.map((s, i) => i === index ? { ...s, yel: Math.max(0, parseInt(value, 10) || 0) } : s))
+  }
+
+  return (
+    <div className="sm:col-span-2 flex flex-col gap-2">
+      <label className="text-sm font-medium text-zinc-700">Time slots &amp; YEL points</label>
+
+      {/* Hidden inputs for form submission */}
+      <input type="hidden" name="times" value={slots.map(s => s.time).join(',')} />
+      <input
+        type="hidden"
+        name="time_yel_map"
+        value={JSON.stringify(
+          Object.fromEntries(
+            slots.filter(s => s.time).map(s => [s.time, s.yel])
+          )
+        )}
+      />
+
+      <div className="flex flex-col gap-2">
+        {slots.map((slot, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <input
+              type="text"
+              value={slot.time}
+              onChange={e => updateTime(i, e.target.value)}
+              placeholder="HH:MM"
+              aria-label={`Time slot ${i + 1}`}
+              className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-28"
+            />
+            <span className="text-sm text-zinc-500 shrink-0">YEL pts:</span>
+            <input
+              type="number"
+              min={0}
+              value={slot.yel}
+              onChange={e => updateYel(i, e.target.value)}
+              aria-label={`YEL points for slot ${i + 1}`}
+              className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-24"
+            />
+            <button
+              type="button"
+              onClick={() => removeSlot(i)}
+              aria-label={`Remove time slot ${i + 1}`}
+              className="h-10 px-3 rounded-lg border border-zinc-300 text-sm text-zinc-600 hover:bg-zinc-50 hover:text-red-600 transition-colors"
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={addSlot}
+        className="self-start h-10 px-3 rounded-lg border border-zinc-300 text-sm text-zinc-600 hover:bg-zinc-50 transition-colors"
+      >
+        + Add time slot
+      </button>
+    </div>
+  )
 }
 
 export function VenueFormClient({
@@ -230,10 +330,24 @@ export function VenueFormClient({
       setValidErr('Armenian (Հայ) name is required')
       return
     }
-    const timesInput = (e.currentTarget as HTMLFormElement).elements.namedItem('times') as HTMLInputElement
-    if (!timesInput?.value.trim()) {
+    const timesHidden = (e.currentTarget as HTMLFormElement).elements.namedItem('times') as HTMLInputElement
+    if (!timesHidden?.value.trim()) {
       e.preventDefault()
-      setValidErr('At least one time slot is required (e.g. 12:00, 14:00)')
+      setValidErr('At least one time slot is required')
+      return
+    }
+    // Validate HH:MM format
+    const timeValues = timesHidden.value.split(',').map(s => s.trim())
+    const badTime = timeValues.find(t => !/^\d{2}:\d{2}$/.test(t))
+    if (badTime) {
+      e.preventDefault()
+      setValidErr(`Invalid time format "${badTime}" — use HH:MM`)
+      return
+    }
+    const hasDupes = new Set(timeValues).size !== timeValues.length
+    if (hasDupes) {
+      e.preventDefault()
+      setValidErr('Duplicate time slots are not allowed')
       return
     }
     setIsDirty(false)
@@ -334,11 +448,11 @@ export function VenueFormClient({
           />
         </div>
 
-        {/* Non-translatable: times */}
-        <div className="sm:col-span-2 flex flex-col gap-1">
-          <label className="text-sm font-medium text-zinc-700">Times (comma-separated, e.g. 12:00, 13:00)</label>
-          <input type="text" name="times" defaultValue={defaults.times ?? ''} className="h-10 px-3 rounded-lg border border-zinc-300 text-sm" />
-        </div>
+        {/* Non-translatable: time slots with YEL points */}
+        <TimeYelEditor
+          defaultSlots={parseDefaultSlots(defaults)}
+          onChange={() => { setValidErr(null); setIsDirty(true) }}
+        />
 
         {/* Translatable: tags */}
         <div className="sm:col-span-2 flex flex-col gap-1">
