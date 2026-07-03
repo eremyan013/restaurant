@@ -138,9 +138,9 @@ export default async function ActivityPage({
                 {entries.map((e) => (
                   <tr key={e.id} className="border-b border-zinc-100 last:border-0 odd:bg-white even:bg-zinc-50/50">
                     <td className="px-4 py-3 text-zinc-400 text-xs whitespace-nowrap tabular-nums">
-                      {new Date(e.created_at).toLocaleDateString('en-GB', {
+                      {e.created_at ? new Date(e.created_at).toLocaleDateString('en-GB', {
                         day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
-                      })}
+                      }) : '—'}
                     </td>
                     <td className="px-4 py-3">
                       <p className="font-medium text-zinc-900">{e.admin_name ?? '—'}</p>
