@@ -341,7 +341,7 @@ export default async function ReservationsPage({
                           }} />
                         </div>
                         <ReservationStatusButtons
-                          status={r.status}
+                          status={r.status as 'pending' | 'confirmed' | 'cancelled' | 'visited'}
                           onConfirm={setStatus.bind(null, r.id, 'confirmed')}
                           onCancel={setStatus.bind(null, r.id, 'cancelled')}
                           onVisited={setStatus.bind(null, r.id, 'visited')}
@@ -349,7 +349,7 @@ export default async function ReservationsPage({
                         />
                         <NoteForm
                           id={r.id}
-                          status={r.status}
+                          status={r.status as 'pending' | 'confirmed' | 'cancelled' | 'visited'}
                           defaultNote={r.admin_note ?? ''}
                           saveNote={saveNote}
                         />
