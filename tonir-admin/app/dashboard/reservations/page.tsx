@@ -181,7 +181,7 @@ export default async function ReservationsPage({
 
   let query = supabase
     .from('reservations')
-    .select('id, date, time, people, status, occasion, note, admin_note, created_at, venue_id, user_id, venues(name), profiles(name, email)', { count: 'exact' })
+    .select('id, date, date_iso, time, people, status, occasion, note, admin_note, created_at, updated_at, yel_earned, venue_id, user_id, venues(name), profiles(name, email)', { count: 'exact' })
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
     .range(from, to)
