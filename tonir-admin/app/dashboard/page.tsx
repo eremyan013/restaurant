@@ -82,7 +82,8 @@ type PendingReview = {
   venues:   { name: string } | null
 }
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string | null): string {
+  if (!iso) return '—'
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60_000)
   if (mins < 1)  return 'just now'
@@ -421,7 +422,7 @@ function ActivityFeed({ entries }: { entries: ActivityEntry[] }) {
                   <span className="text-zinc-500"> · {e.entity_name}</span>
                 ) : null}
               </p>
-              <p className="text-xs text-zinc-400 mt-0.5" title={new Date(e.created_at).toLocaleString()}>
+              <p className="text-xs text-zinc-400 mt-0.5" title={e.created_at ? new Date(e.created_at).toLocaleString() : ''}>
                 {timeAgo(e.created_at)}
               </p>
             </div>

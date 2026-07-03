@@ -107,7 +107,7 @@ export async function addItem(
   }).select('id, section_id, sort_order, item_type, venue_id, guide_id').single()
   if (error) return { error: error.message }
   revalidatePath('/dashboard/home-sections')
-  return { item: data }
+  return { item: data as AddedItem }
 }
 
 export async function removeItem(itemId: string): Promise<void> {

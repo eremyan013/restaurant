@@ -158,7 +158,7 @@ export default async function EditPrizePage({ params }: { params: Promise<{ id: 
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-zinc-600">{c.code ?? '—'}</td>
                   <td className="px-4 py-3 text-zinc-500 text-xs whitespace-nowrap">
-                    {new Date(c.claimed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {c.claimed_at ? new Date(c.claimed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[c.status] ?? ''}`}>

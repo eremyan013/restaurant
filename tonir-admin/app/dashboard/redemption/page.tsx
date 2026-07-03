@@ -153,7 +153,7 @@ export default async function RedemptionPage({
             <div className="flex items-center justify-between">
               <span className="font-mono text-2xl font-bold text-zinc-900 tracking-widest">{result.code}</span>
               <span className="text-xs text-zinc-400">
-                Claimed {new Date(result.claimed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                Claimed {result.claimed_at ? new Date(result.claimed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
               </span>
             </div>
 

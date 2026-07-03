@@ -98,9 +98,9 @@ export default async function UserProfilePage({
     .toUpperCase()
     .slice(0, 2)
 
-  const memberSince = new Date(user.created_at).toLocaleDateString('en-GB', {
+  const memberSince = user.created_at ? new Date(user.created_at).toLocaleDateString('en-GB', {
     year: 'numeric', month: 'long', day: 'numeric',
-  })
+  }) : '—'
 
   return (
     <div className="max-w-4xl">
@@ -168,7 +168,7 @@ export default async function UserProfilePage({
               <DetailRow label="Phone" value={<span className="tabular-nums">{user.phone ?? '—'}</span>} />
               <DetailRow label="User ID" value={<span className="font-mono text-xs break-all">{user.id}</span>} />
               <DetailRow label="Role" value={user.role} />
-              <DetailRow label="Last updated" value={new Date(user.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} />
+              <DetailRow label="Last updated" value={user.updated_at ? new Date(user.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'} />
             </dl>
           </div>
 
