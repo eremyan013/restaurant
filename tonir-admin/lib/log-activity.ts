@@ -28,7 +28,7 @@ export async function logActivity(
       entity_type: entityType,
       entity_id:   entityId,
       entity_name: entityName,
-      meta:        meta ?? null,
+      details:     meta ?? null,
     })
   } catch {
     // logging failures must never crash the actual operation

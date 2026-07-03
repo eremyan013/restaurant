@@ -69,7 +69,7 @@ export default async function ActivityPage({
 
   let query = supabase
     .from('admin_activity_log')
-    .select('id, admin_id, admin_name, action, entity_type, entity_id, entity_name, meta, created_at', { count: 'exact' })
+    .select('id, admin_id, admin_name, action, entity_type, entity_id, entity_name, details, created_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to)
 
@@ -157,9 +157,9 @@ export default async function ActivityPage({
                       )}
                     </td>
                     <td className="px-4 py-3 text-zinc-500 text-xs max-w-xs">
-                      {e.meta && Object.keys(e.meta).length > 0 ? (
+                      {e.details && typeof e.details === 'object' && !Array.isArray(e.details) && Object.keys(e.details).length > 0 ? (
                         <span className="font-mono">
-                          {Object.entries(e.meta)
+                          {Object.entries(e.details as Record<string, unknown>)
                             .map(([k, v]) => `${k}: ${String(v)}`)
                             .join(' · ')}
                         </span>
