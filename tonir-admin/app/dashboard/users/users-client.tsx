@@ -171,7 +171,7 @@ export default function UsersClient({
                   <td className="px-4 py-3 text-zinc-600 tabular-nums">{user.yel_points ?? 0}</td>
                   <td className="px-4 py-3 text-zinc-600 tabular-nums">{user.total_visits ?? 0}</td>
                   <td className="px-4 py-3 text-zinc-400 tabular-nums text-xs whitespace-nowrap">
-                    {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
+                    {user.created_at ? new Date(user.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Yerevan' }) : '—'}
                   </td>
                 </tr>
               ))

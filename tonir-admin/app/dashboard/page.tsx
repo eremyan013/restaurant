@@ -392,7 +392,7 @@ function PendingReviewsList({ reviews }: { reviews: PendingReview[] }) {
               )}
             </div>
             <span className="text-xs text-zinc-400 whitespace-nowrap shrink-0 mt-0.5">
-              {r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}
+              {r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Asia/Yerevan' }) : '—'}
             </span>
           </div>
         </li>
@@ -422,7 +422,7 @@ function ActivityFeed({ entries }: { entries: ActivityEntry[] }) {
                   <span className="text-zinc-500"> · {e.entity_name}</span>
                 ) : null}
               </p>
-              <p className="text-xs text-zinc-400 mt-0.5" title={e.created_at ? new Date(e.created_at).toLocaleString() : ''}>
+              <p className="text-xs text-zinc-400 mt-0.5" title={e.created_at ? new Date(e.created_at).toLocaleString('en-GB', { timeZone: 'Asia/Yerevan' }) : ''}>
                 {timeAgo(e.created_at)}
               </p>
             </div>

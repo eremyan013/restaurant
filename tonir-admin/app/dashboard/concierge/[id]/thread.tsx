@@ -49,7 +49,7 @@ export default function ConciergeThread({ messages }: Props) {
                 </div>
               )}
               <p className={`text-xs mt-1 ${isUser || isAdmin ? 'text-white/50' : 'text-zinc-400'}`}>
-                {msg.created_at ? new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                {msg.created_at ? new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Yerevan' }) : '—'}
               </p>
             </div>
           </div>

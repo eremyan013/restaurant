@@ -259,7 +259,7 @@ export default async function ReviewsPage({
                       )}
                     </td>
                     <td className="px-4 py-3 text-zinc-400 tabular-nums text-xs whitespace-nowrap">
-                      {r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                      {r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Yerevan' }) : '—'}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[r.status] ?? ''}`}>

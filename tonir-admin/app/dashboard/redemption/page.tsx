@@ -144,7 +144,7 @@ export default async function RedemptionPage({
               {effectiveStatus === 'active' ? '✓' : effectiveStatus === 'used' ? '✗' : '⚠'}
             </span>
             {effectiveStatus === 'active' && 'Valid — ready to redeem'}
-            {effectiveStatus === 'used'   && `Already redeemed${result.used_at ? ` on ${new Date(result.used_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}`}
+            {effectiveStatus === 'used'   && `Already redeemed${result.used_at ? ` on ${new Date(result.used_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Yerevan' })}` : ''}`}
             {effectiveStatus === 'expired'&& 'Expired — do not honour'}
           </div>
 
@@ -153,7 +153,7 @@ export default async function RedemptionPage({
             <div className="flex items-center justify-between">
               <span className="font-mono text-2xl font-bold text-zinc-900 tracking-widest">{result.code}</span>
               <span className="text-xs text-zinc-400">
-                Claimed {result.claimed_at ? new Date(result.claimed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                Claimed {result.claimed_at ? new Date(result.claimed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Yerevan' }) : '—'}
               </span>
             </div>
 
