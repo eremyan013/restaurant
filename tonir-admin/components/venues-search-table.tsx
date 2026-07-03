@@ -190,7 +190,7 @@ export function VenuesSearchTable({ venues, toggleActive, isSuperAdmin }: Props)
                 <td className="px-4 py-3">
                   <VenueActiveToggle
                     venueId={venue.id}
-                    isActive={venue.is_active}
+                    isActive={venue.is_active ?? false}
                     venueName={venue.name_hy ?? venue.name}
                     toggleActive={toggleActive}
                   />

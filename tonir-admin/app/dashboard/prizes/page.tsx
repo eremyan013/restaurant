@@ -174,8 +174,8 @@ export default async function PrizesPage({ searchParams }: { searchParams: Promi
                     <td className="px-4 py-3">
                       <PrizeActiveToggle
                         prizeName={p.name}
-                        isActive={p.is_active}
-                        toggleAction={toggleActive.bind(null, p.id, p.is_active)}
+                        isActive={p.is_active ?? false}
+                        toggleAction={toggleActive.bind(null, p.id, p.is_active ?? false)}
                       />
                     </td>
                     <td className="px-4 py-3">
