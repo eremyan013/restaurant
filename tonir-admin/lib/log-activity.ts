@@ -28,7 +28,7 @@ export async function logActivity(
       entity_type: entityType,
       entity_id:   entityId,
       entity_name: entityName,
-      details:     meta ?? null,
+      details:     (meta ?? null) as import('@/lib/database.types').Json,
     })
   } catch {
     // logging failures must never crash the actual operation
