@@ -945,6 +945,7 @@ export type Database = {
           tags_en: string[] | null
           tags_hy: string[] | null
           tags_ru: string[] | null
+          time_yel_map: Json | null
           times: string[]
           updated_at: string
         }
@@ -987,6 +988,7 @@ export type Database = {
           tags_en?: string[] | null
           tags_hy?: string[] | null
           tags_ru?: string[] | null
+          time_yel_map?: Json | null
           times?: string[]
           updated_at?: string
         }
@@ -1029,6 +1031,7 @@ export type Database = {
           tags_en?: string[] | null
           tags_hy?: string[] | null
           tags_ru?: string[] | null
+          time_yel_map?: Json | null
           times?: string[]
           updated_at?: string
         }

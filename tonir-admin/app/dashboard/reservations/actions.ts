@@ -69,6 +69,15 @@ export async function createReservationAdmin(
 
   const supabase = createSupabaseAdminClient()
 
+  const { data: venueData } = await supabase
+    .from('venues')
+    .select('time_yel_map')
+    .eq('id', venueId)
+    .single()
+
+  const yelMap = (venueData?.time_yel_map as Record<string, number> | null) ?? {}
+  const yelEarned = String(yelMap[time] ?? 0)
+
   const { error } = await supabase.from('reservations').insert({
     venue_id:   venueId,
     user_id:    userId,
@@ -79,7 +88,7 @@ export async function createReservationAdmin(
     occasion,
     note,
     status,
-    yel_earned: '0',
+    yel_earned: yelEarned,
   })
 
   if (error) return { ok: false, error: error.message }

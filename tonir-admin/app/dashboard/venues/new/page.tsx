@@ -21,6 +21,18 @@ async function createVenue(formData: FormData) {
   const g = (key: string) => (formData.get(key) as string) || ''
   const arr = (key: string) => g(key).split(',').map(s => s.trim()).filter(Boolean)
 
+  function parseYelMap(raw: string): Record<string, number> {
+    try {
+      const parsed = JSON.parse(raw)
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return {}
+      const clean: Record<string, number> = {}
+      for (const [k, v] of Object.entries(parsed)) {
+        if (typeof v === 'number' && v >= 0) clean[k] = Math.floor(v)
+      }
+      return clean
+    } catch { return {} }
+  }
+
   const name_hy = g('name_hy')
 
   const { error } = await supabase.from('venues').insert({
@@ -61,6 +73,7 @@ async function createVenue(formData: FormData) {
     coord_x:        parseFloat(g('coord_x')) || 0,
     coord_y:        parseFloat(g('coord_y')) || 0,
     times:          arr('times'),
+    time_yel_map:   parseYelMap(g('time_yel_map')) as import('@/lib/database.types').Json,
     is_active:      g('is_active') === 'true',
   })
 

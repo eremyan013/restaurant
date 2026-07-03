@@ -68,6 +68,18 @@ async function updateVenue(id: string, formData: FormData) {
   const g = (key: string) => (formData.get(key) as string) || ''
   const arr = (key: string) => g(key).split(',').map(s => s.trim()).filter(Boolean)
 
+  function parseYelMap(raw: string): Record<string, number> {
+    try {
+      const parsed = JSON.parse(raw)
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return {}
+      const clean: Record<string, number> = {}
+      for (const [k, v] of Object.entries(parsed)) {
+        if (typeof v === 'number' && v >= 0) clean[k] = Math.floor(v)
+      }
+      return clean
+    } catch { return {} }
+  }
+
   const name_hy = g('name_hy')
 
   const { error } = await supabase
@@ -106,6 +118,7 @@ async function updateVenue(id: string, formData: FormData) {
       coord_x:        parseFloat(g('coord_x')) || 0,
       coord_y:        parseFloat(g('coord_y')) || 0,
       times:          arr('times'),
+      time_yel_map:   parseYelMap(g('time_yel_map')) as import('@/lib/database.types').Json,
       is_active:      g('is_active') === 'true',
     })
     .eq('id', id)
@@ -154,7 +167,7 @@ export default async function EditVenuePage({
   const todayISO = new Date().toISOString().split('T')[0]
 
   const [venueRes, hoursRes, blockedRes, bookedTodayRes] = await Promise.all([
-    supabase.from('venues').select('id, name, name_hy, name_ru, name_en, cuisine, cuisine_hy, cuisine_ru, cuisine_en, area, area_hy, area_ru, area_en, description, description_hy, description_ru, description_en, perk, perk_hy, perk_ru, perk_en, tags, tags_hy, tags_ru, tags_en, price, rating, photo_url, dish_url, distance_km, heat, kind, coord_x, coord_y, times, is_active').eq('id', id).single(),
+    supabase.from('venues').select('id, name, name_hy, name_ru, name_en, cuisine, cuisine_hy, cuisine_ru, cuisine_en, area, area_hy, area_ru, area_en, description, description_hy, description_ru, description_en, perk, perk_hy, perk_ru, perk_en, tags, tags_hy, tags_ru, tags_en, price, rating, photo_url, dish_url, distance_km, heat, kind, coord_x, coord_y, times, time_yel_map, is_active').eq('id', id).single(),
     supabase.from('venue_hours').select('id, venue_id, day_of_week, is_open, open_time, close_time').eq('venue_id', id).order('day_of_week'),
     supabase.from('venue_blocked_dates').select('id, venue_id, date, reason, created_at').eq('venue_id', id).order('date'),
     supabase
@@ -209,6 +222,7 @@ export default async function EditVenuePage({
     coord_x:        String(venue.coord_x ?? 44),
     coord_y:        String(venue.coord_y ?? 40),
     times:          (venue.times ?? []).join(', '),
+    time_yel_map:   venue.time_yel_map != null ? JSON.stringify(venue.time_yel_map) : undefined,
     is_active:      String(venue.is_active),
   }
 
