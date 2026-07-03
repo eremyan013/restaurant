@@ -14,9 +14,12 @@ export function useVenues() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    Promise.all([fetchVenues(), fetchTodayBookingCounts().catch(() => ({} as Record<string, number>))])
+    Promise.all([fetchVenues(), fetchTodayBookingCounts().catch(() => null)])
       .then(([venues, counts]) => {
-        setRaw(venues.map(v => ({ ...v, booked_today: counts[v.id] ?? v.booked_today })));
+        setRaw(venues.map(v => ({
+          ...v,
+          booked_today: counts !== null ? (counts[v.id] ?? 0) : v.booked_today,
+        })));
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));

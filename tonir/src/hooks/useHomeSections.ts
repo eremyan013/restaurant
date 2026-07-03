@@ -67,7 +67,7 @@ export function useHomeSections() {
                 for (const g of guidesData ?? []) guideMap.set(g.id, g as GuideRow);
               })
           : Promise.resolve(),
-        fetchTodayBookingCounts().catch(() => ({} as Record<string, number>)),
+        fetchTodayBookingCounts().catch(() => null),
       ]);
 
       // Step 4: merge + localise
@@ -89,7 +89,7 @@ export function useHomeSections() {
             return {
               ...item,
               venue: venue
-                ? { ...venue, booked_today: bookingCounts[venue.id] ?? venue.booked_today }
+                ? { ...venue, booked_today: bookingCounts !== null ? (bookingCounts[venue.id] ?? 0) : venue.booked_today }
                 : null,
               guide: item.guide_id ? (guideMap.get(item.guide_id) ?? null) : null,
             };
