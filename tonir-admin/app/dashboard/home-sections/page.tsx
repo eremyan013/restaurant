@@ -49,7 +49,8 @@ export default async function HomeSectionsPage() {
 
   return (
     <HomeSectionsClient
-      initialSections={sectionsResult.data ?? []}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      initialSections={(sectionsResult.data ?? []) as any}
       availableVenues={venuesResult.data ?? []}
       availableGuides={guidesResult.data ?? []}
       reorderSections={reorderSections}
