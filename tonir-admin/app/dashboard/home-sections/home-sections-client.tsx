@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/toast-provider'
+import type { AddedItem } from './actions'
 import {
   DndContext,
   DragEndEvent,
@@ -80,7 +81,7 @@ type Props = {
     sectionId: string,
     itemType: 'venue' | 'guide',
     itemId: string
-  ) => Promise<{ error?: string }>
+  ) => Promise<{ error?: string; item?: AddedItem }>
   removeItem: (itemId: string) => Promise<void>
   createSection: (payload: {
     name: string
@@ -335,12 +336,10 @@ function ItemsPanel({
 
   async function handleRemove(itemId: string) {
     await onRemoveItem(itemId)
-    router.refresh()
   }
 
   async function handleAdd(sectionId: string, type: 'venue' | 'guide', id: string) {
     await onAddItem(sectionId, type, id)
-    router.refresh()
   }
 
   return (
@@ -1003,10 +1002,33 @@ export function HomeSectionsClient({
 
   // ---- remove item ----
   async function handleRemoveItem(itemId: string) {
+    let sectionIdOfItem: string | null = null
+    let removedItem: SectionItem | undefined
+    setItemOrder((prev) => {
+      const next = { ...prev }
+      for (const [sid, items] of Object.entries(next)) {
+        const idx = items.findIndex((i) => i.id === itemId)
+        if (idx !== -1) {
+          sectionIdOfItem = sid
+          removedItem = items[idx]
+          next[sid] = items.filter((i) => i.id !== itemId)
+          break
+        }
+      }
+      return next
+    })
     try {
       await removeItem(itemId)
       toast.success('Item removed')
     } catch {
+      if (sectionIdOfItem && removedItem) {
+        const sid = sectionIdOfItem
+        const item = removedItem
+        setItemOrder((prev) => ({
+          ...prev,
+          [sid]: [...(prev[sid] ?? []), item].sort((a, b) => a.sort_order - b.sort_order),
+        }))
+      }
       toast.error('Failed to remove item')
     }
   }
@@ -1014,11 +1036,22 @@ export function HomeSectionsClient({
   // ---- add item ----
   async function handleAddItem(sectionId: string, type: 'venue' | 'guide', id: string) {
     const result = await addItem(sectionId, type, id)
-    if (result?.error) {
-      toast.error(result.error ?? 'Failed to add item')
-    } else {
-      toast.success('Item added')
+    if (result?.error || !result?.item) {
+      toast.error(result?.error ?? 'Failed to add item')
+      return
     }
+    const venueMatch = type === 'venue' ? availableVenues.find((v) => v.id === id) : undefined
+    const guideMatch = type === 'guide' ? availableGuides.find((g) => g.id === id) : undefined
+    const newItem: SectionItem = {
+      ...result.item,
+      venue: venueMatch ? { id, name: venueMatch.name, photo_url: null } : null,
+      guide: guideMatch ? { id, title: guideMatch.title, cover_url: null } : null,
+    }
+    setItemOrder((prev) => ({
+      ...prev,
+      [sectionId]: [...(prev[sectionId] ?? []), newItem],
+    }))
+    toast.success('Item added')
   }
 
   return (

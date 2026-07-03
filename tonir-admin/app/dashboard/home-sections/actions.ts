@@ -15,6 +15,15 @@ async function getAdminClient() {
   return createSupabaseAdminClient()
 }
 
+export type AddedItem = {
+  id: string
+  section_id: string
+  sort_order: number
+  item_type: 'venue' | 'guide'
+  venue_id: string | null
+  guide_id: string | null
+}
+
 // ─── Section ordering ─────────────────────────────────────────────────────────
 
 export async function reorderSections(orderedIds: string[]): Promise<void> {
@@ -81,23 +90,24 @@ export async function addItem(
   sectionId: string,
   itemType: 'venue' | 'guide',
   itemId: string
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; item?: AddedItem }> {
   const supabase = await getAdminClient()
   // Determine next sort_order from current item count in this section
   const { count } = await supabase
     .from('home_section_items')
     .select('*', { count: 'exact', head: true })
     .eq('section_id', sectionId)
-  const { error } = await supabase.from('home_section_items').insert({
+  const sortOrder = count ?? 0
+  const { data, error } = await supabase.from('home_section_items').insert({
     section_id: sectionId,
     item_type:  itemType,
     venue_id:   itemType === 'venue' ? itemId : null,
     guide_id:   itemType === 'guide' ? itemId : null,
-    sort_order: count ?? 0,
-  })
+    sort_order: sortOrder,
+  }).select('id, section_id, sort_order, item_type, venue_id, guide_id').single()
   if (error) return { error: error.message }
   revalidatePath('/dashboard/home-sections')
-  return {}
+  return { item: data }
 }
 
 export async function removeItem(itemId: string): Promise<void> {
