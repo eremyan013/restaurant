@@ -293,6 +293,7 @@ export default async function ReservationsPage({
             <thead>
               <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Date / Time</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Created</th>
                 {showVenueCol && <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Venue</th>}
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Guest</th>
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Ppl</th>
@@ -309,6 +310,14 @@ export default async function ReservationsPage({
                     <td className="px-4 py-3">
                       <p className="font-medium text-zinc-900">{r.date}</p>
                       <p className="text-xs text-zinc-400">{r.time}</p>
+                    </td>
+                    <td className="px-4 py-3 tabular-nums text-xs text-zinc-400 whitespace-nowrap">
+                      {r.created_at ? (
+                        <>
+                          <p>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                          <p>{new Date(r.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</p>
+                        </>
+                      ) : '—'}
                     </td>
                     {showVenueCol && (
                       <td className="px-4 py-3 text-zinc-700">{r.venues?.name ?? '—'}</td>
