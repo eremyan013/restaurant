@@ -28,7 +28,7 @@ function UserSearch({ onSelect }: { onSelect: (u: UserResult) => void }) {
     <>
       <form action={searchAction} className="flex gap-2">
         <input name="q" type="text" placeholder="Search by name, email or player ID…" className="flex-1 px-3 py-2 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900" />
-        <button type="submit" disabled={searching} className="px-3 py-2 bg-zinc-900 text-white rounded-lg text-sm hover:bg-zinc-700 disabled:opacity-50 transition-colors">{searching ? '…' : 'Search'}</button>
+        <button type="submit" disabled={searching} className="px-3 py-1.5 bg-zinc-900 text-white rounded-lg text-xs font-medium hover:bg-zinc-700 disabled:opacity-50 transition-colors">{searching ? '…' : 'Search'}</button>
       </form>
       {searchState.results.length > 0 && (
         <div className="mt-1.5 border border-zinc-200 rounded-lg overflow-hidden">
@@ -237,13 +237,13 @@ export function NewReservationModal({ venues, defaultVenueId }: Props) {
               )}
 
               <div className="flex gap-3 pt-1">
-                <button type="button" onClick={handleClose} className="flex-1 px-4 py-2.5 text-sm font-medium border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors">
+                <button type="button" onClick={handleClose} className="flex-1 px-3 py-1.5 text-xs font-medium border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors">
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={creating || !selectedUser}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-40 transition-colors"
+                  className="flex-1 px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-40 transition-colors"
                 >
                   {creating ? 'Creating…' : 'Create Reservation'}
                 </button>
