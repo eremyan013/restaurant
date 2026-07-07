@@ -260,7 +260,7 @@ export default async function ReservationsPage({
       <ReservationFilters venues={venuesList} />
 
       {/* Status tabs */}
-      <div className="flex gap-1 mb-4 bg-zinc-100 p-1 rounded-lg w-fit overflow-x-auto">
+      <div className="flex gap-1 mb-4 bg-zinc-100 p-1 rounded-xl w-fit overflow-x-auto">
         {TABS.map((tab) => {
           const count = tab === 'all' ? total : (countMap[tab] ?? 0)
           const isActive = activeTab === tab
@@ -268,7 +268,7 @@ export default async function ReservationsPage({
             <Link
               key={tab}
               href={tabHref(tab)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
                 isActive ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
               }`}
             >
