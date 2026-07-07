@@ -34,12 +34,12 @@ export function NoteForm({ id, status, defaultNote, saveNote }: {
         name="admin_note"
         defaultValue={defaultNote}
         placeholder="Admin note…"
-        className="text-xs px-2 py-1 rounded-lg border border-zinc-200 bg-white text-zinc-700 w-32 focus:outline-none"
+        className="text-xs px-3 py-1.5 rounded-lg border border-zinc-200 bg-white text-zinc-700 w-32 focus:outline-none"
       />
       <button
         type="submit"
         disabled={isPending}
-        className={`text-xs px-2 py-1 rounded-lg transition-colors font-medium ${
+        className={`text-xs px-3 py-1.5 rounded-lg transition-colors font-medium ${
           saved
             ? 'bg-green-600 text-white'
             : 'bg-zinc-800 text-white hover:bg-zinc-600'

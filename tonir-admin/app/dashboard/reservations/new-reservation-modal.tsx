@@ -111,7 +111,7 @@ export function NewReservationModal({ venues, defaultVenueId }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="px-4 py-2 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-700 transition-colors"
+        className="px-3 py-1.5 bg-zinc-900 text-white text-xs font-medium rounded-lg hover:bg-zinc-700 transition-colors"
       >
         + New Reservation
       </button>

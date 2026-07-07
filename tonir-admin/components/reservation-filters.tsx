@@ -156,7 +156,7 @@ export function ReservationFilters({
       <div className="flex items-center gap-2 mt-3">
         <button
           type="submit"
-          className="px-4 py-1.5 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-700 transition-colors"
+          className="px-3 py-1.5 rounded-lg bg-zinc-900 text-white text-xs font-medium hover:bg-zinc-700 transition-colors"
         >
           Apply filters
         </button>
@@ -164,7 +164,7 @@ export function ReservationFilters({
           <button
             type="button"
             onClick={clearFilters}
-            className="px-4 py-1.5 rounded-lg border border-zinc-200 text-zinc-600 text-sm hover:bg-zinc-50 transition-colors"
+            className="px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-600 text-xs hover:bg-zinc-50 transition-colors"
           >
             Clear filters
           </button>
