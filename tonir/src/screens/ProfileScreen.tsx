@@ -14,7 +14,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { PALETTES, Palette, FONTS, COLORS } from '../theme';
 import { supabase } from '../lib/supabase';
 import { updateProfile, uploadAvatar, fetchTierSettings } from '../lib/api';
-import { TIER_COUNT, TIER_MIN_FALLBACKS, PROFILE_NAME_MAX_LENGTH } from '../lib/constants';
+import { TIER_COUNT, TIER_NAME_FALLBACKS, TIER_MIN_FALLBACKS, PROFILE_NAME_MAX_LENGTH } from '../lib/constants';
 import { Icon, IconName } from '../components/Icon';
 import { CompositeNavigationProp, useFocusEffect } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -39,9 +39,10 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
   const [tierUpName, setTierUpName] = useState('');
   const initialLoad = useRef(true);
   const [tierMins, setTierMins] = useState<Record<number, number>>({ ...TIER_MIN_FALLBACKS });
+  const [tierNameMap, setTierNameMap] = useState<Record<number, string>>({ ...TIER_NAME_FALLBACKS });
 
   useEffect(() => {
-    fetchTierSettings().then(({ mins }) => setTierMins(mins)).catch(() => {});
+    fetchTierSettings().then(({ mins, names }) => { setTierMins(mins); setTierNameMap(names); }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -161,7 +162,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
     { icon: 'chat',    label: tr('prof_settings_help'),     onPress: () => { haptic(); Alert.alert(tr('prof_soon_title'), trf('prof_soon_sub', { section: tr('prof_settings_help') })); } },
   ];
 
-  const tierNames = tra('prof_tier_names');
+  const tierNames = Array.from({ length: TIER_COUNT }, (_, i) => tierNameMap[i + 1] ?? TIER_NAME_FALLBACKS[i + 1]!);
 
   function signOut() {
     Alert.alert(
