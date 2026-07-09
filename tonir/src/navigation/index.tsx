@@ -174,9 +174,8 @@ const linking = {
 };
 
 export function AppNavigator() {
-  const { theme: t, pendingPhoneVerification } = useStore();
-  const [session, setSession] = useState<boolean | null>(null);          // null = still checking
-  const [seenOnboarding, setSeenOnboarding] = useState<boolean | null>(null); // null = still checking
+  const { theme: t, pendingPhoneVerification, userId, sessionChecked } = useStore();
+  const [seenOnboarding, setSeenOnboarding] = useState<boolean | null>(null);
 
   useEffect(() => {
     // Check existing session and remember-me flag on mount
@@ -188,28 +187,25 @@ export function AppNavigator() {
       ]);
       if (data.session && rememberMe === 'false') {
         await (supabase as any).auth.signOut();
-        setSession(false);
         useStore.getState().setUserId(null);
       } else {
-        setSession(!!data.session);
         useStore.getState().setUserId(data.session?.user?.id ?? null);
       }
       setSeenOnboarding(onboardingVal === 'true');
+      useStore.getState().setSessionChecked(true);
     })();
 
-    // Listen for sign-in / sign-out
+    // Keep userId in sync with Supabase auth events (sign-in via deep link, token refresh, etc.)
     const { data: { subscription } } = (supabase as any).auth.onAuthStateChange(
       (_event: string, sess: any) => {
-        const uid = sess?.user?.id ?? null;
-        setSession(!!sess);
-        useStore.getState().setUserId(uid);
+        useStore.getState().setUserId(sess?.user?.id ?? null);
       }
     );
     return () => subscription.unsubscribe();
   }, []);
 
   // Splash/loading while checking auth or onboarding flag
-  if (session === null || seenOnboarding === null) {
+  if (!sessionChecked || seenOnboarding === null) {
     return (
       <View style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator color={t.primary} size="large" />
@@ -220,7 +216,7 @@ export function AppNavigator() {
   return (
     <NavigationContainer linking={linking}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {session && !pendingPhoneVerification ? (
+        {userId && !pendingPhoneVerification ? (
           // ── Authenticated ──────────────────────────────
           <>
             <Stack.Screen name="Tabs" component={TabNavigator} />

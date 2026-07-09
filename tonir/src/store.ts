@@ -39,6 +39,10 @@ interface AppState {
   // Phone verification gate — true while new user hasn't verified their phone yet
   pendingPhoneVerification: boolean;
   setPendingPhoneVerification: (v: boolean) => void;
+
+  // Session gate — null = still checking on launch, true = logged in, false = logged out
+  sessionChecked: boolean;
+  setSessionChecked: (v: boolean) => void;
 }
 
 export interface BookingDraft {
@@ -84,6 +88,9 @@ export const useStore = create<AppState>()(
 
       pendingPhoneVerification: false,
       setPendingPhoneVerification: (pendingPhoneVerification) => set({ pendingPhoneVerification }),
+
+      sessionChecked: false,
+      setSessionChecked: (sessionChecked) => set({ sessionChecked }),
     }),
     {
       name: 'tonir-prefs',
