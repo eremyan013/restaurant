@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import Constants from 'expo-constants';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
@@ -155,8 +156,10 @@ function TabNavigator() {
   );
 }
 
+const APP_SCHEME = (Constants.expoConfig?.scheme as string | undefined) ?? 'tonir';
+
 const linking = {
-  prefixes: ['tonir://'],
+  prefixes: [`${APP_SCHEME}://`],
   config: {
     screens: {
       ReservationAction: {

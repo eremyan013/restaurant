@@ -17,6 +17,8 @@ import { FONTS } from '../theme';
 import { registerPushToken } from '../lib/notifications';
 import { CALENDAR_EVENT_DURATION_MS } from '../lib/constants';
 
+const GOOGLE_CALENDAR_URL = 'https://calendar.google.com/calendar/r/eventedit';
+
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Confirmation'>;
 };
@@ -83,7 +85,7 @@ export function ConfirmationScreen({ navigation }: Props) {
     const endDate   = new Date(startDate.getTime() + CALENDAR_EVENT_DURATION_MS);
 
     if (Platform.OS === 'web') {
-      Linking.openURL('https://calendar.google.com/calendar/r/eventedit').catch(() => {});
+      Linking.openURL(GOOGLE_CALENDAR_URL).catch(() => {});
       return;
     }
 

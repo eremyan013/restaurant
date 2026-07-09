@@ -39,6 +39,14 @@ const KIND_COLORS: Record<string, string> = {
 const MAP_FILTER_KEYS = ['all', 'restaurants', 'bars', 'tonight'] as const;
 type MapFilterKey = typeof MAP_FILTER_KEYS[number];
 
+// NOTE: buildHtml / MAP_HTML are currently unused — the screen renders Leaflet.
+// If Yandex is re-enabled, use this lookup instead of the hardcoded lang string.
+const YANDEX_LANG: Record<string, string> = {
+  hy: 'ru_RU',  // Yandex has no Armenian UI; Russian is the correct fallback
+  ru: 'ru_RU',
+  en: 'en_US',
+};
+
 const MAP_HTML = `<!DOCTYPE html>
 <html>
 <head>
@@ -87,7 +95,7 @@ const MAP_HTML = `<!DOCTYPE html>
     }
     window.addEventListener('message',function(e){try{var d=JSON.parse(e.data);if(d.type==='updateVisible')updateVisible(d.ids);else if(d.type==='selectMarker')selectMarker(d.id);}catch(err){}});
     var ys=document.createElement('script');
-    ys.src='https://api-maps.yandex.ru/v3/?apikey=__API_KEY__&lang=ru_RU';
+    ys.src='https://api-maps.yandex.ru/v3/?apikey=__API_KEY__&lang=__LANG__';
     ys.onload=function(){
       ymaps3.ready.then(function(){
         mi=new ymaps3.YMap(document.getElementById('map'),{location:{center:[44.5152,40.1872],zoom:14}});
@@ -105,7 +113,7 @@ const MAP_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
-function buildHtml(venues: VenueRow[]): string {
+function buildHtml(venues: VenueRow[], lang: string): string {
   const data = JSON.stringify(
     venues.map((v) => ({
       id: v.id,
@@ -118,16 +126,18 @@ function buildHtml(venues: VenueRow[]): string {
   );
   return MAP_HTML
     .replace('__API_KEY__', YANDEX_MAPS_API_KEY)
+    .replace('__LANG__', YANDEX_LANG[lang] ?? 'ru_RU')
     .replace('__VENUES__', data);
 }
 
 // ─── Web: Leaflet + OpenStreetMap (no API key required) ───────────────────────
+const LEAFLET_VERSION = '1.9.4';
 const LEAFLET_HTML = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@${LEAFLET_VERSION}/dist/leaflet.css">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     html,body,#map{width:100%;height:100%;overflow:hidden}
@@ -140,7 +150,7 @@ const LEAFLET_HTML = `<!DOCTYPE html>
 </head>
 <body>
   <div id="map"></div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet@${LEAFLET_VERSION}/dist/leaflet.js"></script>
   <script>
     var venues=__VENUES__;
     var mm={};

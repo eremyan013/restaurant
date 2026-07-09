@@ -1,5 +1,10 @@
+const UNSPLASH_BASE    = 'https://images.unsplash.com/photo-';
+const UNSPLASH_QUALITY = 78;
+const UNSPLASH_FORMAT  = 'format';
+const UNSPLASH_FIT     = 'crop';
+
 const P = (id: string, w = 800) =>
-  `https://images.unsplash.com/photo-${id}?w=${w}&q=78&auto=format&fit=crop`;
+  `${UNSPLASH_BASE}${id}?w=${w}&q=${UNSPLASH_QUALITY}&auto=${UNSPLASH_FORMAT}&fit=${UNSPLASH_FIT}`;
 
 export const PHOTOS = {
   steak:       P('1414235077428-338989a2e8c0'),
