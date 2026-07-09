@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, Pressable, StyleSheet, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { Theme, SHADOWS, FONTS} from '../theme';
+import { Theme, SHADOWS, FONTS, COLORS } from '../theme';
 import { VenueRow } from '../lib/database.types';
 import { Icon } from './Icon';
 import { Stars } from './Stars';
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.55)',
   },
   bookedText: {
-    color: '#fff',
+    color: COLORS.cream,
     fontSize: 11.5,
     fontFamily: FONTS.semiBold, fontWeight: '600',
   },

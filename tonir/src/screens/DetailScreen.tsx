@@ -139,11 +139,11 @@ export function DetailScreen({ navigation, route }: Props) {
           {/* Back / Share / Heart */}
           <View style={[styles.photoControls, { top: insets.top + 10 }]}>
             <Pressable onPress={() => navigation.goBack()} style={styles.glassBtn} hitSlop={3} accessibilityLabel={tr('det_back_btn')}>
-              <Icon name="chevL" size={20} color="#fff" />
+              <Icon name="chevL" size={20} color={COLORS.cream} />
             </Pressable>
             <View style={styles.rightBtns}>
               <Pressable onPress={shareVenue} style={styles.glassBtn} hitSlop={3} accessibilityLabel={tr('det_share_btn')}>
-                <Icon name="share" size={18} color="#fff" />
+                <Icon name="share" size={18} color={COLORS.cream} />
               </Pressable>
               <Pressable
                 onPress={() => {
@@ -157,7 +157,7 @@ export function DetailScreen({ navigation, route }: Props) {
                 <Icon
                   name={favs.has(venue.id) ? 'heartFill' : 'heart'}
                   size={18}
-                  color={favs.has(venue.id) ? t.pop : '#fff'}
+                  color={favs.has(venue.id) ? t.pop : COLORS.cream}
                 />
               </Pressable>
             </View>
@@ -343,7 +343,7 @@ export function DetailScreen({ navigation, route }: Props) {
                             { borderColor: t.border, backgroundColor: active ? t.primary : t.bgAlt },
                           ]}
                         >
-                          <Text style={[styles.catPillText, { color: active ? '#fff' : t.textMute }]}>
+                          <Text style={[styles.catPillText, { color: active ? COLORS.cream : t.textMute }]}>
                             {cat ? cat.name : tr('det_menu_all')}
                           </Text>
                         </Pressable>
