@@ -28,8 +28,8 @@ const LIST_KEYS = ['all', 'try', 'romantic', 'group'] as const;
 type ListKey = typeof LIST_KEYS[number];
 
 // Tag strings stored in the DB — centralised so a rename is a one-line change.
-const ROMANTIC_TAGS = ['Ինտիմ', 'Բակ', 'Պատշգամբ'] as const;
-const GROUP_TAGS    = ['Խմբեր', 'Խմբերի համար', 'Ընտանեկան'] as const;
+const ROMANTIC_TAGS = ['romantic', 'wine', 'fine-dining', 'intimate'] as const;
+const GROUP_TAGS    = ['group', 'family', 'large-party'] as const;
 
 const LIST_FILTER: Record<ListKey, (v: VenueRow) => boolean> = {
   all:      () => true,

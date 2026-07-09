@@ -80,33 +80,34 @@ export type CreateReservationResult =
   | { data: { reservation_id: string }; error: null }
   | { data: null; error: string };
 
-const EDGE_ERROR_MESSAGES: Record<string, string> = {
-  no_availability:              'No tables are available for that time. Please choose a different time or date.',
-  cancellation_deadline_passed: 'The cancellation window has passed.',
-  invalid_token:                'This link is invalid or has already been used.',
-  already_confirmed:            'This reservation is already confirmed.',
-  already_cancelled:            'This reservation has already been cancelled.',
+const EDGE_ERROR_KEY: Record<string, string> = {
+  no_availability:              'err_no_availability',
+  cancellation_deadline_passed: 'err_cancellation_deadline_passed',
+  invalid_token:                'err_invalid_token',
+  already_confirmed:            'err_already_confirmed',
+  already_cancelled:            'err_already_cancelled',
 };
 
-function mapEdgeError(raw: unknown, fallback: string): string {
-  if (typeof raw === 'string' && EDGE_ERROR_MESSAGES[raw]) return EDGE_ERROR_MESSAGES[raw]!;
+function mapEdgeError(raw: unknown, fallbackKey: string, tr: (k: string) => string): string {
+  if (typeof raw === 'string' && EDGE_ERROR_KEY[raw]) return tr(EDGE_ERROR_KEY[raw]!);
   if (typeof raw === 'object' && raw !== null) {
     const code = (raw as Record<string, unknown>)['code'] ?? (raw as Record<string, unknown>)['error'];
-    if (typeof code === 'string' && EDGE_ERROR_MESSAGES[code]) return EDGE_ERROR_MESSAGES[code]!;
+    if (typeof code === 'string' && EDGE_ERROR_KEY[code]) return tr(EDGE_ERROR_KEY[code]!);
   }
-  return fallback;
+  return tr(fallbackKey);
 }
 
 export async function createReservation(
-  payload: CreateReservationPayload
+  payload: CreateReservationPayload,
+  tr: (k: string) => string
 ): Promise<CreateReservationResult> {
   const { data, error } = await sb.functions.invoke('create-reservation', { body: payload });
   if (error) {
-    return { data: null, error: mapEdgeError(error?.context, 'Booking failed. Please try again.') };
+    return { data: null, error: mapEdgeError(error?.context, 'err_booking_failed', tr) };
   }
   const id = (data as Record<string, unknown>)?.reservation_id ?? (data as Record<string, unknown>)?.id;
   if (!id) {
-    return { data: null, error: 'Booking failed. Please try again.' };
+    return { data: null, error: tr('err_booking_failed') };
   }
   return { data: { reservation_id: String(id) }, error: null };
 }
@@ -121,21 +122,23 @@ export type ReservationActionResult =
   | { data: null; error: string };
 
 export async function confirmReservationByToken(
-  token: string
+  token: string,
+  tr: (k: string) => string
 ): Promise<ReservationActionResult> {
   const { data, error } = await sb.functions.invoke('confirm-reservation', { body: { token } });
   if (error) {
-    return { data: null, error: mapEdgeError(error?.context, 'Could not confirm reservation. Please try again.') };
+    return { data: null, error: mapEdgeError(error?.context, 'err_confirm_failed', tr) };
   }
   return { data: { status: (data as Record<string, unknown>)?.status as string ?? 'confirmed' }, error: null };
 }
 
 export async function cancelReservationByToken(
-  token: string
+  token: string,
+  tr: (k: string) => string
 ): Promise<ReservationActionResult> {
   const { data, error } = await sb.functions.invoke('cancel-reservation', { body: { token } });
   if (error) {
-    return { data: null, error: mapEdgeError(error?.context, 'Could not cancel reservation. Please try again.') };
+    return { data: null, error: mapEdgeError(error?.context, 'err_cancel_failed', tr) };
   }
   return { data: { status: (data as Record<string, unknown>)?.status as string ?? 'cancelled' }, error: null };
 }

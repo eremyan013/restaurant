@@ -98,7 +98,9 @@ export function SearchScreen({ navigation }: { navigation: Nav }) {
       );
     }
     if (activeFilter === 'wine') list = list.filter((v) => v.kind === 'bar');
-    if (activeFilter === 'armenian') list = list.filter((v) => v.cuisine.includes('Հայկ'));
+    if (activeFilter === 'armenian') list = list.filter(
+      (v) => v.tags.includes('armenian') || v.cuisine_en?.toLowerCase().includes('armenian')
+    );
     return list;
   }, [debouncedQuery, activeFilter, venuesWithDist, userLocation]);
 

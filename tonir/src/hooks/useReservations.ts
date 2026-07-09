@@ -3,9 +3,11 @@ import { fetchReservations, createReservation, cancelReservation, CreateReservat
 import { ReservationRow } from '../lib/database.types';
 import { useStore } from '../store';
 import { supabase } from '../lib/supabase';
+import { useTranslation } from './useTranslation';
 
 export function useReservations() {
   const { userId, setUpcomingCount } = useStore();
+  const { tr } = useTranslation();
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,13 +76,13 @@ export function useReservations() {
     async (data: Omit<ReservationRow, 'id' | 'created_at' | 'updated_at' | 'user_id'>): Promise<void> => {
       if (!userId) throw new Error('Not logged in');
       const payload: CreateReservationPayload = { ...data, user_id: userId };
-      const result = await createReservation(payload);
+      const result = await createReservation(payload, tr);
       if (result.error) {
         throw new Error(result.error);
       }
       // The realtime subscription (lines 29-58) will push the inserted row into state.
     },
-    [userId]
+    [userId, tr]
   );
 
   const cancel = useCallback(async (id: string) => {

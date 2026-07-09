@@ -41,15 +41,15 @@ export function ReservationActionScreen({ navigation, route }: Props) {
     async function run() {
       const result =
         action === 'confirm'
-          ? await confirmReservationByToken(token)
-          : await cancelReservationByToken(token);
+          ? await confirmReservationByToken(token, tr)
+          : await cancelReservationByToken(token, tr);
 
       if (cancelled) return;
 
       if (result.error) {
         const isAlreadyDone =
-          result.error.toLowerCase().includes('already confirmed') ||
-          result.error.toLowerCase().includes('already cancelled');
+          result.error === tr('err_already_confirmed') ||
+          result.error === tr('err_already_cancelled');
 
         if (isAlreadyDone) {
           if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
