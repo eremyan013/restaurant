@@ -60,7 +60,7 @@ const MAP_HTML = `<!DOCTYPE html>
     .pb{width:36px;height:36px;border-radius:18px;border:2.5px solid #fff;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3);transition:transform .15s,box-shadow .15s;position:relative}
     .pb img{width:100%;height:100%;object-fit:cover}
     .pt{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:10px solid;margin-top:-1px}
-    .hd{position:absolute;top:-1px;right:-1px;width:10px;height:10px;border-radius:5px;background:#E8743B;border:1.5px solid #fff}
+    .hd{position:absolute;top:-1px;right:-1px;width:10px;height:10px;border-radius:5px;background:__COLOR_POP__;border:1.5px solid #fff}
   </style>
 </head>
 <body>
@@ -128,6 +128,7 @@ function buildHtml(venues: VenueRow[], lang: string): string {
     .replace('__API_KEY__', YANDEX_MAPS_API_KEY)
     .replace('__LANG__', YANDEX_LANG[lang] ?? 'ru_RU')
     .replace('__VENUES__', data)
+    .replace('__COLOR_POP__', COLORS.pop)
     .replace(
       /var kc=\{[^}]+\};/,
       `var kc=${JSON.stringify({
@@ -154,7 +155,7 @@ const LEAFLET_HTML = `<!DOCTYPE html>
     .lb{width:36px;height:36px;border-radius:50%;border:2.5px solid #fff;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3);position:relative;transition:transform .15s}
     .lb img{width:100%;height:100%;object-fit:cover}
     .lt{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:10px solid;margin:0 auto;margin-top:-1px}
-    .lh{position:absolute;top:-1px;right:-1px;width:10px;height:10px;border-radius:5px;background:#E8743B;border:1.5px solid #fff}
+    .lh{position:absolute;top:-1px;right:-1px;width:10px;height:10px;border-radius:5px;background:__COLOR_POP__;border:1.5px solid #fff}
   </style>
 </head>
 <body>
@@ -204,6 +205,7 @@ function buildLeafletHtml(venues: VenueRow[]): string {
   );
   return LEAFLET_HTML
     .replace('__VENUES__', data)
+    .replace('__COLOR_POP__', COLORS.pop)
     .replace(
       /var kc=\{[^}]+\};/,
       `var kc=${JSON.stringify({
