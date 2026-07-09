@@ -44,7 +44,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
 
   const { venues } = useVenues();
   const { upcoming, past, loading, error, retry, cancel } = useReservations();
-  const { profile } = useProfile();
+  const { profile, refetch: refetchProfile } = useProfile();
   const [refreshing, setRefreshing] = useState(false);
 
   // Rating modal state
@@ -96,6 +96,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
   function onRefresh() {
     setRefreshing(true);
     retry();
+    refetchProfile();
   }
 
   const reservations = tab === 'upcoming' ? upcoming : past;

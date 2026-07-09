@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, Pressable, Image, StyleSheet, StatusBar, Switch, ActivityIndicator, Alert, Platform,
-  Modal, TextInput, KeyboardAvoidingView,
+  Modal, TextInput, KeyboardAvoidingView, RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,6 +32,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
   const insets = useSafeAreaInsets();
   const { profile, loading, refetch } = useProfile();
   const { tr, tra, trf } = useTranslation();
+  const [refreshing, setRefreshing] = useState(false);
 
   const [tierUpVisible, setTierUpVisible] = useState(false);
   const [tierUpName, setTierUpName] = useState('');
@@ -180,6 +181,14 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 16, paddingBottom: 120 }]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); refetch(); setTimeout(() => setRefreshing(false), 1000); }}
+            tintColor={t.primary}
+            colors={[t.primary]}
+          />
+        }
       >
         {/* User card */}
         <View style={[styles.userCard, { backgroundColor: t.surface, borderColor: t.border }]}>
