@@ -36,13 +36,13 @@ async function setStatus(id: string, status: ReservationRow['status']) {
   const supabase = createSupabaseAdminClient()
 
   type ResRow = {
-    user_id: string; venue_id: string; date: string; time: string
+    user_id: string; venue_id: string; date: string; time: string; status: string; yel_earned: string | null
     venues: { name: string } | null
     profiles: { push_token: string | null } | null
   }
   const { data: res } = await supabase
     .from('reservations')
-    .select('user_id, venue_id, date, time, venues(name), profiles(push_token)')
+    .select('user_id, venue_id, date, time, status, yel_earned, venues(name), profiles(push_token)')
     .eq('id', id)
     .single() as unknown as { data: ResRow | null }
 
@@ -52,6 +52,22 @@ async function setStatus(id: string, status: ReservationRow['status']) {
   await supabase.from('reservations').update({ status }).eq('id', id)
   await logActivity(admin, status === 'confirmed' ? 'confirm_reservation' : status === 'cancelled' ? 'cancel_reservation' : status === 'visited' ? 'mark_visited' : 'confirm_reservation',
     'reservation', id, `${res.venues?.name ?? ''} – ${res.date} ${res.time}`)
+
+  // Credit YEL and increment visit count on first transition to visited
+  if (status === 'visited' && res.status !== 'visited') {
+    const yelEarned = Number(res.yel_earned ?? 0)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('yel_points, total_visits')
+      .eq('id', res.user_id)
+      .single()
+    if (profile) {
+      await supabase.from('profiles').update({
+        total_visits: (profile.total_visits ?? 0) + 1,
+        ...(yelEarned > 0 && { yel_points: (profile.yel_points ?? 0) + yelEarned }),
+      }).eq('id', res.user_id)
+    }
+  }
 
   if (res?.profiles?.push_token && (status === 'confirmed' || status === 'cancelled')) {
     const venueName: string = res.venues?.name ?? 'your reservation'
