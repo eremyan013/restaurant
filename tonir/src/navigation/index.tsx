@@ -12,7 +12,7 @@ import * as Notifications from 'expo-notifications';
 import { useStore } from '../store';
 import { useTranslation } from '../hooks/useTranslation';
 import { Icon, IconName } from '../components/Icon';
-import { SHADOWS, FONTS} from '../theme';
+import { SHADOWS, FONTS, COLORS } from '../theme';
 import { supabase } from '../lib/supabase';
 
 // Show notifications while app is in foreground
@@ -110,14 +110,14 @@ function CustomTabBar({ state, navigation }: any) {
               }}
               style={[
                 styles.tabItem,
-                active && [styles.tabItemActive, { backgroundColor: '#FBF5E8' }],
+                active && [styles.tabItemActive, { backgroundColor: COLORS.cream }],
               ]}
             >
               <View style={{ position: 'relative' }}>
                 <Icon
                   name={item.icon}
                   size={20}
-                  color={active ? t.primaryDeep : 'rgba(251,245,232,0.85)'}
+                  color={active ? t.primaryDeep : 'rgba(251,245,232,0.85)' /* COLORS.cream at 85% opacity */}
                   strokeWidth={active ? 2 : 1.7}
                 />
                 {item.name === 'Reservations' && upcomingCount > 0 && (
@@ -331,13 +331,13 @@ const styles = StyleSheet.create({
     minWidth: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#E8743B',
+    backgroundColor: COLORS.pop,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 3,
   },
   badgeText: {
-    color: '#FBF5E8',
+    color: COLORS.cream,
     fontSize: 9,
     fontFamily: FONTS.extraBold, fontWeight: '800',
   },

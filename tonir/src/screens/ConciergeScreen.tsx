@@ -14,7 +14,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import { useTranslation } from '../hooks/useTranslation';
 import { Icon } from '../components/Icon';
 import { HeroCard } from '../components/HeroCard';
-import { FONTS } from '../theme';
+import { FONTS, COLORS } from '../theme';
 import { CONCIERGE_ESCALATION_THRESHOLD, CONCIERGE_TYPING_DELAY_MS, CONCIERGE_FALLBACK_RATING_MIN } from '../lib/constants';
 import { VenueRow } from '../lib/database.types';
 
@@ -330,7 +330,7 @@ export function ConciergeScreen({ navigation }: Props) {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: t.primaryDeep, paddingTop: insets.top + 12 }]}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-          <Icon name="chevL" size={22} color="#FBF5E8" />
+          <Icon name="chevL" size={22} color={COLORS.cream} />
         </Pressable>
         <View style={[styles.headerAvatar, { backgroundColor: t.accent }]}>
           <Icon name="sparkle" size={18} color={t.primaryDeep} strokeWidth={2} />
@@ -394,7 +394,7 @@ export function ConciergeScreen({ navigation }: Props) {
                   ? [styles.bubbleUser, { backgroundColor: t.primary }]
                   : [styles.bubbleConcierge, { backgroundColor: t.surface, borderColor: t.border }],
               ]}>
-                <Text style={[styles.bubbleText, { color: msg.role === 'user' ? '#FBF5E8' : t.text }]}>
+                <Text style={[styles.bubbleText, { color: msg.role === 'user' ? COLORS.cream : t.text }]}>
                   {msg.text}
                 </Text>
               </View>
@@ -468,7 +468,7 @@ export function ConciergeScreen({ navigation }: Props) {
             accessibilityRole="button"
             accessibilityLabel={tr('conc_send_label' as any)}
           >
-            <Icon name="arrow" size={18} color="#FBF5E8" strokeWidth={2} />
+            <Icon name="arrow" size={18} color={COLORS.cream} strokeWidth={2} />
           </Pressable>
         </View>
       </View>
@@ -494,9 +494,9 @@ const styles = StyleSheet.create({
   onlineDot: {
     position: 'absolute', bottom: 1, right: 1,
     width: 10, height: 10, borderRadius: 5,
-    backgroundColor: '#6FCF97', borderWidth: 1.5, borderColor: '#14352A',
+    backgroundColor: COLORS.successGreen, borderWidth: 1.5, borderColor: COLORS.primaryDeep,
   },
-  headerName: { color: '#FBF5E8', fontSize: 15, fontFamily: FONTS.bold, fontWeight: '700' },
+  headerName: { color: COLORS.cream, fontSize: 15, fontFamily: FONTS.bold, fontWeight: '700' },
   headerSub: { color: 'rgba(251,245,232,0.6)', fontSize: 11.5, marginTop: 1 },
   messages: { padding: 16, gap: 12 },
   msgRow: { flexDirection: 'row', maxWidth: '82%' },

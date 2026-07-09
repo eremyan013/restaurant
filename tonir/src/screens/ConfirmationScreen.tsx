@@ -13,7 +13,7 @@ import { useStore } from '../store';
 import { useVenue } from '../hooks/useVenues';
 import { useTranslation } from '../hooks/useTranslation';
 import { Icon } from '../components/Icon';
-import { FONTS } from '../theme';
+import { FONTS, COLORS } from '../theme';
 import { registerPushToken } from '../lib/notifications';
 import { CALENDAR_EVENT_DURATION_MS } from '../lib/constants';
 
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   heroTitle: {
-    color: '#FBF5E8',
+    color: COLORS.cream,
     fontSize: 24,
     fontFamily: FONTS.extraBold, fontWeight: '800',
     textAlign: 'center',
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   heroSub: {
-    color: 'rgba(251,245,232,0.65)',
+    color: COLORS.creamAlpha65,
     fontSize: 13,
     fontFamily: FONTS.regular,
     textAlign: 'center',

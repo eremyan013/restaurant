@@ -16,7 +16,7 @@ import { RootStackParamList } from '../navigation';
 import { useStore } from '../store';
 import { useTranslation } from '../hooks/useTranslation';
 import { Icon } from '../components/Icon';
-import { FONTS } from '../theme';
+import { FONTS, COLORS } from '../theme';
 import { confirmReservationByToken, cancelReservationByToken } from '../lib/api';
 
 type Props = {
@@ -73,9 +73,9 @@ export function ReservationActionScreen({ navigation, route }: Props) {
 
   const heroBg = {
     loading: t.primaryDeep ?? '#1A1208',
-    success: isConfirm ? (t.primaryDeep ?? '#1A1208') : '#8B2020',
-    already_done: isConfirm ? (t.primaryDeep ?? '#1A1208') : '#8B2020',
-    error: '#5C2020',
+    success: isConfirm ? (t.primaryDeep ?? '#1A1208') : COLORS.cancelHero,
+    already_done: isConfirm ? (t.primaryDeep ?? '#1A1208') : COLORS.cancelHero,
+    error: COLORS.cancelHeroDeep,
   }[screenState];
 
   const heroTitle = {
@@ -114,9 +114,9 @@ export function ReservationActionScreen({ navigation, route }: Props) {
       >
         <View style={[styles.iconCircle, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
           {screenState === 'loading' ? (
-            <ActivityIndicator color="#FBF5E8" size="large" />
+            <ActivityIndicator color={COLORS.cream} size="large" />
           ) : (
-            <Icon name={heroIconName as any} size={30} color="#FBF5E8" strokeWidth={2.5} />
+            <Icon name={heroIconName as any} size={30} color={COLORS.cream} strokeWidth={2.5} />
           )}
         </View>
         <Text style={styles.heroTitle}>{heroTitle}</Text>
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     marginBottom: 22,
   },
   heroTitle: {
-    color: '#FBF5E8',
+    color: COLORS.cream,
     fontSize: 24,
     fontFamily: FONTS.extraBold,
     fontWeight: '800',
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   heroSub: {
-    color: 'rgba(251,245,232,0.65)',
+    color: COLORS.creamAlpha65,
     fontSize: 13,
     fontFamily: FONTS.regular,
     textAlign: 'center',
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   doneBtnText: {
-    color: '#FBF5E8',
+    color: COLORS.cream,
     fontSize: 15,
     fontFamily: FONTS.bold,
     fontWeight: '700',

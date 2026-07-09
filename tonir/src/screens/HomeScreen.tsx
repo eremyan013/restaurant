@@ -22,7 +22,7 @@ import { Chip } from '../components/Chip';
 import { HeroCard } from '../components/HeroCard';
 import { GuideCard } from '../components/GuideCard';
 import { ErrorState } from '../components/ErrorState';
-import { FONTS } from '../theme';
+import { FONTS, COLORS } from '../theme';
 import { LANG_FLAGS, LANGS } from '../i18n';
 import { useTranslation } from '../hooks/useTranslation';
 import { LOYALTY_TIER_INCREMENT } from '../lib/constants';
@@ -109,7 +109,7 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
                 colors={[t.accent, t.primary]}
                 style={styles.conciergeBtnGradient}
               >
-                <Icon name="sparkle" size={18} color="#FBF5E8" strokeWidth={2} />
+                <Icon name="sparkle" size={18} color={COLORS.cream} strokeWidth={2} />
               </LinearGradient>
             </Pressable>
           </View>
@@ -388,12 +388,12 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   heatTitle: {
-    color: '#FBF5E8',
+    color: COLORS.cream,
     fontSize: 13,
     fontFamily: FONTS.semiBold, fontWeight: '600',
   },
   heatSub: {
-    color: 'rgba(251,245,232,0.65)',
+    color: COLORS.creamAlpha65,
     fontSize: 11.5,
   },
   mapPill: {
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   loyaltyPoints: {
-    color: '#FBF5E8',
+    color: COLORS.cream,
     fontSize: 18,
     fontFamily: FONTS.extraBold, fontWeight: '800',
     letterSpacing: -0.4,
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   redeemText: {
-    color: '#FBF5E8',
+    color: COLORS.cream,
     fontSize: 13,
     fontFamily: FONTS.semiBold, fontWeight: '600',
   },

@@ -11,7 +11,7 @@ import * as Haptics from 'expo-haptics';
 import { useStore } from '../store';
 import { useProfile } from '../hooks/useProfile';
 import { useTranslation } from '../hooks/useTranslation';
-import { PALETTES, Palette, FONTS} from '../theme';
+import { PALETTES, Palette, FONTS, COLORS } from '../theme';
 import { supabase } from '../lib/supabase';
 import { updateProfile, uploadAvatar, fetchTierSettings } from '../lib/api';
 import { TIER_COUNT, TIER_MIN_FALLBACKS, PROFILE_NAME_MAX_LENGTH } from '../lib/constants';
@@ -207,7 +207,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
 
             </View>
             <View style={[styles.cameraBadge, { backgroundColor: t.primary, borderColor: t.surface }]}>
-              <Icon name="camera" size={10} color="#FBF5E8" strokeWidth={2} />
+              <Icon name="camera" size={10} color={COLORS.cream} strokeWidth={2} />
             </View>
           </Pressable>
           <View style={{ flex: 1 }}>
@@ -263,8 +263,8 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
                   styles.tierItem,
                   {
                     color: i <= user.tier_level - 1
-                      ? '#FBF5E8'
-                      : 'rgba(251,245,232,0.4)',
+                      ? COLORS.cream
+                      : 'rgba(251,245,232,0.4)', /* COLORS.cream at 40% opacity */
                     fontFamily: i === user.tier_level - 1 ? FONTS.bold : FONTS.regular,
                     fontWeight: i === user.tier_level - 1 ? '700' : '400',
                   },
@@ -335,7 +335,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
               value={dark}
               onValueChange={(val) => { haptic(); setDark(val); }}
               trackColor={{ false: t.border, true: t.primary }}
-              thumbColor={dark ? t.accent : '#FBF5E8'}
+              thumbColor={dark ? t.accent : COLORS.cream}
             />
           </View>
 
@@ -355,7 +355,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
                   ]}
                 >
                   {active && (
-                    <Icon name="check" size={14} color="#FBF5E8" strokeWidth={2.5} />
+                    <Icon name="check" size={14} color={COLORS.cream} strokeWidth={2.5} />
                   )}
                 </Pressable>
               );
@@ -367,10 +367,10 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
         {/* Sign out */}
         <Pressable
           onPress={signOut}
-          style={[styles.signOutBtn, { borderColor: `#9B233540` }]}
+          style={[styles.signOutBtn, { borderColor: `${COLORS.danger}40` }]}
         >
           <View style={{ transform: [{ rotate: '180deg' }] }}>
-            <Icon name="arrow" size={16} color="#9B2335" strokeWidth={2} />
+            <Icon name="arrow" size={16} color={COLORS.danger} strokeWidth={2} />
           </View>
           <Text style={styles.signOutText}>{tr('prof_signout')}</Text>
         </Pressable>
@@ -394,7 +394,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
                 onPress={() => { haptic(); setTierUpVisible(false); (navigation as any).navigate('MyPrizes'); }}
                 style={[tierStyles.btn, tierStyles.btnPrimary, { backgroundColor: t.primary }]}
               >
-                <Text style={[tierStyles.btnText, { color: '#FBF5E8' }]}>{tr('tierup_cta')}</Text>
+                <Text style={[tierStyles.btnText, { color: COLORS.cream }]}>{tr('tierup_cta')}</Text>
               </Pressable>
               <Pressable
                 onPress={() => { haptic(); setTierUpVisible(false); }}
@@ -444,17 +444,17 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
                     hitSlop={8}
                     style={{ marginTop: 4 }}
                   >
-                    <Text style={[styles.avatarPickerLabel, { color: '#9B2335', fontSize: 12 }]}>{tr('prof_edit_remove_photo')}</Text>
+                    <Text style={[styles.avatarPickerLabel, { color: COLORS.danger, fontSize: 12 }]}>{tr('prof_edit_remove_photo')}</Text>
                   </Pressable>
                 )}
               </Pressable>
 
               {/* Name field */}
-              <View style={[styles.fieldWrap, { backgroundColor: t.surface, borderColor: editName.trim().length > PROFILE_NAME_MAX_LENGTH ? '#9B2335' : t.border }]}>
+              <View style={[styles.fieldWrap, { backgroundColor: t.surface, borderColor: editName.trim().length > PROFILE_NAME_MAX_LENGTH ? COLORS.danger : t.border }]}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text style={[styles.fieldLabel, { color: t.textMute }]}>{tr('prof_edit_name')}</Text>
                   {editName.length > 40 && (
-                    <Text style={[styles.fieldLabel, { color: editName.trim().length > PROFILE_NAME_MAX_LENGTH ? '#9B2335' : t.textFaint }]}>
+                    <Text style={[styles.fieldLabel, { color: editName.trim().length > PROFILE_NAME_MAX_LENGTH ? COLORS.danger : t.textFaint }]}>
                       {editName.trim().length}/{PROFILE_NAME_MAX_LENGTH}
                     </Text>
                   )}
@@ -547,14 +547,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(201,169,97,0.15)',
   },
   yelEyebrow: {
-    color: 'rgba(251,245,232,0.65)',
+    color: COLORS.creamAlpha65,
     fontSize: 11,
     fontFamily: FONTS.semiBold, fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   yelPoints: {
-    color: '#FBF5E8',
+    color: COLORS.cream,
     fontSize: 34,
     fontFamily: FONTS.extraBold, fontWeight: '800',
     letterSpacing: -0.8,
@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   signOutText: {
-    color: '#9B2335',
+    color: COLORS.danger,
     fontSize: 14,
     fontFamily: FONTS.semiBold, fontWeight: '600',
   },
@@ -716,7 +716,7 @@ const styles = StyleSheet.create({
   },
   fieldLabel: { fontSize: 11, fontFamily: FONTS.medium, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.5 },
   fieldInput: { fontSize: 15, padding: 0 },
-  editErrorText: { color: '#9B2335', fontSize: 13, textAlign: 'center' },
+  editErrorText: { color: COLORS.danger, fontSize: 13, textAlign: 'center' },
 });
 
 const tierStyles = StyleSheet.create({

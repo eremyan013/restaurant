@@ -17,7 +17,7 @@ import { VenueRow } from '../lib/database.types';
 import { Icon } from '../components/Icon';
 import { Stars } from '../components/Stars';
 import { TimePill } from '../components/TimePill';
-import { FONTS } from '../theme';
+import { FONTS, COLORS } from '../theme';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Obtain a free key at https://developer.tech.yandex.ru
@@ -30,10 +30,10 @@ type Props = {
 };
 
 const KIND_COLORS: Record<string, string> = {
-  restaurant: '#1F4D3E',
-  bar: '#C9A961',
-  lounge: '#9B59B6',
-  club: '#E8743B',
+  restaurant: COLORS.primary,
+  bar: COLORS.accent,
+  lounge: COLORS.loungeColor,
+  club: COLORS.pop,
 };
 
 const MAP_FILTER_KEYS = ['all', 'restaurants', 'bars', 'tonight'] as const;
@@ -127,7 +127,16 @@ function buildHtml(venues: VenueRow[], lang: string): string {
   return MAP_HTML
     .replace('__API_KEY__', YANDEX_MAPS_API_KEY)
     .replace('__LANG__', YANDEX_LANG[lang] ?? 'ru_RU')
-    .replace('__VENUES__', data);
+    .replace('__VENUES__', data)
+    .replace(
+      /var kc=\{[^}]+\};/,
+      `var kc=${JSON.stringify({
+        restaurant: COLORS.primary,
+        bar:        COLORS.accent,
+        lounge:     COLORS.loungeColor,
+        club:       COLORS.pop,
+      })};`
+    );
 }
 
 // ─── Web: Leaflet + OpenStreetMap (no API key required) ───────────────────────
@@ -193,7 +202,17 @@ function buildLeafletHtml(venues: VenueRow[]): string {
       heat: v.heat,
     }))
   );
-  return LEAFLET_HTML.replace('__VENUES__', data);
+  return LEAFLET_HTML
+    .replace('__VENUES__', data)
+    .replace(
+      /var kc=\{[^}]+\};/,
+      `var kc=${JSON.stringify({
+        restaurant: COLORS.primary,
+        bar:        COLORS.accent,
+        lounge:     COLORS.loungeColor,
+        club:       COLORS.pop,
+      })};`
+    );
 }
 
 export function MapScreen({ navigation, route }: Props) {
@@ -345,7 +364,7 @@ export function MapScreen({ navigation, route }: Props) {
                 },
               ]}
             >
-              <Text style={[styles.filterChipText, { color: activeFilter === f ? '#FBF5E8' : t.text }]}>
+              <Text style={[styles.filterChipText, { color: activeFilter === f ? COLORS.cream : t.text }]}>
                 {tr(`map_filter_${f}` as any)}
               </Text>
             </Pressable>
@@ -406,7 +425,7 @@ export function MapScreen({ navigation, route }: Props) {
             onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.goBack(); }}
             style={[styles.listCtaBtn, { backgroundColor: t.primaryDeep }]}
           >
-            <Icon name="search" size={16} color="#FBF5E8" strokeWidth={2} />
+            <Icon name="search" size={16} color={COLORS.cream} strokeWidth={2} />
             <Text style={styles.listCtaText}>{tr('map_list_view' as any)}</Text>
           </Pressable>
         </View>
@@ -537,7 +556,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   listCtaText: {
-    color: '#FBF5E8',
+    color: COLORS.cream,
     fontSize: 14,
     fontFamily: FONTS.semiBold, fontWeight: '600',
   },

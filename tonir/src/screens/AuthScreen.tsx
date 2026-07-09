@@ -14,7 +14,7 @@ import { useStore } from '../store';
 import { useTranslation } from '../hooks/useTranslation';
 import { supabase } from '../lib/supabase';
 import { Icon } from '../components/Icon';
-import { FONTS } from '../theme';
+import { FONTS, COLORS } from '../theme';
 import { AUTH_COUNTRY_CODE, AUTH_PHONE_DIGIT_COUNT, AUTH_PHONE_REGEX, AUTH_PASSWORD_MIN_LENGTH } from '../lib/constants';
 
 type Props = {
@@ -185,7 +185,7 @@ export function AuthScreen({ navigation }: Props) {
               accessibilityLabel={tr('auth_signin')}
               accessibilityRole="button"
             >
-              <Text style={[styles.toggleText, { color: mode === 'signin' ? '#FBF5E8' : t.text }]}>
+              <Text style={[styles.toggleText, { color: mode === 'signin' ? COLORS.cream : t.text }]}>
                 {tr('auth_signin')}
               </Text>
             </Pressable>
@@ -195,7 +195,7 @@ export function AuthScreen({ navigation }: Props) {
               accessibilityLabel={tr('auth_signup')}
               accessibilityRole="button"
             >
-              <Text style={[styles.toggleText, { color: mode === 'signup' ? '#FBF5E8' : t.text }]}>
+              <Text style={[styles.toggleText, { color: mode === 'signup' ? COLORS.cream : t.text }]}>
                 {tr('auth_signup')}
               </Text>
             </Pressable>
@@ -288,7 +288,7 @@ export function AuthScreen({ navigation }: Props) {
                 { borderColor: rememberMe ? t.primary : t.border },
                 rememberMe && { backgroundColor: t.primary },
               ]}>
-                {rememberMe && <Icon name="check" size={11} color="#FBF5E8" strokeWidth={2.5} />}
+                {rememberMe && <Icon name="check" size={11} color={COLORS.cream} strokeWidth={2.5} />}
               </View>
               <Text style={[styles.rememberLabel, { color: t.textMute }]}>{tr('auth_remember_me')}</Text>
             </Pressable>
@@ -299,10 +299,10 @@ export function AuthScreen({ navigation }: Props) {
             <View style={[
               styles.errorBox,
               isInfo
-                ? { backgroundColor: '#1F4D3E20', borderColor: '#1F4D3E40' }
-                : { backgroundColor: '#9B233520', borderColor: '#9B233540' },
+                ? { backgroundColor: `${COLORS.primary}20`, borderColor: `${COLORS.primary}40` }
+                : { backgroundColor: `${COLORS.danger}20`, borderColor: `${COLORS.danger}40` },
             ]}>
-              <Icon name={isInfo ? 'check' : 'x'} size={14} color={isInfo ? '#1F4D3E' : '#9B2335'} strokeWidth={2} />
+              <Icon name={isInfo ? 'check' : 'x'} size={14} color={isInfo ? COLORS.primary : COLORS.danger} strokeWidth={2} />
               <Text style={[styles.errorText, isInfo && { color: '#1F4D3E' }]}>{error}</Text>
             </View>
           )}
@@ -319,13 +319,13 @@ export function AuthScreen({ navigation }: Props) {
             accessibilityRole="button"
           >
             {loading ? (
-              <ActivityIndicator color="#FBF5E8" />
+              <ActivityIndicator color={COLORS.cream} />
             ) : (
               <>
                 <Text style={styles.submitText}>
                   {mode === 'signin' ? tr('auth_submit_signin') : tr('auth_submit_signup')}
                 </Text>
-                <Icon name="arrow" size={18} color="#FBF5E8" strokeWidth={2} />
+                <Icon name="arrow" size={18} color={COLORS.cream} strokeWidth={2} />
               </>
             )}
           </Pressable>
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     top: 52,
   },
   brandTitle: {
-    color: '#FBF5E8',
+    color: COLORS.cream,
     fontSize: 32,
     fontFamily: FONTS.extraBold, fontWeight: '800',
     letterSpacing: -0.8,
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
   },
-  errorText: { color: '#9B2335', fontSize: 13, flex: 1 },
+  errorText: { color: COLORS.danger, fontSize: 13, flex: 1 },
   submitBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginTop: 4,
   },
-  submitText: { color: '#FBF5E8', fontSize: 15, fontFamily: FONTS.bold, fontWeight: '700' },
+  submitText: { color: COLORS.cream, fontSize: 15, fontFamily: FONTS.bold, fontWeight: '700' },
   switchHint: { textAlign: 'center', fontSize: 13, marginTop: 4 },
   rememberRow: {
     flexDirection: 'row',

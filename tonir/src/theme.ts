@@ -33,6 +33,25 @@ export const COLORS = {
   cream: '#FBF5E8',
   white: '#FFFFFF',
   black: '#000000',
+
+  // Semantic — fixed-meaning colors outside the palette-swappable theme
+  danger:         '#9B2335',
+  cancelHero:     '#8B2020',
+  cancelHeroDeep: '#5C2020',
+
+  // Venue open/closed status
+  openGreen:     '#22C55E',
+  openGreenText: '#16A34A',
+  closedRed:     '#EF4444',
+  closedRedText: '#DC2626',
+
+  // Contextual accents
+  successGreen: '#6FCF97',
+  popularAmber: '#FBBF24',
+  loungeColor:  '#9B59B6',
+
+  // Cream at opacity (used on dark backgrounds across 3+ files)
+  creamAlpha65: 'rgba(251,245,232,0.65)',
 } as const;
 
 export type Palette = 'green' | 'red' | 'terracotta' | 'navy';

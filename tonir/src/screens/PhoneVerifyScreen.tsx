@@ -14,7 +14,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { supabase } from '../lib/supabase';
 import { sendPhoneOtp, verifyPhoneOtp } from '../lib/api';
 import { Icon } from '../components/Icon';
-import { FONTS } from '../theme';
+import { FONTS, COLORS } from '../theme';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'PhoneVerify'>;
@@ -225,7 +225,7 @@ export function PhoneVerifyScreen({ navigation, route }: Props) {
                     borderColor: digit ? t.primary : t.border,
                     color: t.text,
                   },
-                  error ? { borderColor: '#9B2335' } : undefined,
+                  error ? { borderColor: COLORS.danger } : undefined,
                 ]}
                 caretHidden
               />
@@ -234,8 +234,8 @@ export function PhoneVerifyScreen({ navigation, route }: Props) {
 
           {/* Error */}
           {error && (
-            <View style={[styles.errorBox, { backgroundColor: '#9B233520', borderColor: '#9B233540' }]}>
-              <Icon name="x" size={14} color="#9B2335" strokeWidth={2} />
+            <View style={[styles.errorBox, { backgroundColor: `${COLORS.danger}20`, borderColor: `${COLORS.danger}40` }]}>
+              <Icon name="x" size={14} color={COLORS.danger} strokeWidth={2} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
@@ -250,11 +250,11 @@ export function PhoneVerifyScreen({ navigation, route }: Props) {
             ]}
           >
             {loading ? (
-              <ActivityIndicator color="#FBF5E8" />
+              <ActivityIndicator color={COLORS.cream} />
             ) : (
               <>
                 <Text style={styles.submitText}>{tr('otp_submit')}</Text>
-                <Icon name="arrow" size={18} color="#FBF5E8" strokeWidth={2} />
+                <Icon name="arrow" size={18} color={COLORS.cream} strokeWidth={2} />
               </>
             )}
           </Pressable>
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
     top: 52,
   },
   brandTitle: {
-    color: '#FBF5E8',
+    color: COLORS.cream,
     fontSize: 32,
     fontFamily: FONTS.extraBold, fontWeight: '800',
     letterSpacing: -0.8,
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
   },
-  errorText: { color: '#9B2335', fontSize: 13, flex: 1 },
+  errorText: { color: COLORS.danger, fontSize: 13, flex: 1 },
   submitBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 16,
   },
-  submitText: { color: '#FBF5E8', fontSize: 15, fontFamily: FONTS.bold, fontWeight: '700' },
+  submitText: { color: COLORS.cream, fontSize: 15, fontFamily: FONTS.bold, fontWeight: '700' },
   resendRow: {
     alignItems: 'center',
     minHeight: 24,

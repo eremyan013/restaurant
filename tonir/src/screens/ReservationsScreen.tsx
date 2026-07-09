@@ -20,7 +20,7 @@ import { CANCEL_DEADLINE_MS } from '../lib/constants';
 import { ReservationRow } from '../lib/database.types';
 import { Icon } from '../components/Icon';
 import { ErrorState } from '../components/ErrorState';
-import { FONTS } from '../theme';
+import { FONTS, COLORS } from '../theme';
 
 function isPastCancelDeadline(r: ReservationRow): boolean {
   if (!r.date_iso) return false;
@@ -85,11 +85,11 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
   }
 
   const statusLabels = useMemo(() => ({
-    confirmed:  { label: tr('res_status_confirmed'),  color: '#1F4D3E' },
-    pending:    { label: tr('res_status_pending'),    color: '#C9A961' },
-    upcoming:   { label: tr('res_status_upcoming'),   color: '#1F4D3E' },
-    visited:    { label: tr('res_status_visited'),    color: '#6B6B6B' },
-    cancelled:  { label: tr('res_status_cancelled'),  color: '#9B2335' },
+    confirmed:  { label: tr('res_status_confirmed'),  color: COLORS.primary },
+    pending:    { label: tr('res_status_pending'),    color: COLORS.accent },
+    upcoming:   { label: tr('res_status_upcoming'),   color: COLORS.primary },
+    visited:    { label: tr('res_status_visited'),    color: COLORS.textMute },
+    cancelled:  { label: tr('res_status_cancelled'),  color: COLORS.danger },
   }), [language]);
 
   useEffect(() => {
@@ -136,7 +136,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
             accessibilityRole="tab"
             accessibilityState={{ selected: tab === 'upcoming' }}
           >
-            <Text style={[styles.switchText, { color: tab === 'upcoming' ? '#FBF5E8' : t.text }]}>
+            <Text style={[styles.switchText, { color: tab === 'upcoming' ? COLORS.cream : t.text }]}>
               {tr('res_tab_upcoming')} · {upcoming.length}
             </Text>
           </Pressable>
@@ -149,7 +149,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
             accessibilityRole="tab"
             accessibilityState={{ selected: tab === 'past' }}
           >
-            <Text style={[styles.switchText, { color: tab === 'past' ? '#FBF5E8' : t.text }]}>
+            <Text style={[styles.switchText, { color: tab === 'past' ? COLORS.cream : t.text }]}>
               {tr('res_tab_past')} · {past.length}
             </Text>
           </Pressable>
@@ -393,7 +393,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                       disabled={stars === 0 || submitting}
                       style={[styles.modalBtn, styles.modalBtnPrimary, { backgroundColor: stars === 0 ? t.border : t.primary }]}
                     >
-                      <Text style={[styles.modalBtnText, { color: '#FBF5E8' }]}>
+                      <Text style={[styles.modalBtnText, { color: COLORS.cream }]}>
                         {submitting ? '…' : tr('rate_submit')}
                       </Text>
                     </Pressable>

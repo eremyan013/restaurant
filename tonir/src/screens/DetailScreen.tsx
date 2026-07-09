@@ -23,7 +23,7 @@ import { HeatDot } from '../components/HeatDot';
 import { HeroCard } from '../components/HeroCard';
 import { ErrorState } from '../components/ErrorState';
 import { VenueHoursSection } from '../components/VenueHoursSection';
-import { FONTS } from '../theme';
+import { FONTS, COLORS } from '../theme';
 import { getVenueStatus } from '../lib/venueStatus';
 import { DETAIL_TIMES_PREVIEW_COUNT, DETAIL_SIMILAR_VENUES_COUNT } from '../lib/constants';
 import { useLocation } from '../hooks/useLocation';
@@ -196,9 +196,9 @@ export function DetailScreen({ navigation, route }: Props) {
             else if (result.detail === 'opens_tomorrow') label = trf('det_hours_opens_tmr', { time: result.openTime });
             else label = tr('det_hours_closed_now');
             return (
-              <View style={[styles.openBadge, { backgroundColor: isOpen ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.10)' }]}>
-                <View style={[styles.openDot, { backgroundColor: isOpen ? '#22C55E' : '#EF4444' }]} />
-                <Text style={[styles.openBadgeText, { color: isOpen ? '#16A34A' : '#DC2626' }]}>{label}</Text>
+              <View style={[styles.openBadge, { backgroundColor: isOpen ? 'rgba(34,197,94,0.12)' /* COLORS.openGreen at 12% opacity */ : 'rgba(239,68,68,0.10)' /* COLORS.closedRed at 10% opacity */ }]}>
+                <View style={[styles.openDot, { backgroundColor: isOpen ? COLORS.openGreen : COLORS.closedRed }]} />
+                <Text style={[styles.openBadgeText, { color: isOpen ? COLORS.openGreenText : COLORS.closedRedText }]}>{label}</Text>
               </View>
             );
           })()}
@@ -227,14 +227,14 @@ export function DetailScreen({ navigation, route }: Props) {
             <Text style={styles.bookingTitle}>{tr('det_book_table')}</Text>
             <View style={[styles.partyPill, { backgroundColor: 'rgba(251,245,232,0.12)' }]}>
               <Pressable onPress={() => setPeople((p) => Math.max(1, p - 1))} hitSlop={16} accessibilityLabel={tr('det_party_minus')}>
-                <Icon name="minus" size={12} color="#FBF5E8" strokeWidth={2.5} />
+                <Icon name="minus" size={12} color={COLORS.cream} strokeWidth={2.5} />
               </Pressable>
-              <Icon name="users" size={13} color="#FBF5E8" strokeWidth={2} />
+              <Icon name="users" size={13} color={COLORS.cream} strokeWidth={2} />
               <Text style={styles.partyText}>
                 {people}{selectedTime ? ` · ${selectedTime}` : ''}
               </Text>
               <Pressable onPress={() => setPeople((p) => Math.min(20, p + 1))} hitSlop={16} accessibilityLabel={tr('det_party_plus')}>
-                <Icon name="plus" size={12} color="#FBF5E8" strokeWidth={2.5} />
+                <Icon name="plus" size={12} color={COLORS.cream} strokeWidth={2.5} />
               </Pressable>
             </View>
           </View>
@@ -484,7 +484,7 @@ export function DetailScreen({ navigation, route }: Props) {
             style={[styles.bookBtn, { backgroundColor: t.primary }]}
           >
             <Text style={styles.bookBtnText}>{tr('det_book_btn')} · {people} {tr('det_people_unit')} · {selectedTime}</Text>
-            <Icon name="arrow" size={18} color="#FBF5E8" strokeWidth={2} />
+            <Icon name="arrow" size={18} color={COLORS.cream} strokeWidth={2} />
           </Pressable>
         </View>
       )}
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bookingTitle: {
-    color: '#FBF5E8',
+    color: COLORS.cream,
     fontSize: 15,
     fontFamily: FONTS.bold, fontWeight: '700',
   },
@@ -599,7 +599,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   partyText: {
-    color: '#FBF5E8',
+    color: COLORS.cream,
     fontSize: 13,
     fontFamily: FONTS.semiBold, fontWeight: '600',
   },
@@ -704,12 +704,12 @@ const styles = StyleSheet.create({
   menuItemDesc: { fontSize: 12, lineHeight: 18 },
   menuItemPrice: { fontSize: 15, fontFamily: FONTS.bold, fontWeight: '700', flexShrink: 0 },
   popularBadge: {
-    backgroundColor: '#FBBF24',
+    backgroundColor: COLORS.popularAmber,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
   },
-  popularBadgeText: { fontSize: 10, fontFamily: FONTS.bold, fontWeight: '700', color: '#fff' },
+  popularBadgeText: { fontSize: 10, fontFamily: FONTS.bold, fontWeight: '700', color: COLORS.white },
   unavailableBadge: {
     borderWidth: 1,
     paddingHorizontal: 7,
@@ -764,7 +764,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   bookBtnText: {
-    color: '#FBF5E8',
+    color: COLORS.cream,
     fontSize: 15,
     fontFamily: FONTS.bold, fontWeight: '700',
   },
