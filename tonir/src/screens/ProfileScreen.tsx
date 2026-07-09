@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View, Text, ScrollView, Pressable, Image, StyleSheet, StatusBar, Switch, ActivityIndicator, Alert, Platform,
   Modal, TextInput, KeyboardAvoidingView, RefreshControl,
@@ -19,7 +20,7 @@ import { Icon, IconName } from '../components/Icon';
 import { CompositeNavigationProp, useFocusEffect } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList, TabParamList } from '../navigation';
+import { RootStackParamList, TabParamList, REMEMBER_ME_KEY } from '../navigation';
 
 type Nav = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Profile'>,
@@ -173,7 +174,10 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
         {
           text: tr('prof_signout'),
           style: 'destructive',
-          onPress: () => (supabase as any).auth.signOut(),
+          onPress: async () => {
+            await AsyncStorage.removeItem(REMEMBER_ME_KEY);
+            await (supabase as any).auth.signOut();
+          },
         },
       ]
     );
