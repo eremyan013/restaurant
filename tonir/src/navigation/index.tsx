@@ -215,7 +215,7 @@ export function AppNavigator() {
 
   return (
     <NavigationContainer linking={linking}>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator key={userId ? 'auth' : 'unauth'} screenOptions={{ headerShown: false }}>
         {userId && !pendingPhoneVerification ? (
           // ── Authenticated ──────────────────────────────
           <>
