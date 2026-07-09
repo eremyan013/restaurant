@@ -16,6 +16,7 @@ import { useReservations } from '../hooks/useReservations';
 import { useProfile } from '../hooks/useProfile';
 import { useTranslation } from '../hooks/useTranslation';
 import { submitReview, fetchMyReviews } from '../lib/api';
+import { CANCEL_DEADLINE_MS } from '../lib/constants';
 import { ReservationRow } from '../lib/database.types';
 import { Icon } from '../components/Icon';
 import { ErrorState } from '../components/ErrorState';
@@ -27,7 +28,7 @@ function isPastCancelDeadline(r: ReservationRow): boolean {
   if (!hourStr || !minuteStr) return false;
   const reservationDate = new Date(r.date_iso);
   reservationDate.setHours(parseInt(hourStr, 10), parseInt(minuteStr, 10), 0, 0);
-  const deadlineMs = reservationDate.getTime() - 60 * 60 * 1000;
+  const deadlineMs = reservationDate.getTime() - CANCEL_DEADLINE_MS;
   return Date.now() >= deadlineMs;
 }
 

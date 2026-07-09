@@ -1,4 +1,5 @@
 import type { VenueHoursRow } from './database.types';
+import { VENUE_CLOSES_SOON_THRESHOLD_MINUTES } from './constants';
 
 export type VenueStatusResult =
   | { status: 'open';   detail: 'plain' }
@@ -54,7 +55,7 @@ export function getVenueStatus(
     if (currentMinutes >= closeMin) return findNext(hoursMap, dow);
 
     const minutesLeft = closeMin - currentMinutes;
-    if (minutesLeft <= 60) {
+    if (minutesLeft <= VENUE_CLOSES_SOON_THRESHOLD_MINUTES) {
       return { status: 'open', detail: 'closes_soon', closeTime: todayRow.close_time };
     }
     return { status: 'open', detail: 'plain' };

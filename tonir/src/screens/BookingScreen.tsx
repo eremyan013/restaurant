@@ -17,13 +17,12 @@ import { Icon } from '../components/Icon';
 import { FONTS } from '../theme';
 import { notifyAdminsNewReservation } from '../lib/api';
 import { useVenueAvailability, isDateAvailable, filterAvailableTimes } from '../hooks/useVenueAvailability';
+import { BOOKING_PEOPLE_OPTIONS, BOOKING_LARGE_GROUP_SENTINEL, BOOKING_HORIZON_DAYS, CANCEL_DEADLINE_MS } from '../lib/constants';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Booking'>;
   route: RouteProp<RootStackParamList, 'Booking'>;
 };
-
-const PEOPLE_OPTIONS = [2, 3, 4, 5, 6, 7, 8, '9+'];
 
 function generateDates(
   dayNames: string[],
@@ -32,7 +31,7 @@ function generateDates(
   labelTomorrow: string,
 ) {
   const today = new Date();
-  return Array.from({ length: 7 }, (_, i) => {
+  return Array.from({ length: BOOKING_HORIZON_DAYS }, (_, i) => {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     return {
@@ -68,7 +67,7 @@ export function BookingScreen({ navigation, route }: Props) {
 
   const isoDates = useMemo(() => {
     const today = new Date();
-    return Array.from({ length: 7 }, (_, i) => {
+    return Array.from({ length: BOOKING_HORIZON_DAYS }, (_, i) => {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
       return d.toISOString().split('T')[0]!;
@@ -109,7 +108,7 @@ export function BookingScreen({ navigation, route }: Props) {
       if (hourStr && minuteStr) {
         const resDate = new Date(modifyDateIso);
         resDate.setHours(parseInt(hourStr, 10), parseInt(minuteStr, 10), 0, 0);
-        if (Date.now() >= resDate.getTime() - 60 * 60 * 1000) {
+        if (Date.now() >= resDate.getTime() - CANCEL_DEADLINE_MS) {
           Alert.alert(
             tr('book_error_title'),
             tr('res_cancel_deadline_passed'),
@@ -228,12 +227,12 @@ export function BookingScreen({ navigation, route }: Props) {
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { color: t.text }]}>{tr('book_people')}</Text>
           <View style={styles.peopleGrid}>
-            {PEOPLE_OPTIONS.map((p) => (
+            {BOOKING_PEOPLE_OPTIONS.map((p) => (
               <Pressable
                 key={String(p)}
                 onPress={() => {
                   if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  if (p === '9+') {
+                  if (p === BOOKING_LARGE_GROUP_SENTINEL) {
                     Alert.alert(
                       tr('book_large_title'),
                       tr('book_large_sub'),

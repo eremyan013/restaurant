@@ -15,6 +15,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { Icon } from '../components/Icon';
 import { FONTS } from '../theme';
 import { registerPushToken } from '../lib/notifications';
+import { CALENDAR_EVENT_DURATION_MS } from '../lib/constants';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Confirmation'>;
@@ -79,7 +80,7 @@ export function ConfirmationScreen({ navigation }: Props) {
     // Reconstruct from display string is fragile — default to tomorrow if parse fails.
     const [isoYear, isoMonth, isoDay] = (booking.dateIso ?? '').split('-').map(Number);
     const startDate = new Date(isoYear!, isoMonth! - 1, isoDay!, hour, minute, 0);
-    const endDate   = new Date(startDate.getTime() + 90 * 60 * 1000);
+    const endDate   = new Date(startDate.getTime() + CALENDAR_EVENT_DURATION_MS);
 
     if (Platform.OS === 'web') {
       Linking.openURL('https://calendar.google.com/calendar/r/eventedit').catch(() => {});

@@ -1,4 +1,5 @@
 import { supabase as _supabase } from './supabase';
+import { TIER_NAME_FALLBACKS, TIER_MIN_FALLBACKS } from './constants';
 
 const ADMIN_URL = process.env.EXPO_PUBLIC_CONCIERGE_URL?.replace(/\/$/, '');
 import { VenueRow, ReservationRow, ProfileRow, MenuCategoryRow, MenuItemRow, GuideRow, VenueHoursRow, VenueBlockedDateRow } from './database.types';
@@ -338,8 +339,8 @@ export async function fetchTierSettings(): Promise<{
     .from('settings')
     .select('key, value')
     .in('key', ['tier_1_name','tier_2_name','tier_3_name','tier_4_name','tier_2_min','tier_3_min','tier_4_min']);
-  const names: Record<number, string> = { 1: 'Tonir', 2: 'Pandok', 3: 'Areni', 4: 'Master' };
-  const mins:  Record<number, number> = { 1: 0, 2: 1000, 3: 2000, 4: 3000 };
+  const names: Record<number, string> = { ...TIER_NAME_FALLBACKS };
+  const mins:  Record<number, number> = { ...TIER_MIN_FALLBACKS };
   for (const row of (data ?? [])) {
     if (row.key.endsWith('_name')) { const l = parseInt(row.key[5]); if (l >= 1 && l <= 4) names[l] = row.value; }
     if (row.key.endsWith('_min'))  { const l = parseInt(row.key[5]); if (l >= 2 && l <= 4) mins[l]  = parseInt(row.value); }

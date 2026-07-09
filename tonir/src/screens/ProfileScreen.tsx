@@ -14,6 +14,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { PALETTES, Palette, FONTS} from '../theme';
 import { supabase } from '../lib/supabase';
 import { updateProfile, uploadAvatar, fetchTierSettings } from '../lib/api';
+import { TIER_COUNT, TIER_MIN_FALLBACKS, PROFILE_NAME_MAX_LENGTH } from '../lib/constants';
 import { Icon, IconName } from '../components/Icon';
 import { CompositeNavigationProp, useFocusEffect } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -37,7 +38,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
   const [tierUpVisible, setTierUpVisible] = useState(false);
   const [tierUpName, setTierUpName] = useState('');
   const initialLoad = useRef(true);
-  const [tierMins, setTierMins] = useState<Record<number, number>>({ 1: 0, 2: 1000, 3: 2000, 4: 3000 });
+  const [tierMins, setTierMins] = useState<Record<number, number>>({ ...TIER_MIN_FALLBACKS });
 
   useEffect(() => {
     fetchTierSettings().then(({ mins }) => setTierMins(mins)).catch(() => {});
@@ -99,7 +100,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
     if (!userId) return;
     const trimmed = editName.trim();
     if (trimmed.length < 2) { setEditError(tr('prof_edit_name_too_short')); return; }
-    if (trimmed.length > 60) { setEditError(tr('prof_edit_name_too_long'));  return; }
+    if (trimmed.length > PROFILE_NAME_MAX_LENGTH) { setEditError(tr('prof_edit_name_too_long'));  return; }
     setEditSaving(true);
     setEditError(null);
     try {
@@ -139,7 +140,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
   };
 
   const user = profile ?? FALLBACK;
-  const MAX_TIER = 4;
+  const MAX_TIER = TIER_COUNT;
   const currentMin = tierMins[user.tier_level] ?? 0;
   const nextMin    = user.tier_level < MAX_TIER ? (tierMins[user.tier_level + 1] ?? currentMin + 1000) : null;
   const yelProgress = nextMin !== null
@@ -449,12 +450,12 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
               </Pressable>
 
               {/* Name field */}
-              <View style={[styles.fieldWrap, { backgroundColor: t.surface, borderColor: editName.trim().length > 60 ? '#9B2335' : t.border }]}>
+              <View style={[styles.fieldWrap, { backgroundColor: t.surface, borderColor: editName.trim().length > PROFILE_NAME_MAX_LENGTH ? '#9B2335' : t.border }]}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text style={[styles.fieldLabel, { color: t.textMute }]}>{tr('prof_edit_name')}</Text>
                   {editName.length > 40 && (
-                    <Text style={[styles.fieldLabel, { color: editName.trim().length > 60 ? '#9B2335' : t.textFaint }]}>
-                      {editName.trim().length}/60
+                    <Text style={[styles.fieldLabel, { color: editName.trim().length > PROFILE_NAME_MAX_LENGTH ? '#9B2335' : t.textFaint }]}>
+                      {editName.trim().length}/{PROFILE_NAME_MAX_LENGTH}
                     </Text>
                   )}
                 </View>
@@ -464,7 +465,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
                   placeholder={tr('prof_edit_name_placeholder')}
                   placeholderTextColor={t.textFaint}
                   autoCapitalize="words"
-                  maxLength={61}
+                  maxLength={PROFILE_NAME_MAX_LENGTH + 1}
                   style={[styles.fieldInput, { color: t.text }]}
                 />
               </View>

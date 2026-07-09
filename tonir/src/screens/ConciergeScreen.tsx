@@ -15,6 +15,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { Icon } from '../components/Icon';
 import { HeroCard } from '../components/HeroCard';
 import { FONTS } from '../theme';
+import { CONCIERGE_ESCALATION_THRESHOLD, CONCIERGE_TYPING_DELAY_MS, CONCIERGE_FALLBACK_RATING_MIN } from '../lib/constants';
 import { VenueRow } from '../lib/database.types';
 
 type Props = {
@@ -160,7 +161,7 @@ function buildReply(
       return { text: tr(rule.textKey), suggestions: resolveVenues(venues, rule.filter) };
     }
   }
-  const fallback = resolveVenues(venues, (v) => v.heat === 'high' || v.rating >= 4.5);
+  const fallback = resolveVenues(venues, (v) => v.heat === 'high' || v.rating >= CONCIERGE_FALLBACK_RATING_MIN);
   return { text: tr('conc_reply_fallback'), suggestions: fallback };
 }
 
@@ -295,7 +296,7 @@ export function ConciergeScreen({ navigation }: Props) {
     setTyping(true);
     const [matched] = await Promise.all([
       askConcierge(text, nextHistory, venues, tr, userId, sessionId),
-      new Promise<void>((r) => setTimeout(r, 800)),
+      new Promise<void>((r) => setTimeout(r, CONCIERGE_TYPING_DELAY_MS)),
     ]);
     if (matched.session_id && !sessionId) setSessionId(matched.session_id);
     setApiOffline(matched.offline === true);
@@ -443,7 +444,7 @@ export function ConciergeScreen({ navigation }: Props) {
 
       {/* Composer */}
       <View style={[styles.composer, { backgroundColor: t.bg, borderTopColor: t.border, paddingBottom: insets.bottom + 8 }]}>
-        {(sessionId || apiOffline) && !escalated && messages.filter(m => m.role === 'user').length >= 3 && (
+        {(sessionId || apiOffline) && !escalated && messages.filter(m => m.role === 'user').length >= CONCIERGE_ESCALATION_THRESHOLD && (
           <Pressable onPress={handleEscalate} style={styles.escalateBtn}>
             <Text style={[styles.escalateText, { color: t.textMute }]}>{tr('conc_need_help')}</Text>
           </Pressable>

@@ -25,6 +25,7 @@ import { ErrorState } from '../components/ErrorState';
 import { VenueHoursSection } from '../components/VenueHoursSection';
 import { FONTS } from '../theme';
 import { getVenueStatus } from '../lib/venueStatus';
+import { DETAIL_TIMES_PREVIEW_COUNT, DETAIL_SIMILAR_VENUES_COUNT } from '../lib/constants';
 import { useLocation } from '../hooks/useLocation';
 import { haversineKm, formatDistance } from '../lib/distance';
 
@@ -77,7 +78,7 @@ export function DetailScreen({ navigation, route }: Props) {
   }, [activeTab, venueId]);
   const { venues: allVenues } = useVenues();
   const { categories: menuCats, items: menuItems, loading: menuLoading } = useMenu(venueId);
-  const similar = allVenues.filter((v) => v.id !== venueId && venue && v.kind === venue.kind).slice(0, 4);
+  const similar = allVenues.filter((v) => v.id !== venueId && venue && v.kind === venue.kind).slice(0, DETAIL_SIMILAR_VENUES_COUNT);
 
   const { hoursMap, blockedDates, loading: availabilityLoading } = useVenueAvailability(venueId);
   const todayISO = new Date().toISOString().split('T')[0]!;
@@ -240,7 +241,7 @@ export function DetailScreen({ navigation, route }: Props) {
           <View style={styles.timeGrid}>
             {(() => {
               const yelMap = (venue.time_yel_map as Record<string, number> | null) ?? {};
-              return (showAllTimes ? timesToShow : timesToShow.slice(0, 4)).map((time) => (
+              return (showAllTimes ? timesToShow : timesToShow.slice(0, DETAIL_TIMES_PREVIEW_COUNT)).map((time) => (
                 <View key={time} style={availabilityLoading ? { opacity: 0.45 } : undefined}>
                   <TimePill
                     time={time}
@@ -263,7 +264,7 @@ export function DetailScreen({ navigation, route }: Props) {
               </Text>
             )}
           </View>
-          {timesToShow.length > 4 && (
+          {timesToShow.length > DETAIL_TIMES_PREVIEW_COUNT && (
             <Pressable onPress={() => setShowAllTimes((v) => !v)} style={styles.moreTimesBtn}>
               <Text style={styles.moreTimesText}>
                 {showAllTimes ? tr('det_show_less') : tr('det_show_more')}

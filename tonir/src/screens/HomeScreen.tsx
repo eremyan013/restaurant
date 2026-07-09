@@ -25,6 +25,7 @@ import { ErrorState } from '../components/ErrorState';
 import { FONTS } from '../theme';
 import { LANG_FLAGS, LANGS } from '../i18n';
 import { useTranslation } from '../hooks/useTranslation';
+import { LOYALTY_TIER_INCREMENT } from '../lib/constants';
 
 type Nav = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Home'>,
@@ -221,10 +222,10 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
               <Text style={styles.loyaltyLabel}>{tr('yel_label')}</Text>
               <Text style={styles.loyaltyPoints}>{(profile?.yel_points ?? 0).toLocaleString()} Yel</Text>
               <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: `${(profile?.yel_points ?? 0) % 1000 === 0 && (profile?.yel_points ?? 0) > 0 ? 100 : ((profile?.yel_points ?? 0) % 1000) / 10}%`, backgroundColor: t.accent }]} />
+                <View style={[styles.progressFill, { width: `${(profile?.yel_points ?? 0) % LOYALTY_TIER_INCREMENT === 0 && (profile?.yel_points ?? 0) > 0 ? 100 : ((profile?.yel_points ?? 0) % LOYALTY_TIER_INCREMENT) / (LOYALTY_TIER_INCREMENT / 100)}%`, backgroundColor: t.accent }]} />
               </View>
               <Text style={[styles.progressLabel, { color: 'rgba(251,245,232,0.55)' }]}>
-                {`${(profile?.yel_points ?? 0) % 1000 === 0 && (profile?.yel_points ?? 0) > 0 ? 1000 : (profile?.yel_points ?? 0) % 1000} / 1000 Yel`}
+                {`${(profile?.yel_points ?? 0) % LOYALTY_TIER_INCREMENT === 0 && (profile?.yel_points ?? 0) > 0 ? LOYALTY_TIER_INCREMENT : (profile?.yel_points ?? 0) % LOYALTY_TIER_INCREMENT} / ${LOYALTY_TIER_INCREMENT} Yel`}
               </Text>
             </View>
           </View>

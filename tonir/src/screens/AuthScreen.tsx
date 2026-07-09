@@ -15,6 +15,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { supabase } from '../lib/supabase';
 import { Icon } from '../components/Icon';
 import { FONTS } from '../theme';
+import { AUTH_COUNTRY_CODE, AUTH_PHONE_DIGIT_COUNT, AUTH_PHONE_REGEX, AUTH_PASSWORD_MIN_LENGTH } from '../lib/constants';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Auth'>;
@@ -53,7 +54,7 @@ export function AuthScreen({ navigation }: Props) {
       setError(tr('auth_err_name'));
       return;
     }
-    if (mode === 'signup' && !/^\d{8}$/.test(phone.trim())) {
+    if (mode === 'signup' && !AUTH_PHONE_REGEX.test(phone.trim())) {
       setError(tr('auth_err_phone'));
       return;
     }
@@ -61,7 +62,7 @@ export function AuthScreen({ navigation }: Props) {
       setError(tr('auth_err_email_invalid'));
       return;
     }
-    if (password.length < 6) {
+    if (password.length < AUTH_PASSWORD_MIN_LENGTH) {
       setError(tr('auth_err_pass_short'));
       return;
     }
@@ -81,7 +82,7 @@ export function AuthScreen({ navigation }: Props) {
           setLoading(false);
           return;
         }
-        const fullPhone = `+374${phone.trim()}`;
+        const fullPhone = `${AUTH_COUNTRY_CODE}${phone.trim()}`;
         // Create profile row for new user
         await (supabase as any).from('profiles').upsert({
           id: data.session.user.id,
@@ -218,15 +219,15 @@ export function AuthScreen({ navigation }: Props) {
                 </View>
                 <View style={[styles.inputWrap, { backgroundColor: t.surface, borderColor: t.border }]}>
                   <Icon name="phone" size={16} color={t.textMute} strokeWidth={1.75} />
-                  <Text style={[styles.countryCode, { color: t.text }]}>+374</Text>
+                  <Text style={[styles.countryCode, { color: t.text }]}>{AUTH_COUNTRY_CODE}</Text>
                   <View style={[styles.codeDivider, { backgroundColor: t.border }]} />
                   <TextInput
                     value={phone}
-                    onChangeText={(v) => setPhone(v.replace(/\D/g, '').slice(0, 8))}
+                    onChangeText={(v) => setPhone(v.replace(/\D/g, '').slice(0, AUTH_PHONE_DIGIT_COUNT))}
                     placeholder={tr('auth_phone_placeholder')}
                     placeholderTextColor={t.textFaint}
                     keyboardType="number-pad"
-                    maxLength={8}
+                    maxLength={AUTH_PHONE_DIGIT_COUNT}
                     style={[styles.input, { color: t.text }]}
                     accessibilityLabel={tr('auth_phone_placeholder')}
                   />
