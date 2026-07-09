@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 
 import { useStore } from '../store';
+import { useTranslation } from '../hooks/useTranslation';
 import { Icon, IconName } from '../components/Icon';
 import { SHADOWS, FONTS} from '../theme';
 import { supabase } from '../lib/supabase';
@@ -75,16 +76,17 @@ export type TabParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
-const TAB_ITEMS: Array<{ name: keyof TabParamList; icon: IconName; label: string }> = [
-  { name: 'Home',         icon: 'home',     label: 'Բացահայտել' },
-  { name: 'Search',       icon: 'search',   label: 'Որոնում' },
-  { name: 'Reservations', icon: 'calendar', label: 'Ամրագրումներ' },
-  { name: 'Favorites',    icon: 'heart',    label: 'Պահպանված' },
-  { name: 'Profile',      icon: 'user',     label: 'Պրոֆիլ' },
+const TAB_ITEMS: Array<{ name: keyof TabParamList; icon: IconName; labelKey: string }> = [
+  { name: 'Home',         icon: 'home',     labelKey: 'tab_home' },
+  { name: 'Search',       icon: 'search',   labelKey: 'tab_search' },
+  { name: 'Reservations', icon: 'calendar', labelKey: 'tab_reservations' },
+  { name: 'Favorites',    icon: 'heart',    labelKey: 'tab_favorites' },
+  { name: 'Profile',      icon: 'user',     labelKey: 'tab_profile' },
 ];
 
 function CustomTabBar({ state, navigation }: any) {
   const { theme: t, upcomingCount } = useStore();
+  const { tr } = useTranslation();
   const insets = useSafeAreaInsets();
 
   return (
@@ -127,7 +129,7 @@ function CustomTabBar({ state, navigation }: any) {
               </View>
               {active && (
                 <Text style={[styles.tabLabel, { color: t.primaryDeep }]}>
-                  {item.label}
+                  {tr(item.labelKey)}
                 </Text>
               )}
             </Pressable>

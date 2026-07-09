@@ -54,6 +54,12 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     srch_clear:            'Մաքրել ֆիլտրը',
     srch_filters:          ['Բոլորը', 'Լավագույն', 'Այս երեկո', 'Մոտակայք', 'Գինու բարեր', 'Հայկական'],
     srch_nearby_no_location: 'Միացրեք գտնվելու վայրը մոտակա վայրերը տեսնելու համար',
+    // Bottom tab navigation
+    tab_home:         'Բացահայտել',
+    tab_search:       'Որոնում',
+    tab_reservations: 'Ամրագրումներ',
+    tab_favorites:    'Պահպանված',
+    tab_profile:      'Պրոֆիլ',
     // FavoritesScreen
     fav_title:       'Պահպանված',
     fav_empty_all:   'Դեռ պահպանված վայրեր չկան',
@@ -431,6 +437,12 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     srch_clear:            'Сбросить фильтр',
     srch_filters:          ['Все', 'Лучшие', 'Сегодня', 'Рядом', 'Винные бары', 'Армянские'],
     srch_nearby_no_location: 'Включите геолокацию, чтобы увидеть ближайшие места',
+    // Bottom tab navigation
+    tab_home:         'Обзор',
+    tab_search:       'Поиск',
+    tab_reservations: 'Брони',
+    tab_favorites:    'Сохранённые',
+    tab_profile:      'Профиль',
     // FavoritesScreen
     fav_title:       'Сохранённые',
     fav_empty_all:   'Нет сохранённых мест',
@@ -805,6 +817,12 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     srch_clear:            'Clear filter',
     srch_filters:          ['All', 'Best', 'Tonight', 'Nearby', 'Wine bars', 'Armenian'],
     srch_nearby_no_location: 'Enable location to see nearby places',
+    // Bottom tab navigation
+    tab_home:         'Discover',
+    tab_search:       'Search',
+    tab_reservations: 'Reservations',
+    tab_favorites:    'Saved',
+    tab_profile:      'Profile',
     // FavoritesScreen
     fav_title:       'Saved',
     fav_empty_all:   'No saved places yet',
