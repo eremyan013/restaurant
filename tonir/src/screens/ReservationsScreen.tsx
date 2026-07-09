@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View, Text, ScrollView, Pressable, Image, StyleSheet, StatusBar, ActivityIndicator,
   RefreshControl, Alert, Platform, Modal, TextInput, KeyboardAvoidingView,
@@ -6,7 +6,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { CompositeNavigationProp } from '@react-navigation/native';
+import { CompositeNavigationProp, useFocusEffect } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import { RootStackParamList, TabParamList } from '../navigation';
@@ -57,6 +57,8 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
   useEffect(() => {
     if (userId) fetchMyReviews(userId).then((ids) => setRatedIds(new Set(ids)));
   }, [userId]);
+
+  useFocusEffect(useCallback(() => { refetchProfile(); }, [refetchProfile]));
 
   async function handleSubmitReview() {
     if (!ratingRes || stars === 0 || !userId) return;

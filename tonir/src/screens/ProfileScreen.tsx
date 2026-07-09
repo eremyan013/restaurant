@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, ScrollView, Pressable, Image, StyleSheet, StatusBar, Switch, ActivityIndicator, Alert, Platform,
   Modal, TextInput, KeyboardAvoidingView, RefreshControl,
@@ -15,7 +15,7 @@ import { PALETTES, Palette, FONTS} from '../theme';
 import { supabase } from '../lib/supabase';
 import { updateProfile, uploadAvatar, fetchTierSettings } from '../lib/api';
 import { Icon, IconName } from '../components/Icon';
-import { CompositeNavigationProp } from '@react-navigation/native';
+import { CompositeNavigationProp, useFocusEffect } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList, TabParamList } from '../navigation';
@@ -60,6 +60,8 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
       setLastKnownTierLevel(currentLevel);
     }
   }, [profile?.tier_level]);
+
+  useFocusEffect(useCallback(() => { refetch(); }, [refetch]));
 
   const [editVisible, setEditVisible] = useState(false);
   const [editName, setEditName] = useState('');
