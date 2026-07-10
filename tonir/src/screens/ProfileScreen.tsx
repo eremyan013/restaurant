@@ -166,6 +166,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
   const tierNames = Array.from({ length: TIER_COUNT }, (_, i) => tierNameMap[i + 1] ?? TIER_NAME_FALLBACKS[i + 1]!);
 
   function signOut() {
+    console.log('[SIGNOUT] signOut() called');
     Alert.alert(
       tr('prof_signout_title'),
       tr('prof_signout_sub'),
@@ -381,7 +382,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
 
         {/* Sign out */}
         <Pressable
-          onPress={signOut}
+          onPress={() => { console.log('[SIGNOUT] Pressable tapped'); signOut(); }}
           style={[styles.signOutBtn, { borderColor: `${COLORS.danger}40` }]}
         >
           <View style={{ transform: [{ rotate: '180deg' }] }}>
