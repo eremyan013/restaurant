@@ -382,7 +382,21 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
 
         {/* Sign out */}
         <Pressable
-          onPress={() => { console.log('[SIGNOUT] Pressable tapped'); signOut(); }}
+          onPress={async () => {
+            console.log('[SIGNOUT] Pressable tapped — bypassing Alert for debug');
+            console.log('[SIGNOUT] step 1: start');
+            await AsyncStorage.removeItem(REMEMBER_ME_KEY);
+            console.log('[SIGNOUT] step 2: AsyncStorage cleared');
+            try {
+              await (supabase as any).auth.signOut();
+              console.log('[SIGNOUT] step 3: supabase signOut done');
+            } catch (e) {
+              console.log('[SIGNOUT] step 3 ERROR', e);
+            }
+            console.log('[SIGNOUT] step 4: bumping appResetKey');
+            useStore.getState().bumpAppResetKey();
+            console.log('[SIGNOUT] step 5: done. appResetKey=', useStore.getState().appResetKey);
+          }}
           style={[styles.signOutBtn, { borderColor: `${COLORS.danger}40` }]}
         >
           <View style={{ transform: [{ rotate: '180deg' }] }}>
