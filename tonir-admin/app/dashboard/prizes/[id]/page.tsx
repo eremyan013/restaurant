@@ -82,6 +82,9 @@ export default async function EditPrizePage({ params }: { params: Promise<{ id: 
       stock:         (!unlimitedStock && stockRaw) ? parseInt(stockRaw) : null,
       sort_order:    parseInt(formData.get('sort_order') as string) || 0,
       is_active:     formData.get('is_active') === 'true',
+      expires_at:    (formData.get('expires_at') as string)?.trim()
+        ? new Date(formData.get('expires_at') as string).toISOString()
+        : null,
       updated_at:    new Date().toISOString(),
     }).eq('id', id)
     revalidatePath('/dashboard/prizes')
@@ -129,6 +132,7 @@ export default async function EditPrizePage({ params }: { params: Promise<{ id: 
           unlimited_stock: prize.stock == null,
           sort_order:    prize.sort_order?.toString(),
           is_active:     prize.is_active ? 'true' : 'false',
+          expires_at:    prize.expires_at ?? undefined,
         }}
       />
 

@@ -12,6 +12,7 @@ export const zPrizeSchema = z.object({
   stock:          z.number().int().positive('Stock must be a positive integer').nullable().optional(),
   sort_order:     z.number().int().min(0).default(0),
   is_active:      z.boolean().default(true),
+  expires_at:     z.string().nullable().optional(),
 }).superRefine((val, ctx) => {
   if (val.unlock_type === 'points' && !val.points_cost) {
     ctx.addIssue({ code: 'custom', path: ['points_cost'], message: 'Points cost is required' })
@@ -44,5 +45,6 @@ export function parsePrizeFormData(fd: FormData): unknown {
     stock:          (!unlimitedStock && stockRaw) ? Number(stockRaw) : null,
     sort_order:     Number(fd.get('sort_order')) || 0,
     is_active:      fd.get('is_active') === 'true',
+    expires_at:     ((fd.get('expires_at') as string)?.trim()) ? new Date(fd.get('expires_at') as string).toISOString() : null,
   }
 }

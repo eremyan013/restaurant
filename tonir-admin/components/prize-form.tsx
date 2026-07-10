@@ -15,6 +15,7 @@ export type PrizeFormDefaults = {
   unlimited_stock?: boolean
   sort_order?: string
   is_active?: string
+  expires_at?: string
 }
 
 type Venue = { id: string; name: string }
@@ -199,6 +200,17 @@ export function PrizeForm({ action, defaults = {}, venues, tierNames, isNew = fa
             <option value="true">Active</option>
             <option value="false">Inactive</option>
           </select>
+        </div>
+
+        {/* Expiration date */}
+        <div className="sm:col-span-2">
+          <label className={labelCls}>Expiration date <span className="text-zinc-400 font-normal">(optional — leave blank for no expiry)</span></label>
+          <input
+            type="datetime-local"
+            name="expires_at"
+            defaultValue={defaults.expires_at ? new Date(defaults.expires_at).toISOString().slice(0, 16) : undefined}
+            className={inputCls}
+          />
         </div>
       </div>
 
