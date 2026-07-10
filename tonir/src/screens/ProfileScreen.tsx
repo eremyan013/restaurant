@@ -177,7 +177,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
           onPress: async () => {
             await AsyncStorage.removeItem(REMEMBER_ME_KEY);
             await (supabase as any).auth.signOut();
-            useStore.getState().setUserId(null);
+            useStore.getState().bumpAppResetKey();
           },
         },
       ]

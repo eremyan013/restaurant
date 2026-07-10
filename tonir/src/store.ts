@@ -43,6 +43,10 @@ interface AppState {
   // Session gate — null = still checking on launch, true = logged in, false = logged out
   sessionChecked: boolean;
   setSessionChecked: (v: boolean) => void;
+
+  // Incremented on sign-out to force AppNavigator to fully remount
+  appResetKey: number;
+  bumpAppResetKey: () => void;
 }
 
 export interface BookingDraft {
@@ -91,6 +95,9 @@ export const useStore = create<AppState>()(
 
       sessionChecked: false,
       setSessionChecked: (sessionChecked) => set({ sessionChecked }),
+
+      appResetKey: 0,
+      bumpAppResetKey: () => set((s) => ({ appResetKey: s.appResetKey + 1, sessionChecked: false })),
     }),
     {
       name: 'tonir-prefs',

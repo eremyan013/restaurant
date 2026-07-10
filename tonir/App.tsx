@@ -13,6 +13,7 @@ import {
 
 import { AppNavigator } from './src/navigation';
 import { FONTS } from './src/theme';
+import { useStore } from './src/store';
 
 // Keep the splash screen visible until fonts are ready
 SplashScreen.preventAutoHideAsync();
@@ -23,6 +24,7 @@ SplashScreen.preventAutoHideAsync();
 (Text as any).defaultProps.style = { fontFamily: FONTS.regular };
 
 export default function App() {
+  const { appResetKey } = useStore();
   const [fontsLoaded, fontError] = useFonts({
     NotoSansArmenian_400Regular,
     NotoSansArmenian_500Medium,
@@ -43,7 +45,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <AppNavigator />
+      <AppNavigator key={appResetKey} />
     </SafeAreaProvider>
   );
 }
