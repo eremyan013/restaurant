@@ -25,6 +25,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   const { appResetKey } = useStore();
+  console.log('[APP] render, appResetKey=', appResetKey);
   const [fontsLoaded, fontError] = useFonts({
     NotoSansArmenian_400Regular,
     NotoSansArmenian_500Medium,

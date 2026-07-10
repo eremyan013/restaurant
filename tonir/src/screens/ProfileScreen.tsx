@@ -175,9 +175,18 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
           text: tr('prof_signout'),
           style: 'destructive',
           onPress: async () => {
+            console.log('[SIGNOUT] step 1: start');
             await AsyncStorage.removeItem(REMEMBER_ME_KEY);
-            await (supabase as any).auth.signOut();
+            console.log('[SIGNOUT] step 2: AsyncStorage cleared');
+            try {
+              await (supabase as any).auth.signOut();
+              console.log('[SIGNOUT] step 3: supabase signOut done');
+            } catch (e) {
+              console.log('[SIGNOUT] step 3: supabase signOut ERROR', e);
+            }
+            console.log('[SIGNOUT] step 4: bumping appResetKey');
             useStore.getState().bumpAppResetKey();
+            console.log('[SIGNOUT] step 5: done. appResetKey=', useStore.getState().appResetKey);
           },
         },
       ]
