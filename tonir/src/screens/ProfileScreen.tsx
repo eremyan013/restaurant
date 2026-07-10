@@ -165,22 +165,24 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
 
   const tierNames = Array.from({ length: TIER_COUNT }, (_, i) => tierNameMap[i + 1] ?? TIER_NAME_FALLBACKS[i + 1]!);
 
+  async function doSignOut() {
+    await AsyncStorage.removeItem(REMEMBER_ME_KEY);
+    try { await (supabase as any).auth.signOut(); } catch (_) {}
+    useStore.getState().setUserId(null);
+    useStore.getState().bumpAppResetKey();
+  }
+
   function signOut() {
+    if (Platform.OS === 'web') {
+      if (window.confirm(`${tr('prof_signout_title')}\n${tr('prof_signout_sub')}`)) doSignOut();
+      return;
+    }
     Alert.alert(
       tr('prof_signout_title'),
       tr('prof_signout_sub'),
       [
         { text: tr('prof_signout_back'), style: 'cancel' },
-        {
-          text: tr('prof_signout'),
-          style: 'destructive',
-          onPress: async () => {
-            await AsyncStorage.removeItem(REMEMBER_ME_KEY);
-            try { await (supabase as any).auth.signOut(); } catch (_) {}
-            useStore.getState().setUserId(null);
-            useStore.getState().bumpAppResetKey();
-          },
-        },
+        { text: tr('prof_signout'), style: 'destructive', onPress: doSignOut },
       ]
     );
   }
