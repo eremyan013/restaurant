@@ -66,7 +66,7 @@ export default async function PrizesPage({ searchParams }: { searchParams: Promi
   const supabase = createSupabaseAdminClient()
 
   const [prizesRes, claimsRes, venuesRes, settingsRes, statsRes] = await Promise.all([
-    supabase.from('prizes').select('id, name, description, type, unlock_type, points_cost, min_tier_level, venue_id, image_url, stock, sort_order, is_active, created_at, updated_at', { count: 'exact' }).order('sort_order').order('created_at', { ascending: false }).range(from, to),
+    supabase.from('prizes').select('id, name, description, type, unlock_type, points_cost, min_tier_level, venue_id, image_url, stock, sort_order, is_active, expires_at, created_at, updated_at', { count: 'exact' }).order('sort_order').order('created_at', { ascending: false }).range(from, to),
     supabase.from('user_prizes').select('prize_id, status'),
     supabase.from('venues').select('id, name').order('name'),
     supabase.from('settings').select('key, value').in('key', ['tier_1_name','tier_2_name','tier_3_name','tier_4_name']),
