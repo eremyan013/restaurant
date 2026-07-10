@@ -14,7 +14,7 @@ import { useProfile } from '../hooks/useProfile';
 import { useTranslation } from '../hooks/useTranslation';
 import { fetchMarketPrizes, redeemPrize, Prize } from '../lib/api';
 import { Icon } from '../components/Icon';
-import { FONTS } from '../theme';
+import { FONTS, COLORS } from '../theme';
 
 type Props = { navigation: NativeStackNavigationProp<RootStackParamList, 'Market'> };
 
@@ -132,7 +132,7 @@ export function MarketScreen({ navigation }: Props) {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[styles.filterRow, { paddingHorizontal: 16 }]}
-        style={{ flexShrink: 0, backgroundColor: t.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: t.border }}
+        style={{ flexGrow: 0, backgroundColor: t.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: t.border }}
       >
         {TYPE_FILTERS.map(f => (
           <Pressable
@@ -144,7 +144,7 @@ export function MarketScreen({ navigation }: Props) {
               filter === f.key && { backgroundColor: t.primary },
             ]}
           >
-            <Text style={[styles.filterText, { color: filter === f.key ? '#FBF5E8' : t.textMute }]}>
+            <Text style={[styles.filterText, { color: filter === f.key ? COLORS.cream : t.textMute }]}>
               {tr(f.labelKey)}
             </Text>
           </Pressable>
@@ -161,7 +161,7 @@ export function MarketScreen({ navigation }: Props) {
           <Icon name="wifi-off" size={32} color={t.textMute} strokeWidth={1.5} />
           <Text style={[styles.empty, { color: t.textMute, marginTop: 12 }]}>{tr('market_err_api' as any)}</Text>
           <Pressable onPress={loadPrizes} style={[styles.retryBtn, { backgroundColor: t.primary }]}>
-            <Text style={[styles.retryText, { color: '#FBF5E8' }]}>{tr('err_retry')}</Text>
+            <Text style={[styles.retryText, { color: COLORS.cream }]}>{tr('err_retry')}</Text>
           </Pressable>
         </View>
       ) : filtered.length === 0 ? (
@@ -204,7 +204,7 @@ export function MarketScreen({ navigation }: Props) {
                     )}
                   </View>
                   <View style={styles.cardBottom}>
-                    <Text style={[styles.cardCost, { color: t.primary }]}>
+                    <Text style={[styles.cardCost, { color: t.primary }]} numberOfLines={1}>
                       {trf('market_pts_cost', { n: (prize.points_cost ?? 0).toLocaleString() })}
                     </Text>
                     <Pressable
@@ -215,7 +215,7 @@ export function MarketScreen({ navigation }: Props) {
                         { backgroundColor: (!canAfford || outOfStock) ? t.border : t.primary },
                       ]}
                     >
-                      <Text style={[styles.redeemText, { color: (!canAfford || outOfStock) ? t.textMute : '#FBF5E8' }]}>
+                      <Text style={[styles.redeemText, { color: (!canAfford || outOfStock) ? t.textMute : COLORS.cream }]}>
                         {outOfStock ? tr('market_out_of_stock') : !canAfford ? tr('market_not_enough') : tr('market_redeem')}
                       </Text>
                     </Pressable>
@@ -254,7 +254,7 @@ export function MarketScreen({ navigation }: Props) {
               >
                 {redeeming
                   ? <ActivityIndicator color="#FBF5E8" size="small" />
-                  : <Text style={[styles.sheetBtnText, { color: '#FBF5E8' }]}>{tr('market_confirm_yes')}</Text>
+                  : <Text style={[styles.sheetBtnText, { color: COLORS.cream }]}>{tr('market_confirm_yes')}</Text>
                 }
               </Pressable>
             </View>
@@ -293,7 +293,7 @@ export function MarketScreen({ navigation }: Props) {
               onPress={() => { haptic(); setSuccessCode(null); }}
               style={[styles.sheetBtn, styles.sheetBtnPrimary, styles.sheetBtnFull, { backgroundColor: t.primary }]}
             >
-              <Text style={[styles.sheetBtnText, { color: '#FBF5E8' }]}>{tr('market_success_close')}</Text>
+              <Text style={[styles.sheetBtnText, { color: COLORS.cream }]}>{tr('market_success_close')}</Text>
             </Pressable>
           </View>
         </View>
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 17, fontFamily: FONTS.bold, fontWeight: '700' },
   balancePill: { paddingVertical: 5, paddingHorizontal: 12, borderRadius: 999 },
   balanceText: { fontSize: 13, fontFamily: FONTS.semiBold, fontWeight: '600' },
-  filterRow: { flexDirection: 'row', gap: 8, paddingVertical: 10 },
+  filterRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 },
   filterChip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999, borderWidth: 1 },
   filterText: { fontSize: 13, fontFamily: FONTS.medium, fontWeight: '500' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -320,10 +320,10 @@ const styles = StyleSheet.create({
   retryText: { fontSize: 14, fontFamily: FONTS.semiBold, fontWeight: '600' },
   list: { padding: 16, gap: 12 },
   card: {
-    flexDirection: 'row', borderRadius: 18, borderWidth: 1, overflow: 'hidden',
+    flexDirection: 'row', alignItems: 'stretch', minHeight: 110, borderRadius: 18, borderWidth: 1, overflow: 'hidden',
   },
   cardImg: { width: 100, height: 110 },
-  cardImgPlaceholder: { width: 100, height: 110, alignItems: 'center', justifyContent: 'center' },
+  cardImgPlaceholder: { width: 100, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
   cardEmoji: { fontSize: 36 },
   cardBody: { flex: 1, padding: 12, justifyContent: 'space-between' },
   cardTop: { gap: 3 },
@@ -331,8 +331,8 @@ const styles = StyleSheet.create({
   cardDesc: { fontSize: 12, lineHeight: 16 },
   cardVenue: { fontSize: 11, marginTop: 2 },
   cardBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
-  cardCost: { fontSize: 14, fontFamily: FONTS.bold, fontWeight: '700' },
-  redeemBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999 },
+  cardCost: { flex: 1, flexShrink: 1, fontSize: 14, fontFamily: FONTS.bold, fontWeight: '700', marginRight: 8 },
+  redeemBtn: { flexShrink: 0, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999 },
   redeemText: { fontSize: 12, fontFamily: FONTS.semiBold, fontWeight: '600' },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'flex-end' },
   sheet: { width: '100%', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 12, alignItems: 'center', paddingBottom: 36 },
