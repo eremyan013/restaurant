@@ -97,11 +97,7 @@ export const useStore = create<AppState>()(
       setSessionChecked: (sessionChecked) => set({ sessionChecked }),
 
       appResetKey: 0,
-      bumpAppResetKey: () => {
-        console.log('[STORE] bumpAppResetKey called');
-        set((s) => ({ appResetKey: s.appResetKey + 1, sessionChecked: false }));
-        console.log('[STORE] new appResetKey=', useStore.getState().appResetKey);
-      },
+      bumpAppResetKey: () => set((s) => ({ appResetKey: s.appResetKey + 1, sessionChecked: false })),
     }),
     {
       name: 'tonir-prefs',

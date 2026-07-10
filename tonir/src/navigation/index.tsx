@@ -175,7 +175,6 @@ const linking = {
 
 export function AppNavigator() {
   const { theme: t, pendingPhoneVerification, userId, sessionChecked } = useStore();
-  console.log('[NAV] render — userId=', userId, 'sessionChecked=', sessionChecked);
   const [seenOnboarding, setSeenOnboarding] = useState<boolean | null>(null);
 
   useEffect(() => {

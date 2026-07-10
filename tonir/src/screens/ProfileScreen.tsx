@@ -166,7 +166,6 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
   const tierNames = Array.from({ length: TIER_COUNT }, (_, i) => tierNameMap[i + 1] ?? TIER_NAME_FALLBACKS[i + 1]!);
 
   function signOut() {
-    console.log('[SIGNOUT] signOut() called');
     Alert.alert(
       tr('prof_signout_title'),
       tr('prof_signout_sub'),
@@ -176,18 +175,9 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
           text: tr('prof_signout'),
           style: 'destructive',
           onPress: async () => {
-            console.log('[SIGNOUT] step 1: start');
             await AsyncStorage.removeItem(REMEMBER_ME_KEY);
-            console.log('[SIGNOUT] step 2: AsyncStorage cleared');
-            try {
-              await (supabase as any).auth.signOut();
-              console.log('[SIGNOUT] step 3: supabase signOut done');
-            } catch (e) {
-              console.log('[SIGNOUT] step 3: supabase signOut ERROR', e);
-            }
-            console.log('[SIGNOUT] step 4: bumping appResetKey');
+            try { await (supabase as any).auth.signOut(); } catch (_) {}
             useStore.getState().bumpAppResetKey();
-            console.log('[SIGNOUT] step 5: done. appResetKey=', useStore.getState().appResetKey);
           },
         },
       ]
@@ -382,21 +372,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
 
         {/* Sign out */}
         <Pressable
-          onPress={async () => {
-            console.log('[SIGNOUT] Pressable tapped — bypassing Alert for debug');
-            console.log('[SIGNOUT] step 1: start');
-            await AsyncStorage.removeItem(REMEMBER_ME_KEY);
-            console.log('[SIGNOUT] step 2: AsyncStorage cleared');
-            try {
-              await (supabase as any).auth.signOut();
-              console.log('[SIGNOUT] step 3: supabase signOut done');
-            } catch (e) {
-              console.log('[SIGNOUT] step 3 ERROR', e);
-            }
-            console.log('[SIGNOUT] step 4: bumping appResetKey');
-            useStore.getState().bumpAppResetKey();
-            console.log('[SIGNOUT] step 5: done. appResetKey=', useStore.getState().appResetKey);
-          }}
+          onPress={signOut}
           style={[styles.signOutBtn, { borderColor: `${COLORS.danger}40` }]}
         >
           <View style={{ transform: [{ rotate: '180deg' }] }}>
