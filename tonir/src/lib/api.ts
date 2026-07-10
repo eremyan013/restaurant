@@ -289,6 +289,7 @@ export type Prize = {
   image_url: string | null;
   stock: number | null;
   sort_order: number;
+  expires_at: string | null;
 };
 
 export type UserPrize = {

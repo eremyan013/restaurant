@@ -14,7 +14,7 @@ import { useProfile } from '../hooks/useProfile';
 import { useTranslation } from '../hooks/useTranslation';
 import { fetchUserPrizes, UserPrize } from '../lib/api';
 import { Icon } from '../components/Icon';
-import { FONTS } from '../theme';
+import { FONTS, COLORS } from '../theme';
 
 type Props = { navigation: NativeStackNavigationProp<RootStackParamList, 'MyPrizes'> };
 
@@ -28,9 +28,12 @@ export function MyPrizesScreen({ navigation }: Props) {
   const { theme: t, language } = useStore();
   const insets = useSafeAreaInsets();
   const { profile } = useProfile();
-  const { tr } = useTranslation();
+  const { tr, trf } = useTranslation();
 
   const LOCALE_MAP: Record<string, string> = { hy: 'hy-AM', ru: 'ru-RU', en: 'en-GB' };
+
+  const isPrizeExpired = (up: UserPrize) =>
+    !!up.prize?.expires_at && new Date(up.prize.expires_at) < new Date();
 
   const [prizes, setPrizes] = useState<UserPrize[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +52,7 @@ export function MyPrizesScreen({ navigation }: Props) {
     }, [profile?.id]),
   );
 
-  const activeCount = prizes.filter(p => p.status === 'active').length;
+  const activeCount = prizes.filter(p => p.status === 'active' && !isPrizeExpired(p)).length;
   const usedCount   = prizes.filter(p => p.status === 'used').length;
 
   const tabLabel = (key: string) => {
@@ -61,6 +64,7 @@ export function MyPrizesScreen({ navigation }: Props) {
 
   const filtered = useMemo(() => {
     if (tab === 'all') return prizes;
+    if (tab === 'active') return prizes.filter(p => p.status === 'active' && !isPrizeExpired(p));
     return prizes.filter(p => p.status === tab);
   }, [prizes, tab]);
 
@@ -127,12 +131,14 @@ export function MyPrizesScreen({ navigation }: Props) {
           showsVerticalScrollIndicator={false}
         >
           {filtered.map(up => {
-            const prize  = up.prize;
+            const prize = up.prize;
             const isUsed = up.status === 'used';
+            const isExpired = isPrizeExpired(up);
+            const isInactive = isUsed || isExpired;
             return (
               <View
                 key={up.id}
-                style={[styles.card, { backgroundColor: t.surface, borderColor: t.border, opacity: isUsed ? 0.65 : 1 }]}
+                style={[styles.card, { backgroundColor: t.surface, borderColor: t.border, opacity: isInactive ? 0.65 : 1 }]}
               >
                 {/* Top row */}
                 <View style={styles.cardHeader}>
@@ -150,15 +156,20 @@ export function MyPrizesScreen({ navigation }: Props) {
                       <Text style={[styles.cardVenue, { color: t.textFaint }]}>📍 {prize.venues.name}</Text>
                     ) : null}
                   </View>
-                  <View style={[styles.statusBadge, { backgroundColor: isUsed ? t.bgAlt : `${t.primary}18` }]}>
-                    <Text style={[styles.statusText, { color: isUsed ? t.textMute : t.primary }]}>
-                      {isUsed ? tr('prizes_used') : tr('prizes_tab_active')}
+                  <View style={[
+                    styles.statusBadge,
+                    { backgroundColor: isUsed ? t.bgAlt : isExpired ? `${COLORS.danger}15` : `${t.primary}18` }
+                  ]}>
+                    <Text style={[styles.statusText, {
+                      color: isUsed ? t.textMute : isExpired ? COLORS.danger : t.primary
+                    }]}>
+                      {isUsed ? tr('prizes_used') : isExpired ? tr('prizes_expired' as any) : tr('prizes_tab_active')}
                     </Text>
                   </View>
                 </View>
 
                 {/* Code */}
-                {up.code && !isUsed && (
+                {up.code && !isInactive && (
                   <>
                     <Text style={[styles.showCodeHint, { color: t.textFaint }]}>{tr('prizes_show_code')}</Text>
                     <View style={[styles.codeBox, { backgroundColor: `${t.primary}10`, borderColor: `${t.primary}25` }]}>
@@ -166,11 +177,18 @@ export function MyPrizesScreen({ navigation }: Props) {
                     </View>
                   </>
                 )}
-                {up.code && isUsed && (
+                {up.code && isInactive && (
                   <Text style={[styles.usedCode, { color: t.textFaint }]}>{up.code}</Text>
                 )}
 
                 {/* Footer */}
+                {prize?.expires_at && !isUsed && (
+                  <Text style={[styles.expiresAt, { color: isExpired ? COLORS.danger : t.textFaint }]}>
+                    {trf('prizes_expires' as any, {
+                      date: new Date(prize.expires_at).toLocaleDateString(LOCALE_MAP[language] ?? 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                    })}
+                  </Text>
+                )}
                 <Text style={[styles.claimedAt, { color: t.textFaint }]}>
                   {tr('prizes_claimed')}: {new Date(up.claimed_at).toLocaleDateString(LOCALE_MAP[language] ?? 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   {up.used_at ? `  ·  ${tr('prizes_used')}: ${new Date(up.used_at).toLocaleDateString(LOCALE_MAP[language] ?? 'en-GB', { day: 'numeric', month: 'short' })}` : ''}
@@ -212,5 +230,6 @@ const styles = StyleSheet.create({
   codeBox: { paddingVertical: 14, borderRadius: 14, borderWidth: 1, alignItems: 'center' },
   codeText: { fontSize: 28, fontFamily: FONTS.extraBold, fontWeight: '800', letterSpacing: 3 },
   usedCode: { fontSize: 16, fontFamily: FONTS.medium, fontWeight: '500', textAlign: 'center', textDecorationLine: 'line-through' },
+  expiresAt: { fontSize: 11, textAlign: 'center', fontFamily: FONTS.medium, fontWeight: '500' },
   claimedAt: { fontSize: 11, textAlign: 'center' },
 });
