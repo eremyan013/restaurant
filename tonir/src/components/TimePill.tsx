@@ -10,10 +10,34 @@ interface TimePillProps {
   perk?: string;
   size?: 'sm' | 'md' | 'lg';
   dark?: boolean;
+  light?: boolean;
 }
 
-export function TimePill({ time, active = false, t, onPress, perk, size = 'md', dark = false }: TimePillProps) {
+export function TimePill({ time, active = false, t, onPress, perk, size = 'md', dark = false, light = false }: TimePillProps) {
   const sz = SIZES[size];
+
+  let bgColor: string;
+  let textColor: string;
+  let borderWidth: number;
+  let borderColor: string;
+
+  if (light) {
+    bgColor = active ? t.primary : t.surface;
+    textColor = active ? '#FBF5E8' : t.text;
+    borderWidth = active ? 0 : 1;
+    borderColor = active ? 'transparent' : t.border;
+  } else if (dark) {
+    bgColor = active ? '#FBF5E8' : 'rgba(251,245,232,0.18)';
+    textColor = active ? t.primaryDeep : '#FBF5E8';
+    borderWidth = active ? 2 : 0;
+    borderColor = active ? t.accent : 'transparent';
+  } else {
+    bgColor = t.primary;
+    textColor = '#FBF5E8';
+    borderWidth = active ? 2 : 0;
+    borderColor = active ? t.accent : 'transparent';
+  }
+
   return (
     <View style={{ position: 'relative' }}>
       <Pressable
@@ -23,25 +47,13 @@ export function TimePill({ time, active = false, t, onPress, perk, size = 'md', 
           {
             paddingVertical: sz.py,
             paddingHorizontal: sz.px,
-            backgroundColor: dark
-              ? active ? '#FBF5E8' : 'rgba(251,245,232,0.18)'
-              : t.primary,
-            borderWidth: active ? 2 : 0,
-            borderColor: active ? t.accent : 'transparent',
+            backgroundColor: bgColor,
+            borderWidth,
+            borderColor,
           },
         ]}
       >
-        <Text
-          style={[
-            styles.label,
-            {
-              fontSize: sz.fs,
-              color: dark
-                ? active ? t.primaryDeep : '#FBF5E8'
-                : '#FBF5E8',
-            },
-          ]}
-        >
+        <Text style={[styles.label, { fontSize: sz.fs, color: textColor }]}>
           {time}
         </Text>
       </Pressable>

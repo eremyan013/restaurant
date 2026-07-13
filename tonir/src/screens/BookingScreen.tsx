@@ -358,6 +358,7 @@ export function BookingScreen({ navigation, route }: Props) {
                     active={time === t2}
                     t={t}
                     size="lg"
+                    light
                     perk={yelMap[t2] ? `+${yelMap[t2]}` : undefined}
                     onPress={() => {
                       if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
