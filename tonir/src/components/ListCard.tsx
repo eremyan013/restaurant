@@ -58,7 +58,7 @@ export function ListCard({ venue, t, onOpen, onFav, isFav }: ListCardProps) {
         })()}
       </ScrollView>
       <View style={styles.heatRow}>
-        <HeatDot level={venue.heat} t={t} withLabel size={6} />
+        <HeatDot level={venue.booked_today >= 15 ? 'high' : venue.booked_today >= 5 ? 'med' : 'low'} t={t} withLabel size={6} />
         {venue.booked_today >= 10 && (
           <>
             <Text style={{ color: t.textMute, fontSize: 11 }}>·</Text>
