@@ -14,6 +14,7 @@ import { useVenue } from '../hooks/useVenues';
 import { useReservations } from '../hooks/useReservations';
 import { useTranslation } from '../hooks/useTranslation';
 import { Icon } from '../components/Icon';
+import { TimePill } from '../components/TimePill';
 import { FONTS } from '../theme';
 import { notifyAdminsNewReservation } from '../lib/api';
 import { useVenueAvailability, isDateAvailable, filterAvailableTimes } from '../hooks/useVenueAvailability';
@@ -348,29 +349,23 @@ export function BookingScreen({ navigation, route }: Props) {
             </View>
           ) : (
             <View style={styles.timeGrid}>
-              {availableTimes.map((t2) => (
-                <Pressable
-                  key={t2}
-                  onPress={() => {
-                    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setTime(t2);
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={t2}
-                  accessibilityState={{ selected: time === t2 }}
-                  style={[
-                    styles.timeBtn,
-                    {
-                      backgroundColor: time === t2 ? t.primary : t.surface,
-                      borderColor: time === t2 ? t.primary : t.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.timeBtnText, { color: time === t2 ? '#FBF5E8' : t.text }]}>
-                    {t2}
-                  </Text>
-                </Pressable>
-              ))}
+              {(() => {
+                const yelMap = (venue.time_yel_map as Record<string, number> | null) ?? {};
+                return availableTimes.map((t2) => (
+                  <TimePill
+                    key={t2}
+                    time={t2}
+                    active={time === t2}
+                    t={t}
+                    size="lg"
+                    perk={yelMap[t2] ? `+${yelMap[t2]}` : undefined}
+                    onPress={() => {
+                      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setTime(t2);
+                    }}
+                  />
+                ));
+              })()}
             </View>
           )}
         </View>
@@ -513,7 +508,7 @@ const styles = StyleSheet.create({
   dateDayText: { fontSize: 11, fontFamily: FONTS.medium, fontWeight: '500' },
   dateDateText: { fontSize: 20, fontFamily: FONTS.bold, fontWeight: '700' },
   dateLabelText: { fontSize: 10.5, fontFamily: FONTS.semiBold, fontWeight: '600' },
-  timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingTop: 8 },
   noTimesWrap: { gap: 12 },
   noTimesBtn: {
     flexDirection: 'row',
