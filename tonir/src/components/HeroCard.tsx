@@ -62,7 +62,7 @@ export function HeroCard({ venue, t, onOpen, onFav, isFav, onBook }: HeroCardPro
             <TimePill key={time} time={time} t={t} size="sm" />
           ))}
         </View>
-        <Text style={[styles.perk, { color: t.accent }]}>+{venue.perk}</Text>
+        <Text style={[styles.perk, { color: t.accent }]}>{venue.perk}</Text>
         {onBook && (
           <Pressable
             onPress={() => {

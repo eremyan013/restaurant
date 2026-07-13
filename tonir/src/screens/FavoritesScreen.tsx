@@ -150,7 +150,7 @@ export function FavoritesScreen({ navigation }: { navigation: Nav }) {
                     <Text style={[styles.itemPrice, { color: t.textMute }]}>
                       {venue.price}
                     </Text>
-                    <Text style={[styles.itemPerk, { color: t.accent }]}>+{venue.perk} Yel</Text>
+                    <Text style={[styles.itemPerk, { color: t.accent }]}>{venue.perk} Yel</Text>
                   </View>
                 </View>
                 <Pressable

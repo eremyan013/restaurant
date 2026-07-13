@@ -52,7 +52,7 @@ export function TimePill({ time, active = false, t, onPress, perk, size = 'md', 
             { backgroundColor: t.accent },
           ]}
         >
-          <Text style={[styles.perkText, { color: t.primaryDeep }]}>+{perk}</Text>
+          <Text style={[styles.perkText, { color: t.primaryDeep }]}>{perk}</Text>
         </View>
       )}
     </View>

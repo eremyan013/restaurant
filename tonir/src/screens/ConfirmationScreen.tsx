@@ -148,7 +148,7 @@ export function ConfirmationScreen({ navigation }: Props) {
     { icon: 'calendar' as const, label: tr('conf_date'), value: booking?.date ?? '—' },
     { icon: 'clock' as const, label: tr('conf_time'), value: booking?.time ?? '—' },
     { icon: 'users' as const, label: tr('conf_people'), value: `${booking?.people ?? 2} ${tr('conf_people_unit')}` },
-    { icon: 'gift' as const, label: tr('conf_earn'), value: `+${booking?.yelEarned ?? venue?.perk ?? '—'} Yel` },
+    { icon: 'gift' as const, label: tr('conf_earn'), value: `+${booking?.yelEarned ?? String(venue?.perk ?? '—').replace(/^\+/, '')} Yel` },
   ];
 
   return (
