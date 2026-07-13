@@ -12,6 +12,7 @@ interface StarsProps {
 }
 
 export function Stars({ rating, reviews, t, size = 12, compact = false }: StarsProps) {
+  if (!reviews) return null;
   return (
     <View style={styles.row}>
       <Icon name="star" size={size} color={t.accent} />
