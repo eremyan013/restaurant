@@ -66,6 +66,9 @@ export function Sidebar({
         ? [{ href: '/dashboard/venues', label: 'My Venues', exact: false }]
         : [{ href: '/dashboard/venues', label: 'Venues', exact: false }]
       : []),
+    ...(isSuperAdmin
+      ? [{ href: '/dashboard/locations', label: 'Locations', exact: false }]
+      : []),
     ...(isSuperAdmin || permissions.prizes != null
       ? [{ href: '/dashboard/prizes', label: 'Prizes', exact: false }]
       : []),

@@ -75,6 +75,7 @@ async function createVenue(formData: FormData) {
     times:          arr('times'),
     time_yel_map:   parseYelMap(g('time_yel_map')) as import('@/lib/database.types').Json,
     is_active:      g('is_active') === 'true',
+    location_id:    g('location_id') || null,
   })
 
   if (error) throw new Error(error.message)
@@ -86,6 +87,14 @@ async function createVenue(formData: FormData) {
 export default async function NewVenuePage() {
   const admin = await getCurrentAdmin()
   if (admin?.role !== 'super_admin') redirect('/dashboard')
+
+  const supabase = createSupabaseAdminClient()
+  const { data: locationsData } = await supabase
+    .from('locations')
+    .select('id, name_en')
+    .order('sort_order', { ascending: true })
+  const locations = locationsData ?? []
+
   return (
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
@@ -94,7 +103,7 @@ export default async function NewVenuePage() {
         </Link>
         <h1 className="text-2xl font-semibold text-zinc-900">New venue</h1>
       </div>
-      <VenueFormClient action={createVenue} isNew />
+      <VenueFormClient action={createVenue} isNew locations={locations} />
     </div>
   )
 }

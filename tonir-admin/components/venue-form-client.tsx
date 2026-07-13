@@ -166,6 +166,7 @@ export interface VenueFormDefaults {
   heat?: string; kind?: string; photo_url?: string; dish_url?: string
   distance_km?: string; coord_x?: string; coord_y?: string
   times?: string; time_yel_map?: string; is_active?: string
+  location_id?: string | null
 }
 
 // ── Time slot types & helpers ──────────────────────────────────────────────────
@@ -273,11 +274,13 @@ export function VenueFormClient({
   defaults = {},
   isNew = false,
   bookedToday,
+  locations = [],
 }: {
   action: (fd: FormData) => void
   defaults?: VenueFormDefaults
   isNew?: boolean
   bookedToday?: number
+  locations?: { id: string; name_en: string }[]
 }) {
   const [lang, setLang] = useState<Lang>('hy')
   const [lf, setLf] = useState<Record<Lang, LangFields>>({
@@ -427,6 +430,16 @@ export function VenueFormClient({
             <option value="bar">bar</option>
             <option value="lounge">lounge</option>
             <option value="club">club</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-zinc-700">Location</label>
+          <select name="location_id" defaultValue={defaults.location_id ?? ''} className="h-10 px-3 rounded-lg border border-zinc-300 text-sm bg-white">
+            <option value="">— unassigned —</option>
+            {locations.map(loc => (
+              <option key={loc.id} value={loc.id}>{loc.name_en}</option>
+            ))}
           </select>
         </div>
 

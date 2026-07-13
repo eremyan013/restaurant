@@ -120,6 +120,7 @@ async function updateVenue(id: string, formData: FormData) {
       times:          arr('times'),
       time_yel_map:   parseYelMap(g('time_yel_map')) as import('@/lib/database.types').Json,
       is_active:      g('is_active') === 'true',
+      location_id:    g('location_id') || null,
     })
     .eq('id', id)
 
@@ -166,8 +167,8 @@ export default async function EditVenuePage({
 
   const todayISO = new Date().toISOString().split('T')[0]
 
-  const [venueRes, hoursRes, blockedRes, bookedTodayRes] = await Promise.all([
-    supabase.from('venues').select('id, name, name_hy, name_ru, name_en, cuisine, cuisine_hy, cuisine_ru, cuisine_en, area, area_hy, area_ru, area_en, description, description_hy, description_ru, description_en, perk, perk_hy, perk_ru, perk_en, tags, tags_hy, tags_ru, tags_en, price, rating, photo_url, dish_url, distance_km, heat, kind, coord_x, coord_y, times, time_yel_map, is_active').eq('id', id).single(),
+  const [venueRes, hoursRes, blockedRes, bookedTodayRes, locationsRes] = await Promise.all([
+    supabase.from('venues').select('id, name, name_hy, name_ru, name_en, cuisine, cuisine_hy, cuisine_ru, cuisine_en, area, area_hy, area_ru, area_en, description, description_hy, description_ru, description_en, perk, perk_hy, perk_ru, perk_en, tags, tags_hy, tags_ru, tags_en, price, rating, photo_url, dish_url, distance_km, heat, kind, coord_x, coord_y, times, time_yel_map, is_active, location_id').eq('id', id).single(),
     supabase.from('venue_hours').select('id, venue_id, day_of_week, is_open, open_time, close_time').eq('venue_id', id).order('day_of_week'),
     supabase.from('venue_blocked_dates').select('id, venue_id, date, reason, created_at').eq('venue_id', id).order('date'),
     supabase
@@ -176,9 +177,11 @@ export default async function EditVenuePage({
       .eq('venue_id', id)
       .eq('status', 'confirmed')
       .eq('date_iso', todayISO),
+    supabase.from('locations').select('id, name_en').order('sort_order', { ascending: true }),
   ])
 
   const bookedToday = bookedTodayRes.count ?? 0
+  const locations   = locationsRes.data ?? []
 
   if (venueRes.error || !venueRes.data) notFound()
 
@@ -224,6 +227,7 @@ export default async function EditVenuePage({
     times:          (venue.times ?? []).join(', '),
     time_yel_map:   venue.time_yel_map != null ? JSON.stringify(venue.time_yel_map) : undefined,
     is_active:      String(venue.is_active),
+    location_id:    venue.location_id ?? null,
   }
 
   return (
@@ -235,7 +239,7 @@ export default async function EditVenuePage({
         <h1 className="text-2xl font-semibold text-zinc-900">Edit: {venue.name_hy ?? venue.name}</h1>
       </div>
 
-      <VenueFormClient action={updateVenue.bind(null, id)} defaults={defaults} bookedToday={bookedToday} />
+      <VenueFormClient action={updateVenue.bind(null, id)} defaults={defaults} bookedToday={bookedToday} locations={locations} />
 
       {/* Opening Hours */}
       <div className="mt-10">

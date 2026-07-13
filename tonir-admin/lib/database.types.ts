@@ -908,6 +908,39 @@ export type Database = {
           },
         ]
       }
+      locations: {
+        Row: {
+          id: string
+          name_hy: string
+          name_ru: string
+          name_en: string
+          is_active: boolean
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name_hy: string
+          name_ru: string
+          name_en: string
+          is_active?: boolean
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name_hy?: string
+          name_ru?: string
+          name_en?: string
+          is_active?: boolean
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       venues: {
         Row: {
           area: string
@@ -932,6 +965,7 @@ export type Database = {
           id: string
           is_active: boolean
           kind: string
+          location_id: string | null
           name: string
           name_en: string | null
           name_hy: string | null
@@ -975,6 +1009,7 @@ export type Database = {
           id: string
           is_active?: boolean
           kind: string
+          location_id?: string | null
           name: string
           name_en?: string | null
           name_hy?: string | null
@@ -1018,6 +1053,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           kind?: string
+          location_id?: string | null
           name?: string
           name_en?: string | null
           name_hy?: string | null
@@ -1186,6 +1222,7 @@ export const Constants = {
 // ── Convenience row/update aliases ───────────────────────────────────────────
 type T = Database['public']['Tables']
 export type AdminActivityRow    = T['admin_activity_log']['Row']
+export type LocationRow         = T['locations']['Row']
 export type ConciergeMessageRow = T['concierge_messages']['Row']
 export type ConciergeSessionRow = T['concierge_sessions']['Row']
 export type GuideRow            = T['guides']['Row']
