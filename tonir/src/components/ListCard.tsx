@@ -47,12 +47,15 @@ export function ListCard({ venue, t, onOpen, onFav, isFav }: ListCardProps) {
           </View>
         </View>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.timeRow}>
-        {venue.times.slice(0, 5).map((time) => (
-          <View key={time} style={{ marginRight: 6 }}>
-            <TimePill time={time} t={t} size="sm" />
-          </View>
-        ))}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.timeRow} contentContainerStyle={{ paddingTop: 8 }}>
+        {(() => {
+          const yelMap = (venue.time_yel_map as Record<string, number> | null) ?? {};
+          return venue.times.slice(0, 5).map((time) => (
+            <View key={time} style={{ marginRight: 6 }}>
+              <TimePill time={time} t={t} size="sm" light perk={yelMap[time] ? `+${yelMap[time]}` : undefined} />
+            </View>
+          ));
+        })()}
       </ScrollView>
       <View style={styles.heatRow}>
         <HeatDot level={venue.heat} t={t} withLabel size={6} />
