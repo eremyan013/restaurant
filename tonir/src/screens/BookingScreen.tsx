@@ -164,7 +164,7 @@ export function BookingScreen({ navigation, route }: Props) {
         occasion,
         splitWith: [],
         note,
-        yelEarned: venue!.perk,
+        yelEarned: String(venue!.perk).replace(/^\+/, ''),
       });
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       navigation.navigate('Confirmation');
@@ -219,7 +219,7 @@ export function BookingScreen({ navigation, route }: Props) {
             </View>
           </View>
           <View style={[styles.yelBadge, { backgroundColor: t.bgAlt }]}>
-            <Text style={[styles.yelText, { color: t.accent }]}>+{venue.perk} Yel</Text>
+            <Text style={[styles.yelText, { color: t.accent }]}>+{String(venue.perk).replace(/^\+/, '')} Yel</Text>
           </View>
         </View>
 
