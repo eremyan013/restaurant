@@ -4,6 +4,39 @@ export interface Database {
   public: {
     Tables: {
 
+      locations: {
+        Row: {
+          id: string;
+          name_hy: string;
+          name_ru: string;
+          name_en: string;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name_hy: string;
+          name_ru: string;
+          name_en: string;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name_hy?: string;
+          name_ru?: string;
+          name_en?: string;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+
       venues: {
         Row: {
           id: string;
@@ -44,6 +77,7 @@ export interface Database {
           tags_hy: string[] | null;
           tags_ru: string[] | null;
           tags_en: string[] | null;
+          location_id: string | null;
           is_active: boolean;
           created_at: string;
           updated_at: string;
@@ -87,6 +121,7 @@ export interface Database {
           tags_hy?: string[] | null;
           tags_ru?: string[] | null;
           tags_en?: string[] | null;
+          location_id?: string | null;
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -565,6 +600,7 @@ export interface Database {
 }
 
 // ── Convenience row types ─────────────────────────────────────────────────────
+export type LocationRow       = Database['public']['Tables']['locations']['Row'];
 export type VenueRow          = Database['public']['Tables']['venues']['Row'];
 export type ReservationRow    = Database['public']['Tables']['reservations']['Row'];
 export type FavoriteRow       = Database['public']['Tables']['favorites']['Row'];
