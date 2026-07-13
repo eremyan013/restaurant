@@ -20,6 +20,7 @@ import { CANCEL_DEADLINE_MS } from '../lib/constants';
 import { ReservationRow } from '../lib/database.types';
 import { Icon } from '../components/Icon';
 import { ErrorState } from '../components/ErrorState';
+import { TimePill } from '../components/TimePill';
 import { FONTS, COLORS } from '../theme';
 
 function isPastCancelDeadline(r: ReservationRow): boolean {
@@ -215,8 +216,12 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                       <View style={styles.metaRow}>
                         <Icon name="calendar" size={12} color={t.textMute} strokeWidth={2} />
                         <Text style={[styles.metaText, { color: t.textMute }]}>{res.date}</Text>
-                        <Icon name="clock" size={12} color={t.textMute} strokeWidth={2} />
-                        <Text style={[styles.metaText, { color: t.textMute }]}>{res.time}</Text>
+                        <TimePill
+                          time={res.time}
+                          t={t}
+                          size="sm"
+                          perk={res.yel_earned ? `+${res.yel_earned}` : undefined}
+                        />
                         <Icon name="users" size={12} color={t.textMute} strokeWidth={2} />
                         <Text style={[styles.metaText, { color: t.textMute }]}>{res.people}</Text>
                       </View>
@@ -227,7 +232,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
 
                   {/* Bottom row */}
                   <View style={styles.cardBottom}>
-                    <Text style={[styles.perkText, { color: t.accent }]}>{res.yel_earned} Yel</Text>
+                    <Text style={[styles.perkText, { color: t.accent }]}>+{res.yel_earned} Yel</Text>
                     <View style={styles.actions}>
                       {tab === 'past' ? (
                         ratedIds.has(res.id) ? (
