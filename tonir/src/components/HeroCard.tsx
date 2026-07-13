@@ -65,7 +65,6 @@ export function HeroCard({ venue, t, onOpen, onFav, isFav, onBook }: HeroCardPro
             ));
           })()}
         </View>
-        <Text style={[styles.perk, { color: t.accent }]}>{venue.perk}</Text>
         {onBook && (
           <Pressable
             onPress={() => {
