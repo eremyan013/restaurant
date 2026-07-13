@@ -16,6 +16,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     // HomeScreen
     eyebrow:          'ՏՈՆԻՐ ԵՐԵԿՈ',
     location:         'Երևան, Կենտրոն',
+    loc_picker_title: 'Ընտրել քաղաք',
     chip_tonight:     '2 հոգի · 19:30, այս երեկո',
     chip_nearby:      'Մոտակայք',
     chip_now:         'Հիմա',
@@ -418,6 +419,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     // HomeScreen
     eyebrow:          'TONIR ВЕЧЕР',
     location:         'Ереван, Центр',
+    loc_picker_title: 'Выбрать город',
     chip_tonight:     '2 чел. · 19:30, сегодня',
     chip_nearby:      'Рядом',
     chip_now:         'Сейчас',
@@ -817,6 +819,7 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     // HomeScreen
     eyebrow:          'TONIR EVENING',
     location:         'Yerevan, Centre',
+    loc_picker_title: 'Select city',
     chip_tonight:     '2 ppl · 7:30 PM, tonight',
     chip_nearby:      'Nearby',
     chip_now:         'Now',

@@ -32,6 +32,10 @@ interface AppState {
   favs: Set<string>;
   setFavs: (favs: Set<string>) => void;
 
+  // Selected location (persisted)
+  selectedLocationId: string | null;
+  setSelectedLocationId: (id: string | null) => void;
+
   // Tier-up detection (persisted — compare against live profile.tier_level)
   lastKnownTierLevel: number;
   setLastKnownTierLevel: (level: number) => void;
@@ -87,6 +91,9 @@ export const useStore = create<AppState>()(
       favs: new Set<string>(),
       setFavs: (favs) => set({ favs }),
 
+      selectedLocationId: null,
+      setSelectedLocationId: (selectedLocationId) => set({ selectedLocationId }),
+
       lastKnownTierLevel: 1,
       setLastKnownTierLevel: (lastKnownTierLevel) => set({ lastKnownTierLevel }),
 
@@ -102,7 +109,7 @@ export const useStore = create<AppState>()(
     {
       name: 'tonir-prefs',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({ palette: state.palette, dark: state.dark, language: state.language, lastKnownTierLevel: state.lastKnownTierLevel }),
+      partialize: (state) => ({ palette: state.palette, dark: state.dark, language: state.language, lastKnownTierLevel: state.lastKnownTierLevel, selectedLocationId: state.selectedLocationId }),
       onRehydrateStorage: () => (state) => {
         if (state) {
           // palette and dark are now restored from storage — sync the derived theme

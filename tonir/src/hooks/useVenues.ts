@@ -9,12 +9,12 @@ export function useVenues() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const { language } = useStore();
+  const { language, selectedLocationId } = useStore();
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    Promise.all([fetchVenues(), fetchTodayBookingCounts().catch(() => null)])
+    Promise.all([fetchVenues(selectedLocationId), fetchTodayBookingCounts().catch(() => null)])
       .then(([venues, counts]) => {
         setRaw(venues.map(v => ({
           ...v,
@@ -23,7 +23,7 @@ export function useVenues() {
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [attempt]);
+  }, [attempt, selectedLocationId]);
 
   const venues = useMemo(() => raw.map(v => localizeVenue(v, language)), [raw, language]);
   const retry = useCallback(() => setAttempt((n) => n + 1), []);

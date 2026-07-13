@@ -15,6 +15,8 @@ import { useStore } from '../store';
 import { useHomeSections } from '../hooks/useHomeSections';
 import { useFavorites } from '../hooks/useFavorites';
 import { useProfile } from '../hooks/useProfile';
+import { useLocations } from '../hooks/useLocations';
+import { LocationSheet } from '../components/LocationSheet';
 import { Icon } from '../components/Icon';
 import { SearchBar } from '../components/SearchBar';
 import { SectionHeader } from '../components/SectionHeader';
@@ -33,19 +35,36 @@ type Nav = CompositeNavigationProp<
 >;
 
 export function HomeScreen({ navigation }: { navigation: Nav }) {
-  const { theme: t, language, setLanguage } = useStore();
+  const { theme: t, language, setLanguage, selectedLocationId, setSelectedLocationId } = useStore();
   const { tr } = useTranslation();
   const insets = useSafeAreaInsets();
   const { sections, loading, error, retry } = useHomeSections();
   const { favs, toggleFav } = useFavorites();
   const { profile } = useProfile();
+  const { locations, loading: locLoading, defaultLocationId } = useLocations();
   const [refreshing, setRefreshing] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [sheetVisible, setSheetVisible] = useState(false);
 
   // Stop the pull-to-refresh spinner once the fetch completes
   useEffect(() => {
     if (!loading) setRefreshing(false);
   }, [loading]);
+
+  // Auto-select the default location on first load; fix stale IDs
+  useEffect(() => {
+    if (locLoading || locations.length === 0) return;
+    if (selectedLocationId === null) {
+      setSelectedLocationId(defaultLocationId);
+    } else if (!locations.find((l) => l.id === selectedLocationId)) {
+      setSelectedLocationId(defaultLocationId);
+    }
+  }, [locLoading, locations, selectedLocationId, defaultLocationId]);
+
+  const selectedLocation = locations.find((l) => l.id === selectedLocationId);
+  const selectedLocationLabel = selectedLocation
+    ? (language === 'hy' ? selectedLocation.name_hy : language === 'ru' ? selectedLocation.name_ru : selectedLocation.name_en)
+    : '';
 
   function onRefresh() {
     setRefreshing(true);
@@ -86,8 +105,8 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
         <View style={styles.header}>
           <View>
             <Text style={[styles.eyebrow, { color: t.primary }]}>{tr('eyebrow')}</Text>
-            <Pressable style={styles.locationRow} onPress={() => navigation.navigate('Map', {})}>
-              <Text style={[styles.location, { color: t.text }]}>{tr('location')}</Text>
+            <Pressable style={styles.locationRow} onPress={() => setSheetVisible(true)}>
+              <Text style={[styles.location, { color: t.text }]}>{selectedLocationLabel || tr('location')}</Text>
               <Icon name="chevD" size={16} color={t.text} />
             </Pressable>
           </View>
@@ -269,6 +288,17 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
           </View>
         </Pressable>
       </Modal>
+
+      <LocationSheet
+        visible={sheetVisible}
+        onClose={() => setSheetVisible(false)}
+        locations={locations}
+        selectedId={selectedLocationId}
+        onSelect={setSelectedLocationId}
+        t={t}
+        language={language}
+        title={tr('loc_picker_title')}
+      />
     </View>
   );
 }
