@@ -52,7 +52,7 @@ export function ListCard({ venue, t, onOpen, onFav, isFav }: ListCardProps) {
           const yelMap = (venue.time_yel_map as Record<string, number> | null) ?? {};
           return venue.times.slice(0, 5).map((time) => (
             <View key={time} style={{ marginRight: 6 }}>
-              <TimePill time={time} t={t} size="sm" light perk={yelMap[time] ? `+${yelMap[time]}` : undefined} />
+              <TimePill time={time} t={t} size="sm" perk={yelMap[time] ? `+${yelMap[time]}` : undefined} />
             </View>
           ));
         })()}

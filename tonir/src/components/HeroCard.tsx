@@ -61,7 +61,7 @@ export function HeroCard({ venue, t, onOpen, onFav, isFav, onBook }: HeroCardPro
           {(() => {
             const yelMap = (venue.time_yel_map as Record<string, number> | null) ?? {};
             return venue.times.slice(0, 3).map((time) => (
-              <TimePill key={time} time={time} t={t} size="sm" light perk={yelMap[time] ? `+${yelMap[time]}` : undefined} />
+              <TimePill key={time} time={time} t={t} size="sm" perk={yelMap[time] ? `+${yelMap[time]}` : undefined} />
             ));
           })()}
         </View>
