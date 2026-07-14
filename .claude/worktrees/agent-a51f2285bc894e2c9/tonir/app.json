@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Tonir",
+    "slug": "tonir",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.tonir.app",
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"]
+      }
+    },
+    "android": {
+      "package": "com.tonir.app"
+    },
+    "plugins": [
+      ["expo-notifications", { "color": "#1A1208" }]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c56d5076-3d92-45f0-ae79-fe3c3f4f34cc"
+      }
+    },
+    "owner": "yeremyan"
+  }
+}

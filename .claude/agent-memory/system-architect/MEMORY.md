@@ -1,0 +1,4 @@
+- [tonir-admin stack reality](project-tonir-admin-stack.md) — Zod + RHF not installed yet; no shadcn/ui components/ui/ dir in actual repo
+- [tonir-admin form patterns](project-tonir-admin-form-patterns.md) — two patterns: useActionState (Pattern A) vs fetch-based (Pattern B); field errors require ActionState extension
+- [tonir navigation](project-tonir-navigation.md) — uses React Navigation v6, NOT Expo Router; screens in src/screens/, navigator in src/navigation/index.tsx; no app/ directory
+- [Home Sections feature design](project-home-sections.md) — junction table with item_type enum; @dnd-kit approved; useHomeSections replaces hardcoded filters on HomeScreen
