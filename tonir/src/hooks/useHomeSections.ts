@@ -20,7 +20,7 @@ export function useHomeSections() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const { language } = useStore();
+  const { language, selectedLocationId } = useStore();
 
   useEffect(() => {
     let cancelled = false;
@@ -84,6 +84,11 @@ export function useHomeSections() {
 
         const items: HomeSectionItem[] = [...(s.home_section_items ?? [])]
           .sort((a: any, b: any) => a.sort_order - b.sort_order)
+          .filter((item: any) => {
+            if (!item.venue) return true;
+            if (!selectedLocationId) return true;
+            return item.venue.location_id === selectedLocationId;
+          })
           .map((item: any) => {
             const venue = item.venue ?? null;
             return {
@@ -106,7 +111,7 @@ export function useHomeSections() {
       .catch((e) => { if (!cancelled) { setError(e.message); setLoading(false); } });
 
     return () => { cancelled = true; };
-  }, [attempt, language]);
+  }, [attempt, language, selectedLocationId]);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
