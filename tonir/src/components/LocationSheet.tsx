@@ -36,49 +36,51 @@ export function LocationSheet({ visible, onClose, locations, selectedId, onSelec
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} />
-      <Animated.View
-        style={[
-          styles.sheet,
-          {
-            backgroundColor: t.surface,
-            paddingTop: Math.max(insets.top + 8, 16),
-            transform: [{ translateY }],
-          },
-        ]}
-      >
-        <Text style={[styles.title, { color: t.text }]}>{title}</Text>
-        <FlatList
-          data={locations}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => { onSelect(item.id); onClose(); }}
-              style={[styles.row, { borderBottomColor: t.border }]}
-            >
-              <Text style={[styles.rowLabel, { color: t.text }]}>{getLabel(item)}</Text>
-              {selectedId === item.id && (
-                <Icon name="check" size={18} color={t.primary} strokeWidth={2.5} />
-              )}
-            </Pressable>
-          )}
-        />
-        <View style={[styles.handle, { backgroundColor: t.border }]} />
-      </Animated.View>
+      <View style={styles.container}>
+        <Animated.View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: t.surface,
+              paddingTop: Math.max(insets.top + 8, 16),
+              transform: [{ translateY }],
+            },
+          ]}
+        >
+          <Text style={[styles.title, { color: t.text }]}>{title}</Text>
+          <FlatList
+            data={locations}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <Pressable
+                onPress={() => { onSelect(item.id); onClose(); }}
+                style={[styles.row, { borderBottomColor: t.border }]}
+              >
+                <Text style={[styles.rowLabel, { color: t.text }]}>{getLabel(item)}</Text>
+                {selectedId === item.id && (
+                  <Icon name="check" size={18} color={t.primary} strokeWidth={2.5} />
+                )}
+              </Pressable>
+            )}
+          />
+          <View style={[styles.handle, { backgroundColor: t.border }]} />
+        </Animated.View>
+        <Pressable style={styles.backdrop} onPress={onClose} />
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'flex-start',
+  },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
   sheet: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     paddingHorizontal: 20,
