@@ -1,5 +1,0 @@
-export * from './admin.schema'
-export * from './prize.schema'
-export * from './guide.schema'
-export * from './yel.schema'
-export * from './reservation.schema'
