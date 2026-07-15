@@ -63,6 +63,10 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     srch_clear:            'Մաքրել ֆիլտրը',
     srch_filters:          ['Բոլորը', 'Լավագույն', 'Այս երեկո', 'Մոտակայք', 'Գինու բարեր', 'Հայկական'],
     srch_nearby_no_location: 'Միացրեք գտնվելու վայրը մոտակա վայրերը տեսնելու համար',
+    // CategoryScreen
+    cat_see_more:       'Տեսնել բոլորը',
+    cat_see_more_sub:   'Բոլոր վայրերը',
+    cat_venues_count:   '{n} վայր',
     // Bottom tab navigation
     tab_home:         'Բացահայտել',
     tab_search:       'Որոնում',
@@ -466,6 +470,10 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     srch_clear:            'Сбросить фильтр',
     srch_filters:          ['Все', 'Лучшие', 'Сегодня', 'Рядом', 'Винные бары', 'Армянские'],
     srch_nearby_no_location: 'Включите геолокацию, чтобы увидеть ближайшие места',
+    // CategoryScreen
+    cat_see_more:       'Смотреть все',
+    cat_see_more_sub:   'Все заведения',
+    cat_venues_count:   '{n} места',
     // Bottom tab navigation
     tab_home:         'Обзор',
     tab_search:       'Поиск',
@@ -866,6 +874,10 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     srch_clear:            'Clear filter',
     srch_filters:          ['All', 'Best', 'Tonight', 'Nearby', 'Wine bars', 'Armenian'],
     srch_nearby_no_location: 'Enable location to see nearby places',
+    // CategoryScreen
+    cat_see_more:       'See all',
+    cat_see_more_sub:   'All venues',
+    cat_venues_count:   '{n} places',
     // Bottom tab navigation
     tab_home:         'Discover',
     tab_search:       'Search',

@@ -23,6 +23,7 @@ import { SectionHeader } from '../components/SectionHeader';
 import { Chip } from '../components/Chip';
 import { HeroCard } from '../components/HeroCard';
 import { GuideCard } from '../components/GuideCard';
+import { SeeMoreCard } from '../components/SeeMoreCard';
 import { ErrorState } from '../components/ErrorState';
 import { FONTS, COLORS } from '../theme';
 import { LANG_FLAGS, LANGS } from '../i18n';
@@ -184,49 +185,77 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
         </View>
 
         {/* Dynamic sections managed from the admin panel */}
-        {sections.map((section) => (
-          <View key={section.id} style={{ marginTop: 28 }}>
-            <SectionHeader
-              title={section.name}
-              eyebrow={section.eyebrow}
-              t={t}
-              onAction={() => navigation.navigate('Search')}
-            />
-            {section.home_section_items.length === 0 ? (
-              <View style={{ paddingHorizontal: 20, paddingVertical: 16 }}>
-                <Text style={{ color: t.textMute, fontSize: 13, fontFamily: FONTS.regular }}>
-                  {tr('home_section_empty')}
-                </Text>
-              </View>
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
-              >
-                {section.home_section_items.map((item) =>
-                  item.item_type === 'guide' && item.guide ? (
-                    <GuideCard
-                      key={item.id}
-                      guide={item.guide}
+        {sections.map((section) => {
+          const venueItems = section.home_section_items.filter(
+            (item) => item.item_type !== 'guide' && item.venue
+          );
+          const visibleItems = section.home_section_items.filter(
+            (item) => item.item_type === 'guide' || (item.item_type !== 'guide' && item.venue)
+          );
+          // Only show first 5 venue items in the ScrollView
+          let venueCount = 0;
+          const slicedItems = visibleItems.filter((item) => {
+            if (item.item_type !== 'guide' && item.venue) {
+              venueCount += 1;
+              return venueCount <= 5;
+            }
+            return true;
+          });
+
+          return (
+            <View key={section.id} style={{ marginTop: 28 }}>
+              <SectionHeader
+                title={section.name}
+                eyebrow={section.eyebrow}
+                t={t}
+              />
+              {section.home_section_items.length === 0 ? (
+                <View style={{ paddingHorizontal: 20, paddingVertical: 16 }}>
+                  <Text style={{ color: t.textMute, fontSize: 13, fontFamily: FONTS.regular }}>
+                    {tr('home_section_empty')}
+                  </Text>
+                </View>
+              ) : (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
+                >
+                  {slicedItems.map((item) =>
+                    item.item_type === 'guide' && item.guide ? (
+                      <GuideCard
+                        key={item.id}
+                        guide={item.guide}
+                        t={t}
+                        onOpen={() => navigation.navigate('Concierge')}
+                      />
+                    ) : item.venue ? (
+                      <HeroCard
+                        key={item.id}
+                        venue={item.venue}
+                        t={t}
+                        onOpen={() => navigation.navigate('Detail', { venueId: item.venue!.id })}
+                        onFav={() => toggleFav(item.venue!.id)}
+                        isFav={favs.has(item.venue!.id)}
+                      />
+                    ) : null
+                  )}
+                  {venueItems.length > 0 && (
+                    <SeeMoreCard
                       t={t}
-                      onOpen={() => navigation.navigate('Concierge')}
+                      label={tr('cat_see_more')}
+                      sublabel={tr('cat_see_more_sub')}
+                      onPress={() => navigation.navigate('Category', {
+                        sectionId: section.id,
+                        sectionName: section.name,
+                      })}
                     />
-                  ) : item.venue ? (
-                    <HeroCard
-                      key={item.id}
-                      venue={item.venue}
-                      t={t}
-                      onOpen={() => navigation.navigate('Detail', { venueId: item.venue!.id })}
-                      onFav={() => toggleFav(item.venue!.id)}
-                      isFav={favs.has(item.venue!.id)}
-                    />
-                  ) : null
-                )}
-              </ScrollView>
-            )}
-          </View>
-        ))}
+                  )}
+                </ScrollView>
+              )}
+            </View>
+          );
+        })}
 
         {/* Loyalty teaser */}
         <LinearGradient

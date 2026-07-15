@@ -44,6 +44,7 @@ import { MarketScreen } from '../screens/MarketScreen';
 import { MyPrizesScreen } from '../screens/MyPrizesScreen';
 import { PhoneVerifyScreen } from '../screens/PhoneVerifyScreen';
 import { ReservationActionScreen } from '../screens/ReservationActionScreen';
+import { CategoryScreen } from '../screens/CategoryScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -63,6 +64,7 @@ export type RootStackParamList = {
   Concierge: undefined;
   Market: undefined;
   MyPrizes: undefined;
+  Category: { sectionId: string; sectionName: string };
   ReservationAction: { token: string; action: 'confirm' | 'cancel' };
 };
 
@@ -254,6 +256,11 @@ export function AppNavigator() {
               name="MyPrizes"
               component={MyPrizesScreen}
               options={{ animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="Category"
+              component={CategoryScreen}
+              options={{ headerShown: false, animation: 'slide_from_right' }}
             />
             <Stack.Screen
               name="ReservationAction"
