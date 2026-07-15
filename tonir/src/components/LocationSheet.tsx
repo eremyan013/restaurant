@@ -56,7 +56,10 @@ export function LocationSheet({ visible, onClose, locations, selectedId, onSelec
                 onPress={() => { onSelect(item.id); onClose(); }}
                 style={[styles.row, { borderBottomColor: t.border }]}
               >
-                <Text style={[styles.rowLabel, { color: t.text }]}>{getLabel(item)}</Text>
+                <View style={styles.rowLeft}>
+                  <Icon name="pin" size={16} color={t.primary} strokeWidth={2} />
+                  <Text style={[styles.rowLabel, { color: t.text }]}>{getLabel(item)}</Text>
+                </View>
                 {selectedId === item.id && (
                   <Icon name="check" size={18} color={t.primary} strokeWidth={2.5} />
                 )}
@@ -107,6 +110,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  rowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   rowLabel: {
     fontSize: 16,
