@@ -240,7 +240,7 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
                       />
                     ) : null
                   )}
-                  {venueItems.length > 0 && (
+                  {venueItems.length > 5 && (
                     <SeeMoreCard
                       t={t}
                       label={tr('cat_see_more')}
