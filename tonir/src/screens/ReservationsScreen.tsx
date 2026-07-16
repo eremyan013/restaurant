@@ -195,6 +195,8 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                 </View>
               );
               const statusInfo = statusLabels[res.status as keyof typeof statusLabels] ?? statusLabels.upcoming;
+              const yelMap = (venue.time_yel_map as Record<string, number> | null) ?? {};
+              const yelAmount = yelMap[res.time];
               return (
                 <Pressable
                   key={res.id}
@@ -220,7 +222,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                           time={res.time}
                           t={t}
                           size="sm"
-                          perk={res.yel_earned ? `+${res.yel_earned}` : undefined}
+                          perk={yelAmount ? `+${yelAmount}` : undefined}
                         />
                         <Icon name="users" size={12} color={t.textMute} strokeWidth={2} />
                         <Text style={[styles.metaText, { color: t.textMute }]}>{res.people}</Text>
@@ -232,7 +234,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
 
                   {/* Bottom row */}
                   <View style={styles.cardBottom}>
-                    <Text style={[styles.perkText, { color: t.accent }]}>+{res.yel_earned} Yel</Text>
+                    {yelAmount ? <Text style={[styles.perkText, { color: t.accent }]}>+{yelAmount} Yel</Text> : null}
                     <View style={styles.actions}>
                       {tab === 'past' ? (
                         ratedIds.has(res.id) ? (
