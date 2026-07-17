@@ -49,7 +49,7 @@ export default async function UserProfilePage({
   const [profileResult, reservationsResult, favoritesResult] = await Promise.all([
     supabase
       .from('profiles')
-      .select('id, name, email, phone, role, player_id, tier, tier_level, yel_points, total_visits, avatar_url, created_at, updated_at')
+      .select('id, name, surname, email, phone, role, player_id, tier, tier_level, yel_points, total_visits, avatar_url, date_of_birth, created_at, updated_at')
       .eq('id', id)
       .eq('role', 'user')
       .single(),
@@ -130,7 +130,7 @@ export default async function UserProfilePage({
           </div>
 
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-semibold text-zinc-900">{user.name}</h1>
+            <h1 className="text-2xl font-semibold text-zinc-900">{user.name}{(user as any).surname ? ` ${(user as any).surname}` : ''}</h1>
             <p className="text-zinc-500 text-sm mt-0.5">{user.email}</p>
             <p className="text-zinc-400 text-xs mt-1">Member since {memberSince}</p>
           </div>
@@ -166,6 +166,8 @@ export default async function UserProfilePage({
             <dl className="space-y-3 text-sm">
               <DetailRow label="Player ID" value={<span className="font-mono font-semibold text-zinc-900">{user.player_id}</span>} />
               <DetailRow label="Phone" value={<span className="tabular-nums">{user.phone ?? '—'}</span>} />
+              <DetailRow label="Surname" value={<span>{(user as any).surname ?? '—'}</span>} />
+              <DetailRow label="Date of Birth" value={<span className="tabular-nums">{(user as any).date_of_birth ?? '—'}</span>} />
               <DetailRow label="User ID" value={<span className="font-mono text-xs break-all">{user.id}</span>} />
               <DetailRow label="Role" value={user.role} />
               <DetailRow label="Last updated" value={user.updated_at ? new Date(user.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Yerevan' }) : '—'} />

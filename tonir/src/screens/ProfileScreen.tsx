@@ -71,12 +71,22 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
   const [editAvatarUri, setEditAvatarUri] = useState<string | null>(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [editSurname, setEditSurname] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editDob, setEditDob] = useState('');
 
   function openEdit() {
     setEditName(profile?.name ?? '');
+    setEditSurname((profile as any)?.surname ?? '');
+    setEditDob((profile as any)?.date_of_birth ?? '');
     setEditAvatarUri(profile?.avatar_url ?? null);
     setEditError(null);
     setEditVisible(true);
+    supabase.auth.getUser().then(({ data: { user } }: any) => {
+      setEditEmail(user?.email ?? '');
+      setEditPhone(user?.phone ?? '');
+    });
   }
 
   async function pickAvatar() {
@@ -103,6 +113,10 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
     const trimmed = editName.trim();
     if (trimmed.length < 2) { setEditError(tr('prof_edit_name_too_short')); return; }
     if (trimmed.length > PROFILE_NAME_MAX_LENGTH) { setEditError(tr('prof_edit_name_too_long'));  return; }
+    const trimmedSurname = editSurname.trim();
+    if (trimmedSurname.length > 0 && trimmedSurname.length < 2) { setEditError(tr('prof_edit_surname_too_short')); return; }
+    if (trimmedSurname.length > PROFILE_NAME_MAX_LENGTH) { setEditError(tr('prof_edit_surname_too_long')); return; }
+    if (editDob.trim() && !/^\d{4}-\d{2}-\d{2}$/.test(editDob.trim())) { setEditError(tr('prof_edit_dob_invalid')); return; }
     setEditSaving(true);
     setEditError(null);
     try {
@@ -112,7 +126,12 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
       } else if (!editAvatarUri) {
         avatar_url = null;
       }
-      await updateProfile(userId, { name: trimmed, avatar_url });
+      await updateProfile(userId, {
+        name: trimmed,
+        avatar_url,
+        surname: trimmedSurname || null,
+        date_of_birth: editDob.trim() || null,
+      });
       setEditVisible(false);
       refetch();
     } catch (e: any) {
@@ -475,6 +494,74 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
                   placeholderTextColor={t.textFaint}
                   autoCapitalize="words"
                   maxLength={PROFILE_NAME_MAX_LENGTH + 1}
+                  style={[styles.fieldInput, { color: t.text }]}
+                />
+              </View>
+
+              {/* Surname field */}
+              <View style={[styles.fieldWrap, { backgroundColor: t.surface, borderColor: editSurname.trim().length > PROFILE_NAME_MAX_LENGTH ? COLORS.danger : t.border }]}>
+                <Text style={[styles.fieldLabel, { color: t.textMute }]}>{tr('prof_edit_surname')}</Text>
+                <TextInput
+                  value={editSurname}
+                  onChangeText={(v) => { setEditSurname(v); setEditError(null); }}
+                  placeholder={tr('prof_edit_surname_placeholder')}
+                  placeholderTextColor={t.textFaint}
+                  autoCapitalize="words"
+                  maxLength={PROFILE_NAME_MAX_LENGTH + 1}
+                  style={[styles.fieldInput, { color: t.text }]}
+                />
+              </View>
+
+              {/* Email field (read-only) */}
+              <View style={[styles.fieldWrap, { backgroundColor: t.surface, borderColor: t.border }]}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={[styles.fieldLabel, { color: t.textMute }]}>{tr('prof_edit_email')}</Text>
+                  <Pressable
+                    onPress={() => { haptic(); Alert.alert(tr('prof_edit_contact_info_title'), tr('prof_edit_contact_info_sub')); }}
+                    style={{ padding: 6 }}
+                  >
+                    <Text style={{ color: t.textFaint, fontSize: 16 }}>ⓘ</Text>
+                  </Pressable>
+                </View>
+                <TextInput
+                  value={editEmail}
+                  editable={false}
+                  placeholder="—"
+                  placeholderTextColor={t.textFaint}
+                  style={[styles.fieldInput, { color: t.textMute }]}
+                />
+              </View>
+
+              {/* Phone field (read-only) */}
+              <View style={[styles.fieldWrap, { backgroundColor: t.surface, borderColor: t.border }]}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={[styles.fieldLabel, { color: t.textMute }]}>{tr('prof_edit_phone')}</Text>
+                  <Pressable
+                    onPress={() => { haptic(); Alert.alert(tr('prof_edit_contact_info_title'), tr('prof_edit_contact_info_sub')); }}
+                    style={{ padding: 6 }}
+                  >
+                    <Text style={{ color: t.textFaint, fontSize: 16 }}>ⓘ</Text>
+                  </Pressable>
+                </View>
+                <TextInput
+                  value={editPhone}
+                  editable={false}
+                  placeholder="—"
+                  placeholderTextColor={t.textFaint}
+                  style={[styles.fieldInput, { color: t.textMute }]}
+                />
+              </View>
+
+              {/* Date of birth field */}
+              <View style={[styles.fieldWrap, { backgroundColor: t.surface, borderColor: t.border }]}>
+                <Text style={[styles.fieldLabel, { color: t.textMute }]}>{tr('prof_edit_dob')}</Text>
+                <TextInput
+                  value={editDob}
+                  onChangeText={(v) => { setEditDob(v); setEditError(null); }}
+                  placeholder={tr('prof_edit_dob_placeholder')}
+                  placeholderTextColor={t.textFaint}
+                  keyboardType="numeric"
+                  maxLength={10}
                   style={[styles.fieldInput, { color: t.text }]}
                 />
               </View>

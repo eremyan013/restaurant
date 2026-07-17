@@ -167,7 +167,7 @@ export async function fetchProfile(userId: string): Promise<ProfileRow | null> {
 
 export async function updateProfile(
   userId: string,
-  updates: Partial<Pick<ProfileRow, 'name' | 'avatar_url'>>
+  updates: Partial<Pick<ProfileRow, 'name' | 'avatar_url' | 'surname' | 'date_of_birth'>>
 ): Promise<void> {
   const { error } = await sb.from('profiles').update(updates).eq('id', userId);
   if (error) throw error;

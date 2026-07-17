@@ -602,6 +602,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          date_of_birth: string | null
           email: string
           id: string
           is_admin: boolean
@@ -613,6 +614,7 @@ export type Database = {
           player_id: number
           push_token: string | null
           role: string
+          surname: string | null
           tier: string
           tier_level: number
           total_visits: number
@@ -623,6 +625,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email?: string
           id: string
           is_admin?: boolean
@@ -634,6 +637,7 @@ export type Database = {
           player_id?: number
           push_token?: string | null
           role?: string
+          surname?: string | null
           tier?: string
           tier_level?: number
           total_visits?: number
@@ -644,6 +648,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email?: string
           id?: string
           is_admin?: boolean
@@ -655,6 +660,7 @@ export type Database = {
           player_id?: number
           push_token?: string | null
           role?: string
+          surname?: string | null
           tier?: string
           tier_level?: number
           total_visits?: number
