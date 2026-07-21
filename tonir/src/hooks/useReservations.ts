@@ -62,10 +62,22 @@ export function useReservations() {
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
+  function isDatetimePast(r: ReservationRow): boolean {
+    if (!r.date_iso) return false;
+    const [hourStr, minuteStr] = r.time.split(':');
+    if (!hourStr || !minuteStr) return false;
+    const dt = new Date(r.date_iso);
+    dt.setHours(parseInt(hourStr, 10), parseInt(minuteStr, 10), 0, 0);
+    return Date.now() > dt.getTime();
+  }
+
   const upcoming = reservations.filter(
-    (r) => r.status === 'confirmed' || r.status === 'pending'
+    (r) => (r.status === 'confirmed' || r.status === 'pending') && !isDatetimePast(r)
   );
-  const past = reservations.filter((r) => r.status === 'visited' || r.status === 'cancelled' || r.status === 'completed');
+  const past = reservations.filter(
+    (r) => r.status === 'visited' || r.status === 'cancelled' || r.status === 'completed'
+      || ((r.status === 'confirmed' || r.status === 'pending') && isDatetimePast(r))
+  );
 
   // Keep the global badge count in sync
   useEffect(() => {
