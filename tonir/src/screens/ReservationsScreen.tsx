@@ -236,7 +236,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                   <View style={styles.cardBottom}>
                     {yelAmount ? <Text style={[styles.perkText, { color: t.accent }]}>+{yelAmount} Yel</Text> : null}
                     <View style={styles.actions}>
-                      {tab === 'past' ? (
+                      {tab === 'past' && (res.status === 'visited' || res.status === 'completed') ? (
                         ratedIds.has(res.id) ? (
                           <View style={[styles.actionBtn, { borderColor: t.border, opacity: 0.5 }]} accessibilityRole="button" accessibilityState={{ disabled: true }}>
                             <Text style={[styles.actionText, { color: t.textMute }]}>
@@ -255,7 +255,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                             </Text>
                           </Pressable>
                         )
-                      ) : (() => {
+                      ) : tab === 'past' ? null : (() => {
                         const pastModifyDeadline = isPastCancelDeadline(res);
                         return pastModifyDeadline ? (
                           <View style={[styles.actionBtn, styles.cancelDisabledBtn, { borderColor: t.border }]} accessibilityRole="button" accessibilityState={{ disabled: true }}>
