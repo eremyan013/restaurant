@@ -21,11 +21,20 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase
     .from('profiles')
     .select('id, name, email, push_token')
-    .eq('role', 'user')
+    .not('role', 'in', '("admin","super_admin")')
     .or(`name.ilike.%${q}%,email.ilike.%${q}%`)
     .limit(10)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    // Fallback: if role filter fails (e.g. unexpected role values), search without it
+    const { data: fallback, error: fallbackErr } = await supabase
+      .from('profiles')
+      .select('id, name, email, push_token')
+      .or(`name.ilike.%${q}%,email.ilike.%${q}%`)
+      .limit(10)
+    if (fallbackErr) return NextResponse.json({ error: fallbackErr.message }, { status: 500 })
+    return NextResponse.json({ users: fallback ?? [] })
+  }
 
   return NextResponse.json({ users: data ?? [] })
 }

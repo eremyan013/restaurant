@@ -22,15 +22,28 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from('profiles')
     .select('id, name, email, push_token', { count: 'exact' })
-    .eq('role', 'user')
+    .not('role', 'in', '("admin","super_admin")')
     .order('name', { ascending: true })
 
   if (type === 'tier' && tier) {
     query = query.eq('tier_level', parseInt(tier))
   }
 
-  const { data, count, error } = await query.limit(limit)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  let { data, count, error } = await query.limit(limit)
+
+  if (error) {
+    // Fallback without role filter
+    let fallbackQuery = supabase
+      .from('profiles')
+      .select('id, name, email, push_token', { count: 'exact' })
+      .order('name', { ascending: true })
+    if (type === 'tier' && tier) fallbackQuery = fallbackQuery.eq('tier_level', parseInt(tier))
+    const fallback = await fallbackQuery.limit(limit)
+    if (fallback.error) return NextResponse.json({ error: fallback.error.message }, { status: 500 })
+    data = fallback.data
+    count = fallback.count
+    error = null
+  }
 
   return NextResponse.json({ users: data ?? [], total: count ?? 0 })
 }
