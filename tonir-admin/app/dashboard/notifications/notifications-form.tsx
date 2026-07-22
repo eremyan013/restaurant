@@ -43,6 +43,10 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
   const [recipientCount, setRecipientCount] = useState<number | null>(null)
   const [countLoading, setCountLoading] = useState(false)
 
+  const [audienceUsers, setAudienceUsers] = useState<UserResult[]>([])
+  const [audienceTotal, setAudienceTotal] = useState(0)
+  const [audienceLoading, setAudienceLoading] = useState(false)
+
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState<{ sent: number; failed: number; total: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -72,6 +76,19 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
     if (targetType === 'user' && !selectedUser) return
     fetchCount()
   }, [fetchCount])
+
+  // Audience preview (All Users / By Tier)
+  useEffect(() => {
+    if (targetType === 'user') { setAudienceUsers([]); setAudienceTotal(0); return }
+    setAudienceLoading(true)
+    const params = new URLSearchParams({ type: targetType, limit: '8' })
+    if (targetType === 'tier') params.set('tier', String(tier))
+    fetch(`/api/users/preview?${params}`)
+      .then((r) => r.json())
+      .then((data) => { setAudienceUsers(data.users ?? []); setAudienceTotal(data.total ?? 0) })
+      .catch(() => { setAudienceUsers([]); setAudienceTotal(0) })
+      .finally(() => setAudienceLoading(false))
+  }, [targetType, tier])
 
   // User search
   useEffect(() => {
@@ -251,6 +268,43 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
                   <option key={n} value={n}>{TIER_LABELS[n]}</option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {(targetType === 'all' || targetType === 'tier') && (
+            <div>
+              <p className="text-xs text-zinc-500 mb-2">
+                {audienceLoading ? 'Loading…' : `${audienceTotal} user${audienceTotal !== 1 ? 's' : ''} in this audience`}
+              </p>
+              {!audienceLoading && audienceUsers.length > 0 && (
+                <div className="border border-zinc-100 rounded-lg overflow-hidden">
+                  {audienceUsers.map((u, i) => (
+                    <div
+                      key={u.id}
+                      className={`flex items-center gap-3 px-3 py-2 ${i < audienceUsers.length - 1 ? 'border-b border-zinc-100' : ''}`}
+                    >
+                      <div className="w-7 h-7 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-semibold text-zinc-500 shrink-0">
+                        {(u.name ?? '?').charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-zinc-900 truncate">{u.name}</p>
+                        <p className="text-xs text-zinc-400 truncate">{u.email}</p>
+                      </div>
+                      {!u.push_token && (
+                        <span className="text-xs text-amber-500 shrink-0">No token</span>
+                      )}
+                    </div>
+                  ))}
+                  {audienceTotal > audienceUsers.length && (
+                    <div className="px-3 py-2 bg-zinc-50 text-xs text-zinc-400">
+                      + {audienceTotal - audienceUsers.length} more user{audienceTotal - audienceUsers.length !== 1 ? 's' : ''}
+                    </div>
+                  )}
+                </div>
+              )}
+              {!audienceLoading && audienceUsers.length === 0 && (
+                <p className="text-xs text-zinc-400">No users found in this audience.</p>
+              )}
             </div>
           )}
 
