@@ -173,6 +173,11 @@ export async function updateProfile(
   if (error) throw error;
 }
 
+export async function syncLanguage(userId: string, lang: string): Promise<void> {
+  const { error } = await sb.from('profiles').update({ language: lang }).eq('id', userId);
+  if (error) console.warn('[syncLanguage]', error.message);
+}
+
 export async function uploadAvatar(userId: string, localUri: string): Promise<string> {
   const response = await fetch(localUri);
   const blob = await response.blob();

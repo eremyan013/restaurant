@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 
 import { useStore } from '../store';
+import { syncLanguage } from '../lib/api';
 import { useTranslation } from '../hooks/useTranslation';
 import { Icon, IconName } from '../components/Icon';
 import { SHADOWS, FONTS, COLORS } from '../theme';
@@ -176,7 +177,7 @@ const linking = {
 };
 
 export function AppNavigator() {
-  const { theme: t, pendingPhoneVerification, userId, sessionChecked } = useStore();
+  const { theme: t, pendingPhoneVerification, userId, sessionChecked, language } = useStore();
   const [seenOnboarding, setSeenOnboarding] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -205,6 +206,11 @@ export function AppNavigator() {
     );
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!userId) return
+    syncLanguage(userId, language)
+  }, [userId, language])
 
   // Splash/loading while checking auth or onboarding flag
   if (!sessionChecked || seenOnboarding === null) {

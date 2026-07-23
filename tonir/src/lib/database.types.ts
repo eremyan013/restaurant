@@ -216,6 +216,7 @@ export interface Database {
           phone: string | null;
           surname: string | null;
           date_of_birth: string | null;
+          language: string;
           created_at: string;
           updated_at: string;
         };
@@ -233,6 +234,7 @@ export interface Database {
           phone?: string | null;
           surname?: string | null;
           date_of_birth?: string | null;
+          language?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -250,6 +252,7 @@ export interface Database {
           phone?: string | null;
           surname?: string | null;
           date_of_birth?: string | null;
+          language?: string;
           created_at?: string;
           updated_at?: string;
         };

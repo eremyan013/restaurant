@@ -37,8 +37,13 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
   // Issue 15: track whether a search has completed (distinguishes "not yet searched" from "no results")
   const [hasSearched, setHasSearched] = useState(false)
 
-  const [title, setTitle] = useState('')
-  const [body, setBody] = useState('')
+  type Lang = 'hy' | 'ru' | 'en'
+  const LANGS: Lang[] = ['hy', 'ru', 'en']
+  const LANG_LABELS: Record<Lang, string> = { hy: 'Հայ', ru: 'Рус', en: 'Eng' }
+
+  const [activeTab, setActiveTab] = useState<Lang>('hy')
+  const [titles, setTitles] = useState<Record<Lang, string>>({ hy: '', ru: '', en: '' })
+  const [bodies, setBodies] = useState<Record<Lang, string>>({ hy: '', ru: '', en: '' })
 
   const [recipientCount, setRecipientCount] = useState<number | null>(null)
   const [countLoading, setCountLoading] = useState(false)
@@ -115,9 +120,9 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
     return () => clearTimeout(t)
   }, [userSearch, targetType])
 
-  function applyTemplate(t: typeof QUICK_TEMPLATES[number]) {
-    setTitle(t.title)
-    setBody(t.body)
+  function applyTemplate(tmpl: typeof QUICK_TEMPLATES[number]) {
+    setTitles({ hy: tmpl.title, ru: tmpl.title, en: tmpl.title })
+    setBodies({ hy: tmpl.body, ru: tmpl.body, en: tmpl.body })
   }
 
   // Issue 14: switching audience clears the pending confirm state
@@ -130,8 +135,8 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
   }
 
   async function send() {
-    if (!title.trim() || !body.trim()) {
-      setError('Title and body are required.')
+    if (LANGS.some((l) => !titles[l].trim() || !bodies[l].trim())) {
+      setError('Title and body are required in all 3 languages.')
       return
     }
     if (targetType === 'user' && !selectedUser) {
@@ -160,7 +165,7 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
       const res = await fetch('/api/send-push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title.trim(), body: body.trim(), target }),
+        body: JSON.stringify({ titles: { hy: titles.hy.trim(), ru: titles.ru.trim(), en: titles.en.trim() }, bodies: { hy: bodies.hy.trim(), ru: bodies.ru.trim(), en: bodies.en.trim() }, target }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Send failed')
@@ -168,8 +173,9 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
       toast.success(`Sent ${data.sent} of ${data.total} notifications`)
 
       // Issue 16: reset form to defaults after a successful send
-      setTitle('')
-      setBody('')
+      setTitles({ hy: '', ru: '', en: '' })
+      setBodies({ hy: '', ru: '', en: '' })
+      setActiveTab('hy')
       setTargetType('all')
       setTier(1)
       setSelectedUser(null)
@@ -210,30 +216,59 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
         {/* Message */}
         <div className="bg-white rounded-xl border border-zinc-200 p-5 space-y-4">
           <p className="text-sm font-medium text-zinc-700">Message</p>
-          <div>
-            <label className="block text-xs text-zinc-500 mb-1">Title</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Your booking is confirmed"
-              maxLength={100}
-              className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-400"
-            />
-            <p className="text-right text-xs text-zinc-400 mt-0.5">{title.length}/100</p>
+
+          {/* Language tab switcher */}
+          <div className="flex gap-1 p-1 bg-zinc-100 rounded-lg w-fit">
+            {LANGS.map((l) => {
+              const hasError = !titles[l].trim() || !bodies[l].trim()
+              return (
+                <button
+                  key={l}
+                  onClick={() => setActiveTab(l)}
+                  className={`relative px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === l
+                      ? 'bg-white text-zinc-900 shadow-sm'
+                      : 'text-zinc-500 hover:text-zinc-700'
+                  }`}
+                >
+                  {LANG_LABELS[l]}
+                  {hasError && (
+                    <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500" />
+                  )}
+                </button>
+              )
+            })}
           </div>
-          <div>
-            <label className="block text-xs text-zinc-500 mb-1">Body</label>
-            <textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder="e.g. Your table at Dolmama on June 7 at 20:00 is confirmed!"
-              maxLength={200}
-              rows={3}
-              className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 resize-none"
-            />
-            <p className="text-right text-xs text-zinc-400 mt-0.5">{body.length}/200</p>
-          </div>
+
+          {/* Per-language fields — all three always mounted, only active tab visible */}
+          {LANGS.map((l) => (
+            <div key={l} className={l === activeTab ? 'space-y-4' : 'hidden'}>
+              <div>
+                <label className="block text-xs text-zinc-500 mb-1">Title</label>
+                <input
+                  type="text"
+                  value={titles[l]}
+                  onChange={(e) => setTitles((prev) => ({ ...prev, [l]: e.target.value }))}
+                  placeholder="e.g. Your booking is confirmed"
+                  maxLength={100}
+                  className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-400"
+                />
+                <p className="text-right text-xs text-zinc-400 mt-0.5">{titles[l].length}/100</p>
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-500 mb-1">Body</label>
+                <textarea
+                  value={bodies[l]}
+                  onChange={(e) => setBodies((prev) => ({ ...prev, [l]: e.target.value }))}
+                  placeholder="e.g. Your table at Dolmama on June 7 at 20:00 is confirmed!"
+                  maxLength={200}
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 resize-none"
+                />
+                <p className="text-right text-xs text-zinc-400 mt-0.5">{bodies[l].length}/200</p>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Target */}
@@ -400,10 +435,10 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
                   <p className="text-xs text-zinc-500">now</p>
                 </div>
                 <p className="text-sm font-semibold mt-0.5 leading-snug">
-                  {title.trim() || <span className="text-zinc-500 font-normal">Notification title</span>}
+                  {titles[activeTab].trim() || <span className="text-zinc-500 font-normal">Notification title</span>}
                 </p>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                  {body.trim() || <span>Notification body text will appear here.</span>}
+                  {bodies[activeTab].trim() || <span>Notification body text will appear here.</span>}
                 </p>
               </div>
             </div>
@@ -458,7 +493,7 @@ export function NotificationsForm({ venues }: { venues: { id: string; name: stri
         ) : (
           <button
             onClick={send}
-            disabled={sending || !title.trim() || !body.trim() || (targetType === 'user' && !selectedUser)}
+            disabled={sending || LANGS.some((l) => !titles[l].trim() || !bodies[l].trim()) || (targetType === 'user' && !selectedUser)}
             className="w-full px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {sending ? 'Sending…' : `Send Notification${recipientCount !== null ? ` (${recipientCount})` : ''}`}

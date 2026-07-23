@@ -606,6 +606,7 @@ export type Database = {
           email: string
           id: string
           is_admin: boolean
+          language: string
           managed_venue_id: string | null
           managed_venue_ids: string[] | null
           name: string
@@ -629,6 +630,7 @@ export type Database = {
           email?: string
           id: string
           is_admin?: boolean
+          language?: string
           managed_venue_id?: string | null
           managed_venue_ids?: string[] | null
           name?: string
@@ -652,6 +654,7 @@ export type Database = {
           email?: string
           id?: string
           is_admin?: boolean
+          language?: string
           managed_venue_id?: string | null
           managed_venue_ids?: string[] | null
           name?: string

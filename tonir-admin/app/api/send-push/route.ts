@@ -8,9 +8,11 @@ type Target =
   | { type: 'tier'; tier: number }
   | { type: 'user'; userId: string }
 
+type Lang = 'hy' | 'ru' | 'en'
+
 interface SendPayload {
-  title: string
-  body: string
+  titles: Record<Lang, string>
+  bodies: Record<Lang, string>
   target: Target
 }
 
@@ -40,10 +42,11 @@ export async function POST(request: NextRequest) {
   }
 
   const body: SendPayload = await request.json()
-  const { title, body: msgBody, target } = body
+  const { titles, bodies, target } = body
 
-  if (!title?.trim() || !msgBody?.trim()) {
-    return NextResponse.json({ error: 'Title and body are required' }, { status: 400 })
+  const LANGS: Lang[] = ['hy', 'ru', 'en']
+  if (LANGS.some((l) => !titles?.[l]?.trim() || !bodies?.[l]?.trim())) {
+    return NextResponse.json({ error: 'Title and body are required for all languages' }, { status: 400 })
   }
 
   const supabase = createSupabaseAdminClient()
@@ -51,7 +54,7 @@ export async function POST(request: NextRequest) {
   // Fetch target push tokens
   let query = supabase
     .from('profiles')
-    .select('id, push_token')
+    .select('id, push_token, language')
     .not('push_token', 'is', null)
 
   if (target.type === 'tier') {
@@ -63,32 +66,46 @@ export async function POST(request: NextRequest) {
   const { data: profiles, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const tokens: string[] = (profiles ?? [])
-    .map((p: { id: string; push_token: string | null }) => p.push_token)
-    .filter((t): t is string => !!t)
+  const allProfiles = (profiles ?? []) as Array<{ id: string; push_token: string | null; language: string | null }>
 
-  if (tokens.length === 0) {
+  if (allProfiles.length === 0) {
     return NextResponse.json({ sent: 0, failed: 0, total: 0 })
   }
 
-  // Send in chunks of 100 (Expo limit)
+  const groups: Record<Lang, string[]> = { hy: [], ru: [], en: [] }
+  for (const p of allProfiles) {
+    const lang: Lang = (p.language as Lang) && LANGS.includes(p.language as Lang)
+      ? (p.language as Lang)
+      : 'hy'
+    if (p.push_token) groups[lang].push(p.push_token)
+  }
+
+  const total = groups.hy.length + groups.ru.length + groups.en.length
+  if (total === 0) {
+    return NextResponse.json({ sent: 0, failed: 0, total: 0 })
+  }
+
   const CHUNK = 100
   let totalOk = 0
   let totalFail = 0
 
-  for (let i = 0; i < tokens.length; i += CHUNK) {
-    const chunk = tokens.slice(i, i + CHUNK).map((to) => ({
-      to,
-      title,
-      body: msgBody,
-      sound: 'default',
-    }))
-    const { ok, fail } = await sendBatch(chunk)
-    totalOk += ok
-    totalFail += fail
+  for (const lang of LANGS) {
+    const tokens = groups[lang]
+    if (tokens.length === 0) continue
+    for (let i = 0; i < tokens.length; i += CHUNK) {
+      const chunk = tokens.slice(i, i + CHUNK).map((to) => ({
+        to,
+        title: titles[lang],
+        body: bodies[lang],
+        sound: 'default',
+      }))
+      const { ok, fail } = await sendBatch(chunk)
+      totalOk += ok
+      totalFail += fail
+    }
   }
 
-  return NextResponse.json({ sent: totalOk, failed: totalFail, total: tokens.length })
+  return NextResponse.json({ sent: totalOk, failed: totalFail, total })
 }
 
 // Preview: count how many users would receive the notification
