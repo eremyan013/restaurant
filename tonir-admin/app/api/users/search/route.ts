@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     .from('profiles')
     .select('id, name, email, push_token')
     .not('role', 'in', '("admin","super_admin")')
-    .or(`name.ilike.%${q}%,email.ilike.%${q}%`)
+    .or(`name.ilike.%${q}%,email.ilike.%${q}%,id::text.ilike.%${q}%`)
     .limit(10)
 
   if (error) {
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const { data: fallback, error: fallbackErr } = await supabase
       .from('profiles')
       .select('id, name, email, push_token')
-      .or(`name.ilike.%${q}%,email.ilike.%${q}%`)
+      .or(`name.ilike.%${q}%,email.ilike.%${q}%,id::text.ilike.%${q}%`)
       .limit(10)
     if (fallbackErr) return NextResponse.json({ error: fallbackErr.message }, { status: 500 })
     return NextResponse.json({ users: fallback ?? [] })
