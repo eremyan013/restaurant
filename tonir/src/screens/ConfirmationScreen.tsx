@@ -14,7 +14,6 @@ import { useVenue } from '../hooks/useVenues';
 import { useTranslation } from '../hooks/useTranslation';
 import { Icon } from '../components/Icon';
 import { FONTS, COLORS } from '../theme';
-import { registerPushToken } from '../lib/notifications';
 import { CALENDAR_EVENT_DURATION_MS } from '../lib/constants';
 
 const GOOGLE_CALENDAR_URL = 'https://calendar.google.com/calendar/r/eventedit';
@@ -38,11 +37,6 @@ export function ConfirmationScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { venue } = useVenue(booking?.venueId ?? '');
   const { tr } = useTranslation();
-
-  // Ask for push permission after first successful booking rather than on sign-in
-  useEffect(() => {
-    if (userId) registerPushToken(userId);
-  }, []);
 
   function openDirections() {
     if (!venue) return;

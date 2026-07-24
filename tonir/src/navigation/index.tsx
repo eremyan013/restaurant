@@ -11,6 +11,7 @@ import * as Notifications from 'expo-notifications';
 
 import { useStore } from '../store';
 import { syncLanguage } from '../lib/api';
+import { registerPushToken } from '../lib/notifications';
 import { useTranslation } from '../hooks/useTranslation';
 import { Icon, IconName } from '../components/Icon';
 import { SHADOWS, FONTS, COLORS } from '../theme';
@@ -210,6 +211,7 @@ export function AppNavigator() {
   useEffect(() => {
     if (!userId) return
     syncLanguage(userId, language)
+    registerPushToken(userId)
   }, [userId, language])
 
   // Splash/loading while checking auth or onboarding flag
