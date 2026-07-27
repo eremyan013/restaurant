@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "714407649442",
+    "project_id": "tonir-b051b",
+    "storage_bucket": "tonir-b051b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:714407649442:android:2dc34d6c47a23edd06f7fb",
+        "android_client_info": {
+          "package_name": "com.tonir.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCMXhYbhFKDu79SVvFYWg0M4UaVC3ZzXs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

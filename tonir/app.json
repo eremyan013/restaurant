@@ -14,6 +14,7 @@
     },
     "android": {
       "package": "com.tonir.app",
+      "googleServicesFile": "./google-services.json",
       "intentFilters": [
         {
           "action": "VIEW",
