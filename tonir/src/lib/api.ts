@@ -188,6 +188,23 @@ export async function syncLanguage(userId: string, lang: string): Promise<void> 
   if (error) console.warn('[syncLanguage]', error.message);
 }
 
+export async function updateReservationOccasion(
+  userId: string,
+  venueId: string,
+  dateIso: string,
+  time: string,
+  occasion: string | null,
+): Promise<void> {
+  const { error } = await sb
+    .from('reservations')
+    .update({ occasion })
+    .eq('user_id', userId)
+    .eq('venue_id', venueId)
+    .eq('date_iso', dateIso)
+    .eq('time', time);
+  if (error) console.warn('[updateReservationOccasion]', error.message);
+}
+
 export async function uploadAvatar(userId: string, localUri: string): Promise<string> {
   const response = await fetch(localUri);
   const blob = await response.blob();

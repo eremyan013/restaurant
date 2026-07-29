@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  View, Text, Pressable, StyleSheet, StatusBar, ScrollView, Linking, Platform, Share, Image, Alert,
+  View, Text, Pressable, StyleSheet, StatusBar, ScrollView, Linking, Platform, Share, Image, Alert, Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,9 +12,11 @@ import { RootStackParamList } from '../navigation';
 import { useStore } from '../store';
 import { useVenue } from '../hooks/useVenues';
 import { useTranslation } from '../hooks/useTranslation';
+import { useOccasions } from '../hooks/useOccasions';
 import { Icon } from '../components/Icon';
 import { FONTS, COLORS } from '../theme';
 import { CALENDAR_EVENT_DURATION_MS } from '../lib/constants';
+import { updateReservationOccasion } from '../lib/api';
 
 const GOOGLE_CALENDAR_URL = 'https://calendar.google.com/calendar/r/eventedit';
 
@@ -33,10 +35,13 @@ const CONFETTI = Array.from({ length: 18 }, (_, i) => ({
 }));
 
 export function ConfirmationScreen({ navigation }: Props) {
-  const { theme: t, booking, userId } = useStore();
+  const { theme: t, booking, userId, setBooking } = useStore();
   const insets = useSafeAreaInsets();
   const { venue } = useVenue(booking?.venueId ?? '');
   const { tr } = useTranslation();
+  const { options: occasionOptions } = useOccasions();
+  const [occasionModalVisible, setOccasionModalVisible] = useState(false);
+  const [selectedOccasion, setSelectedOccasion] = useState<string | null>(booking?.occasion ?? null);
 
   function openDirections() {
     if (!venue) return;
@@ -127,8 +132,8 @@ export function ConfirmationScreen({ navigation }: Props) {
     {
       icon: 'spark' as const,
       label: tr('conf_occasion_label'),
-      sub: tr('conf_occasion_sub'),
-      onPress: () => Alert.alert(tr('conf_soon_title'), tr('conf_soon_occasion')),
+      sub: selectedOccasion ?? tr('conf_occasion_sub'),
+      onPress: () => setOccasionModalVisible(true),
     },
     {
       icon: 'users' as const,
@@ -268,6 +273,57 @@ export function ConfirmationScreen({ navigation }: Props) {
           <Text style={[styles.doneBtnText, { color: t.primary }]}>{tr('conf_done')}</Text>
         </Pressable>
       </ScrollView>
+
+      {/* Occasion picker modal */}
+      <Modal
+        visible={occasionModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setOccasionModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setOccasionModalVisible(false)}>
+          <Pressable style={[styles.modalSheet, { backgroundColor: t.surface }]} onPress={() => {}}>
+            <View style={[styles.modalHandle, { backgroundColor: t.border }]} />
+            <Text style={[styles.modalTitle, { color: t.text }]}>{tr('conf_occasion_label')}</Text>
+            <View style={styles.modalChips}>
+              {occasionOptions.map(({ id, name }) => {
+                const active = selectedOccasion === name;
+                return (
+                  <Pressable
+                    key={id}
+                    onPress={() => {
+                      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      const next = active ? null : name;
+                      setSelectedOccasion(next);
+                      if (booking) {
+                        setBooking({ ...booking, occasion: next });
+                        if (userId) {
+                          updateReservationOccasion(userId, booking.venueId, booking.dateIso, booking.time, next);
+                        }
+                      }
+                    }}
+                    style={[
+                      styles.modalChip,
+                      {
+                        backgroundColor: active ? t.primary : t.bgAlt,
+                        borderColor: active ? t.primary : t.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.modalChipText, { color: active ? '#FBF5E8' : t.text }]}>{name}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Pressable
+              onPress={() => setOccasionModalVisible(false)}
+              style={[styles.modalDone, { backgroundColor: t.primary }]}
+            >
+              <Text style={styles.modalDoneText}>{tr('conf_done')}</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -367,4 +423,56 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   doneBtnText: { fontSize: 15, fontFamily: FONTS.bold, fontWeight: '700' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontFamily: FONTS.bold,
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+  modalChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 24,
+  },
+  modalChip: {
+    paddingVertical: 9,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  modalChipText: {
+    fontSize: 14,
+    fontFamily: FONTS.medium,
+    fontWeight: '500',
+  },
+  modalDone: {
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  modalDoneText: {
+    color: '#FBF5E8',
+    fontSize: 15,
+    fontFamily: FONTS.bold,
+    fontWeight: '700',
+  },
 });
