@@ -185,7 +185,6 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     book_large_title:     'Մեծ խումբ',
     book_large_sub:       '9+ հոգու ամրագրման համար կապվեք ռեստորանի հետ անմիջականորեն։',
     book_large_ok:        'Հասկացա',
-    book_occasions:       ['Ռոմանտիկ', 'Ծնունդ', 'Գործնական', 'Հանգիստ', 'Տարեդարձ'],
     book_days:            ['Կիր', 'Երկ', 'Երեք', 'Չոր', 'Հնգ', 'Ուրբ', 'Շբթ'],
     book_months:          ['Հնվ', 'Փտվ', 'Մրտ', 'Ապր', 'Մայ', 'Հնս', 'Հուլ', 'Օգ', 'Սեպ', 'Հկտ', 'Նոյ', 'Դեկ'],
     // ConfirmationScreen
@@ -603,7 +602,6 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     book_large_title:     'Большая группа',
     book_large_sub:       'Для бронирования на 9+ человек свяжитесь с рестораном напрямую.',
     book_large_ok:        'Понятно',
-    book_occasions:       ['Романтика', 'День рождения', 'Деловая встреча', 'Отдых', 'Годовщина'],
     book_days:            ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
     book_months:          ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
     // ConfirmationScreen
@@ -1018,7 +1016,6 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     book_large_title:     'Large group',
     book_large_sub:       'For 9+ people, contact the restaurant directly.',
     book_large_ok:        'Got it',
-    book_occasions:       ['Romantic', 'Birthday', 'Business', 'Casual', 'Anniversary'],
     book_days:            ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     book_months:          ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
     // ConfirmationScreen

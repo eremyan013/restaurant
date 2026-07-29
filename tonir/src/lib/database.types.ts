@@ -600,6 +600,36 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['home_section_items']['Insert']>;
       };
 
+      occasions: {
+        Row: {
+          id: string;
+          name_hy: string;
+          name_ru: string;
+          name_en: string;
+          sort_order: number;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name_hy: string;
+          name_ru: string;
+          name_en: string;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name_hy?: string;
+          name_ru?: string;
+          name_en?: string;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+        };
+      };
+
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -622,3 +652,4 @@ export type VenueHoursRow         = Database['public']['Tables']['venue_hours'][
 export type VenueBlockedDateRow   = Database['public']['Tables']['venue_blocked_dates']['Row'];
 export type HomeSectionRow        = Database['public']['Tables']['home_sections']['Row'];
 export type HomeSectionItemRow    = Database['public']['Tables']['home_section_items']['Row'];
+export type OccasionRow           = Database['public']['Tables']['occasions']['Row'];

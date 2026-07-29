@@ -18,6 +18,7 @@ import { TimePill } from '../components/TimePill';
 import { FONTS } from '../theme';
 import { notifyAdminsNewReservation } from '../lib/api';
 import { useVenueAvailability, isDateAvailable, filterAvailableTimes } from '../hooks/useVenueAvailability';
+import { useOccasions } from '../hooks/useOccasions';
 import { BOOKING_PEOPLE_OPTIONS, BOOKING_LARGE_GROUP_SENTINEL, BOOKING_HORIZON_DAYS, CANCEL_DEADLINE_MS } from '../lib/constants';
 
 type Props = {
@@ -60,7 +61,7 @@ export function BookingScreen({ navigation, route }: Props) {
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const OCCASIONS = tra('book_occasions');
+  const { options: OCCASIONS } = useOccasions();
   const DATES = useMemo(
     () => generateDates(tra('book_days'), tra('book_months'), tr('book_today'), tr('book_tomorrow')),
     [language]
@@ -378,23 +379,23 @@ export function BookingScreen({ navigation, route }: Props) {
             <Text style={{ fontFamily: FONTS.regular, fontWeight: '400', opacity: 0.5 }}>{tr('book_occasion_opt')}</Text>
           </Text>
           <View style={styles.chipsWrap}>
-            {OCCASIONS.map((occ) => (
+            {OCCASIONS.map(({ id, name }) => (
               <Pressable
-                key={occ}
+                key={id}
                 onPress={() => {
                   if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setOccasion(occasion === occ ? null : occ);
+                  setOccasion(occasion === name ? null : name);
                 }}
                 style={[
                   styles.occasionChip,
                   {
-                    backgroundColor: occasion === occ ? t.primary : t.surface,
-                    borderColor: occasion === occ ? t.primary : t.border,
+                    backgroundColor: occasion === name ? t.primary : t.surface,
+                    borderColor: occasion === name ? t.primary : t.border,
                   },
                 ]}
               >
-                <Text style={[styles.occasionText, { color: occasion === occ ? '#FBF5E8' : t.text }]}>
-                  {occ}
+                <Text style={[styles.occasionText, { color: occasion === name ? '#FBF5E8' : t.text }]}>
+                  {name}
                 </Text>
               </Pressable>
             ))}

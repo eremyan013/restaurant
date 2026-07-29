@@ -43,6 +43,7 @@ export function Sidebar({
           { href: '/dashboard/home-sections', label: 'Home Sections', exact: false },
           { href: '/dashboard/notifications', label: 'Notifications', exact: false },
           { href: '/dashboard/admins', label: 'Admins', exact: false },
+          { href: '/dashboard/occasions', label: 'Occasions', exact: false },
         ]
       : []),
 

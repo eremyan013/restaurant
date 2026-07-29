@@ -544,6 +544,36 @@ export type Database = {
         }
         Relationships: []
       }
+      occasions: {
+        Row: {
+          id: string
+          name_hy: string
+          name_ru: string
+          name_en: string
+          sort_order: number
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name_hy: string
+          name_ru: string
+          name_en: string
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name_hy?: string
+          name_ru?: string
+          name_en?: string
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
       prizes: {
         Row: {
           created_at: string | null
@@ -1244,5 +1274,6 @@ export type ReservationRow      = T['reservations']['Row']
 export type ReviewRow           = T['reviews']['Row']
 export type SettingRow          = T['settings']['Row']
 export type UserPrizeRow        = T['user_prizes']['Row']
+export type OccasionRow         = T['occasions']['Row']
 export type VenueBlockedDateRow = T['venue_blocked_dates']['Row']
 export type VenueRow            = T['venues']['Row']
