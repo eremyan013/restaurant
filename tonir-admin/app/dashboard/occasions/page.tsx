@@ -114,9 +114,6 @@ export default async function OccasionsPage() {
                       <button
                         type="submit"
                         className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium transition-colors"
-                        onClick={(e) => {
-                          if (!confirm(`Delete "${occ.name_en}"?`)) e.preventDefault()
-                        }}
                       >
                         Delete
                       </button>
