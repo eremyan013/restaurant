@@ -165,7 +165,7 @@ export function BookingScreen({ navigation, route }: Props) {
         occasion,
         splitWith: [],
         note,
-        yelEarned: String(venue!.perk).replace(/^\+/, ''),
+        yelEarned: String((venue!.time_yel_map as Record<string, number> | null)?.[time] ?? 0),
       });
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       navigation.navigate('Confirmation');
