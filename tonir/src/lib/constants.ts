@@ -33,7 +33,7 @@ export const CALENDAR_EVENT_DURATION_MS = 90 * 60 * 1000;
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Maximum number of time slots shown in the booking widget before "show more" appears. */
-export const DETAIL_TIMES_PREVIEW_COUNT = 4;
+export const DETAIL_TIMES_PREVIEW_COUNT = 5;
 
 /** Maximum number of similar venues shown in the horizontal scroll list. */
 export const DETAIL_SIMILAR_VENUES_COUNT = 4;
