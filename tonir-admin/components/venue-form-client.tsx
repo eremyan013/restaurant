@@ -3,6 +3,21 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { LangTabs, LANGS, type Lang } from '@/components/lang-tabs'
 import { useToast } from '@/components/toast-provider'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 function ImageField({
   label, name, defaultValue,
@@ -186,16 +201,77 @@ interface TimeYelEditorProps {
   onChange?: () => void
 }
 
-function TimeYelEditor({ defaultSlots, onChange }: TimeYelEditorProps) {
-  const [slots, setSlots] = useState<TimeSlot[]>(defaultSlots ?? [])
+type SortableSlotRowProps = {
+  id: string
+  slot: TimeSlot
+  index: number
+  onTimeChange: (i: number, v: string) => void
+  onYelChange: (i: number, v: string) => void
+  onRemove: (i: number) => void
+}
 
-  function mutate(next: TimeSlot[]) {
+function SortableSlotRow({ id, slot, index, onTimeChange, onYelChange, onRemove }: SortableSlotRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2">
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label="Drag to reorder"
+        className="cursor-grab active:cursor-grabbing text-zinc-400 hover:text-zinc-600 px-1 touch-none"
+      >
+        ⠿
+      </button>
+      <input
+        type="text"
+        value={slot.time}
+        onChange={e => onTimeChange(index, e.target.value)}
+        placeholder="HH:MM"
+        aria-label={`Time slot ${index + 1}`}
+        className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-28"
+      />
+      <span className="text-sm text-zinc-500 shrink-0">YEL pts:</span>
+      <input
+        type="number"
+        min={0}
+        value={slot.yel}
+        onChange={e => onYelChange(index, e.target.value)}
+        aria-label={`YEL points for slot ${index + 1}`}
+        className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-24"
+      />
+      <button
+        type="button"
+        onClick={() => onRemove(index)}
+        aria-label={`Remove time slot ${index + 1}`}
+        className="h-10 px-3 rounded-lg border border-zinc-300 text-sm text-zinc-600 hover:bg-zinc-50 hover:text-red-600 transition-colors"
+      >
+        Remove
+      </button>
+    </div>
+  )
+}
+
+function TimeYelEditor({ defaultSlots, onChange }: TimeYelEditorProps) {
+  const [slots, setSlots] = useState<(TimeSlot & { id: string })[]>(
+    () => (defaultSlots ?? []).map((s, i) => ({ ...s, id: `slot-${i}-${s.time}` }))
+  )
+
+  const sensors = useSensors(useSensor(PointerSensor))
+
+  function mutate(next: (TimeSlot & { id: string })[]) {
     setSlots(next)
     onChange?.()
   }
 
   function addSlot() {
-    mutate([...slots, { time: '', yel: 0 }])
+    const id = `slot-new-${Date.now()}`
+    mutate([...slots, { time: '', yel: 0, id }])
   }
 
   function removeSlot(index: number) {
@@ -208,6 +284,15 @@ function TimeYelEditor({ defaultSlots, onChange }: TimeYelEditorProps) {
 
   function updateYel(index: number, value: string) {
     mutate(slots.map((s, i) => i === index ? { ...s, yel: Math.max(0, parseInt(value, 10) || 0) } : s))
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (over && active.id !== over.id) {
+      const oldIndex = slots.findIndex(s => s.id === active.id)
+      const newIndex = slots.findIndex(s => s.id === over.id)
+      mutate(arrayMove(slots, oldIndex, newIndex))
+    }
   }
 
   return (
@@ -226,37 +311,23 @@ function TimeYelEditor({ defaultSlots, onChange }: TimeYelEditorProps) {
         )}
       />
 
-      <div className="flex flex-col gap-2">
-        {slots.map((slot, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <input
-              type="text"
-              value={slot.time}
-              onChange={e => updateTime(i, e.target.value)}
-              placeholder="HH:MM"
-              aria-label={`Time slot ${i + 1}`}
-              className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-28"
-            />
-            <span className="text-sm text-zinc-500 shrink-0">YEL pts:</span>
-            <input
-              type="number"
-              min={0}
-              value={slot.yel}
-              onChange={e => updateYel(i, e.target.value)}
-              aria-label={`YEL points for slot ${i + 1}`}
-              className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-24"
-            />
-            <button
-              type="button"
-              onClick={() => removeSlot(i)}
-              aria-label={`Remove time slot ${i + 1}`}
-              className="h-10 px-3 rounded-lg border border-zinc-300 text-sm text-zinc-600 hover:bg-zinc-50 hover:text-red-600 transition-colors"
-            >
-              Remove
-            </button>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={slots.map(s => s.id)} strategy={verticalListSortingStrategy}>
+          <div className="flex flex-col gap-2">
+            {slots.map((slot, i) => (
+              <SortableSlotRow
+                key={slot.id}
+                id={slot.id}
+                slot={slot}
+                index={i}
+                onTimeChange={updateTime}
+                onYelChange={updateYel}
+                onRemove={removeSlot}
+              />
+            ))}
           </div>
-        ))}
-      </div>
+        </SortableContext>
+      </DndContext>
 
       <button
         type="button"
