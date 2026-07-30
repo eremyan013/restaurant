@@ -46,7 +46,8 @@ async function approveReview(id: string, venueId: string) {
     if (!granted) return
   }
   const supabase = createSupabaseAdminClient()
-  await supabase.from('reviews').update({ status: 'approved' }).eq('id', id)
+  const { error } = await supabase.from('reviews').update({ status: 'approved' }).eq('id', id)
+  if (error) throw new Error(error.message)
   await recalcVenueRating(supabase, venueId)
   const { data: venue } = await supabase.from('venues').select('name').eq('id', venueId).single()
   await logActivity(actor, 'approve_review', 'review', id, venue?.name ?? venueId)
@@ -62,7 +63,8 @@ async function hideReview(id: string, venueId: string) {
     if (!granted) return
   }
   const supabase = createSupabaseAdminClient()
-  await supabase.from('reviews').update({ status: 'hidden' }).eq('id', id)
+  const { error } = await supabase.from('reviews').update({ status: 'hidden' }).eq('id', id)
+  if (error) throw new Error(error.message)
   await recalcVenueRating(supabase, venueId)
   const { data: venue } = await supabase.from('venues').select('name').eq('id', venueId).single()
   await logActivity(actor, 'hide_review', 'review', id, venue?.name ?? venueId)

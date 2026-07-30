@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/toast-provider'
 
 type ActionKey = 'approve' | 'hide' | 'delete'
@@ -23,6 +24,7 @@ export function ReviewActionButtons({
   onDelete:  () => Promise<void>
 }) {
   const toast = useToast()
+  const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [pendingAction, setPendingAction] = useState<ActionKey | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -33,6 +35,7 @@ export function ReviewActionButtons({
       try {
         await action()
         toast.success(successMsg)
+        router.refresh()
       } catch {
         toast.error('Action failed')
       } finally {
