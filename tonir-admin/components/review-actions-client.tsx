@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/toast-provider'
 
 type ActionKey = 'approve' | 'hide' | 'delete'
+type ActionFn = () => Promise<{ error?: string } | void>
 
 function Spinner() {
   return (
@@ -19,9 +20,9 @@ export function ReviewActionButtons({
   onDelete,
 }: {
   status:    string
-  onApprove: () => Promise<void>
-  onHide:    () => Promise<void>
-  onDelete:  () => Promise<void>
+  onApprove: ActionFn
+  onHide:    ActionFn
+  onDelete:  ActionFn
 }) {
   const toast = useToast()
   const router = useRouter()
@@ -29,13 +30,17 @@ export function ReviewActionButtons({
   const [pendingAction, setPendingAction] = useState<ActionKey | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
-  function handle(key: ActionKey, action: () => Promise<void>, successMsg: string) {
+  function handle(key: ActionKey, action: ActionFn, successMsg: string) {
     setPendingAction(key)
     startTransition(async () => {
       try {
-        await action()
-        toast.success(successMsg)
-        router.refresh()
+        const result = await action()
+        if (result && 'error' in result && result.error) {
+          toast.error(result.error)
+        } else {
+          toast.success(successMsg)
+          router.refresh()
+        }
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Action failed')
       } finally {

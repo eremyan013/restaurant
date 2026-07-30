@@ -37,38 +37,48 @@ async function recalcVenueRating(supabase: SupabaseClient<Database>, venueId: st
     .eq('id', venueId)
 }
 
-async function approveReview(id: string, venueId: string) {
+async function approveReview(id: string, venueId: string): Promise<{ error?: string }> {
   'use server'
-  const actor = await getCurrentAdmin()
-  if (!actor) return
-  if (actor.role !== 'super_admin') {
-    const granted = await assertPermission(actor, 'reviews', 'moderate')
-    if (!granted) return
+  try {
+    const actor = await getCurrentAdmin()
+    if (!actor) return { error: 'Not authenticated' }
+    if (actor.role !== 'super_admin') {
+      const granted = await assertPermission(actor, 'reviews', 'moderate')
+      if (!granted) return { error: 'Permission denied' }
+    }
+    const supabase = createSupabaseAdminClient()
+    const { error } = await supabase.from('reviews').update({ status: 'approved' }).eq('id', id)
+    if (error) return { error: error.message }
+    await recalcVenueRating(supabase, venueId)
+    const { data: venue } = await supabase.from('venues').select('name').eq('id', venueId).single()
+    await logActivity(actor, 'approve_review', 'review', id, venue?.name ?? venueId)
+    revalidatePath('/dashboard/reviews')
+    return {}
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Unknown error' }
   }
-  const supabase = createSupabaseAdminClient()
-  const { error } = await supabase.from('reviews').update({ status: 'approved' }).eq('id', id)
-  if (error) throw new Error(error.message)
-  await recalcVenueRating(supabase, venueId)
-  const { data: venue } = await supabase.from('venues').select('name').eq('id', venueId).single()
-  await logActivity(actor, 'approve_review', 'review', id, venue?.name ?? venueId)
-  revalidatePath('/dashboard/reviews')
 }
 
-async function hideReview(id: string, venueId: string) {
+async function hideReview(id: string, venueId: string): Promise<{ error?: string }> {
   'use server'
-  const actor = await getCurrentAdmin()
-  if (!actor) return
-  if (actor.role !== 'super_admin') {
-    const granted = await assertPermission(actor, 'reviews', 'moderate')
-    if (!granted) return
+  try {
+    const actor = await getCurrentAdmin()
+    if (!actor) return { error: 'Not authenticated' }
+    if (actor.role !== 'super_admin') {
+      const granted = await assertPermission(actor, 'reviews', 'moderate')
+      if (!granted) return { error: 'Permission denied' }
+    }
+    const supabase = createSupabaseAdminClient()
+    const { error } = await supabase.from('reviews').update({ status: 'hidden' }).eq('id', id)
+    if (error) return { error: error.message }
+    await recalcVenueRating(supabase, venueId)
+    const { data: venue } = await supabase.from('venues').select('name').eq('id', venueId).single()
+    await logActivity(actor, 'hide_review', 'review', id, venue?.name ?? venueId)
+    revalidatePath('/dashboard/reviews')
+    return {}
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Unknown error' }
   }
-  const supabase = createSupabaseAdminClient()
-  const { error } = await supabase.from('reviews').update({ status: 'hidden' }).eq('id', id)
-  if (error) throw new Error(error.message)
-  await recalcVenueRating(supabase, venueId)
-  const { data: venue } = await supabase.from('venues').select('name').eq('id', venueId).single()
-  await logActivity(actor, 'hide_review', 'review', id, venue?.name ?? venueId)
-  revalidatePath('/dashboard/reviews')
 }
 
 async function deleteReview(id: string, venueId: string) {
