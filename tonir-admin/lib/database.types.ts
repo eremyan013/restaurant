@@ -774,6 +774,7 @@ export type Database = {
           comment: string | null
           created_at: string | null
           id: string
+          is_anonymous: boolean
           rating: number
           reservation_id: string
           status: string
@@ -784,6 +785,7 @@ export type Database = {
           comment?: string | null
           created_at?: string | null
           id?: string
+          is_anonymous?: boolean
           rating: number
           reservation_id: string
           status?: string
@@ -794,6 +796,7 @@ export type Database = {
           comment?: string | null
           created_at?: string | null
           id?: string
+          is_anonymous?: boolean
           rating?: number
           reservation_id?: string
           status?: string

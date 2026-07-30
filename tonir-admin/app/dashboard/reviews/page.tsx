@@ -160,7 +160,7 @@ export default async function ReviewsPage({
   // Paginated reviews for the current tab
   let reviewsQuery = supabase
     .from('reviews')
-    .select('id, rating, comment, status, created_at, venue_id, user_id, reservation_id', { count: 'exact' })
+    .select('id, rating, comment, status, created_at, venue_id, user_id, reservation_id, is_anonymous', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to)
 
@@ -267,7 +267,14 @@ export default async function ReviewsPage({
                 {enrichedReviews.map((r) => (
                   <tr key={r.id} className="border-b border-zinc-100 last:border-0 odd:bg-white even:bg-zinc-50/50">
                     <td className="px-4 py-3">
-                      <p className="font-medium text-zinc-900">{r.profiles?.name ?? '—'}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-zinc-900">{r.profiles?.name ?? '—'}</p>
+                        {r.is_anonymous && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 text-zinc-500 leading-none">
+                            Anon
+                          </span>
+                        )}
+                      </div>
                       {r.profiles?.player_id && (
                         <p className="text-xs text-zinc-400">ID {r.profiles.player_id}</p>
                       )}

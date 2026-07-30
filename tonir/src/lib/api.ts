@@ -228,6 +228,7 @@ export async function submitReview(
   reservationId: string,
   rating: number,
   comment: string,
+  isAnonymous: boolean = false,
 ): Promise<void> {
   const { error } = await sb.from('reviews').insert({
     user_id: userId,
@@ -235,6 +236,7 @@ export async function submitReview(
     reservation_id: reservationId,
     rating,
     comment: comment.trim() || null,
+    is_anonymous: isAnonymous,
   });
   if (error) throw error;
 }
@@ -258,7 +260,7 @@ export type VenueReview = {
 export async function fetchVenueReviews(venueId: string): Promise<VenueReview[]> {
   const { data: reviews } = await sb
     .from('reviews')
-    .select('id, user_id, rating, comment, created_at')
+    .select('id, user_id, rating, comment, created_at, is_anonymous')
     .eq('venue_id', venueId)
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
@@ -281,7 +283,7 @@ export async function fetchVenueReviews(venueId: string): Promise<VenueReview[]>
     rating: r.rating,
     comment: r.comment ?? null,
     created_at: r.created_at,
-    author_name: profileMap[r.user_id] ?? null,
+    author_name: r.is_anonymous ? null : (profileMap[r.user_id] ?? null),
   }));
 }
 

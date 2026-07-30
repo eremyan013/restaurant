@@ -484,6 +484,7 @@ export interface Database {
           reservation_id: string;
           rating: number;
           comment: string | null;
+          is_anonymous: boolean;
           status: 'pending' | 'approved' | 'hidden';
           created_at: string;
         };
@@ -494,11 +495,13 @@ export interface Database {
           reservation_id: string;
           rating: number;
           comment?: string | null;
+          is_anonymous?: boolean;
           created_at?: string;
         };
         Update: {
           rating?: number;
           comment?: string | null;
+          is_anonymous?: boolean;
         };
       };
 

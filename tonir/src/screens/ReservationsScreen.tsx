@@ -53,6 +53,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
   const [ratingRes, setRatingRes] = useState<ReservationRow | null>(null);
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [ratedIds, setRatedIds] = useState<Set<string>>(new Set());
 
@@ -66,7 +67,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
     if (!ratingRes || stars === 0 || !userId) return;
     setSubmitting(true);
     try {
-      await submitReview(userId, ratingRes.venue_id, ratingRes.id, stars, comment);
+      await submitReview(userId, ratingRes.venue_id, ratingRes.id, stars, comment, isAnonymous);
       setRatedIds((prev) => new Set([...prev, ratingRes.id]));
       setRatingRes(null);
       setStars(0);
@@ -82,6 +83,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setStars(0);
     setComment('');
+    setIsAnonymous(false);
     setRatingRes(res);
   }
 
@@ -387,6 +389,23 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                     style={[styles.commentInput, { color: t.text, borderColor: t.border, backgroundColor: t.bg }]}
                   />
 
+                  {/* Anonymous toggle */}
+                  <Pressable
+                    onPress={() => {
+                      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setIsAnonymous((v) => !v);
+                    }}
+                    style={styles.anonRow}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: isAnonymous }}
+                    accessibilityLabel={tr('rate_anonymous')}
+                  >
+                    <View style={[styles.checkbox, { borderColor: isAnonymous ? t.primary : t.border, backgroundColor: isAnonymous ? t.primary : 'transparent' }]}>
+                      {isAnonymous && <Text style={styles.checkmark}>✓</Text>}
+                    </View>
+                    <Text style={[styles.anonLabel, { color: t.textMute }]}>{tr('rate_anonymous')}</Text>
+                  </Pressable>
+
                   {/* Buttons */}
                   <View style={styles.modalBtns}>
                     <Pressable
@@ -522,4 +541,27 @@ const styles = StyleSheet.create({
   },
   modalBtnPrimary: { borderWidth: 0 },
   modalBtnText: { fontSize: 14, fontFamily: FONTS.semiBold, fontWeight: '600' },
+  anonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 4,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkmark: {
+    color: '#fff',
+    fontSize: 12,
+    fontFamily: FONTS.bold,
+    fontWeight: '700',
+  },
+  anonLabel: {
+    fontSize: 14,
+  },
 });
