@@ -36,8 +36,8 @@ export function ReviewActionButtons({
         await action()
         toast.success(successMsg)
         router.refresh()
-      } catch {
-        toast.error('Action failed')
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Action failed')
       } finally {
         setPendingAction(null)
       }
