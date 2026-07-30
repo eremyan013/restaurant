@@ -58,6 +58,11 @@ export function DetailScreen({ navigation, route }: Props) {
   const { venue, loading, error, retry } = useVenue(venueId);
 
   useEffect(() => {
+    const unsub = navigation.addListener('focus', retry);
+    return unsub;
+  }, [navigation, retry]);
+
+  useEffect(() => {
     const refresh = () => {
       fetchTodayReservationCount(venueId)
         .then(setBookedToday)
