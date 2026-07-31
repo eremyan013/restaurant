@@ -68,10 +68,10 @@ function SortableRow({
       <td className="px-4 py-3">
         <button
           onClick={() => startTransition(() => onToggle(banner.id, !banner.is_active))}
-          className="text-base leading-none focus:outline-none"
-          title={banner.is_active ? 'Click to deactivate' : 'Click to activate'}
+          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${banner.is_active ? 'bg-green-500' : 'bg-zinc-300'}`}
+          title={banner.is_active ? 'Active — click to deactivate' : 'Inactive — click to activate'}
         >
-          {banner.is_active ? '✓' : '✗'}
+          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${banner.is_active ? 'translate-x-4' : 'translate-x-1'}`} />
         </button>
       </td>
       <td className="px-4 py-3">
