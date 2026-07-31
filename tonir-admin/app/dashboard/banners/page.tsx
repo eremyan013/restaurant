@@ -27,7 +27,7 @@ async function createBanner(formData: FormData) {
     image_url,
     title:      (formData.get('title') as string ?? '').trim() || null,
     subtitle:   (formData.get('subtitle') as string ?? '').trim() || null,
-    tap_action: (formData.get('tap_action') as string) || 'none',
+    tap_action: ((formData.get('tap_action') as string) || 'none') as 'none' | 'deep_link' | 'external_url',
     tap_url:    (formData.get('tap_url') as string ?? '').trim() || null,
     start_date: (formData.get('start_date') as string ?? '').trim() || null,
     end_date:   (formData.get('end_date') as string ?? '').trim() || null,
