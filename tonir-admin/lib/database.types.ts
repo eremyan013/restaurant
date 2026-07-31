@@ -574,6 +574,51 @@ export type Database = {
         }
         Relationships: []
       }
+      banners: {
+        Row: {
+          id:          string
+          image_url:   string
+          title:       string | null
+          subtitle:    string | null
+          tap_action:  'none' | 'deep_link' | 'external_url'
+          tap_url:     string | null
+          is_active:   boolean
+          sort_order:  number
+          start_date:  string | null
+          end_date:    string | null
+          created_at:  string
+          updated_at:  string
+        }
+        Insert: {
+          id?:         string
+          image_url:   string
+          title?:      string | null
+          subtitle?:   string | null
+          tap_action?: 'none' | 'deep_link' | 'external_url'
+          tap_url?:    string | null
+          is_active?:  boolean
+          sort_order?: number
+          start_date?: string | null
+          end_date?:   string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<{
+          id:          string
+          image_url:   string
+          title:       string | null
+          subtitle:    string | null
+          tap_action:  'none' | 'deep_link' | 'external_url'
+          tap_url:     string | null
+          is_active:   boolean
+          sort_order:  number
+          start_date:  string | null
+          end_date:    string | null
+          created_at:  string
+          updated_at:  string
+        }>
+        Relationships: []
+      }
       prizes: {
         Row: {
           created_at: string | null
@@ -1278,5 +1323,6 @@ export type ReviewRow           = T['reviews']['Row']
 export type SettingRow          = T['settings']['Row']
 export type UserPrizeRow        = T['user_prizes']['Row']
 export type OccasionRow         = T['occasions']['Row']
+export type BannerRow           = T['banners']['Row']
 export type VenueBlockedDateRow = T['venue_blocked_dates']['Row']
 export type VenueRow            = T['venues']['Row']

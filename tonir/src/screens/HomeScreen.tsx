@@ -25,6 +25,8 @@ import { HeroCard } from '../components/HeroCard';
 import { GuideCard } from '../components/GuideCard';
 import { SeeMoreCard } from '../components/SeeMoreCard';
 import { ErrorState } from '../components/ErrorState';
+import { BannerCarousel } from '../components/BannerCarousel';
+import { useBanners } from '../hooks/useBanners';
 import { FONTS, COLORS } from '../theme';
 import { LANG_FLAGS, LANGS } from '../i18n';
 import { useTranslation } from '../hooks/useTranslation';
@@ -43,6 +45,7 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
   const { favs, toggleFav } = useFavorites();
   const { profile } = useProfile();
   const { locations, loading: locLoading, defaultLocationId } = useLocations();
+  const { banners } = useBanners();
   const [refreshing, setRefreshing] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [sheetVisible, setSheetVisible] = useState(false);
@@ -155,34 +158,8 @@ export function HomeScreen({ navigation }: { navigation: Nav }) {
           <Chip label={tr('chip_now')} t={t} onPress={() => navigation.navigate('Search')} />
         </ScrollView>
 
-        {/* Heat map banner */}
-        <View style={[styles.heatBanner, { backgroundColor: t.primaryDeep }]}>
-          <View style={styles.heatLeft}>
-            <View style={styles.barChart}>
-              {[0.4, 0.6, 0.8, 1.0, 0.9, 0.7, 0.5].map((h, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.bar,
-                    {
-                      height: h * 28,
-                      backgroundColor: i === 3 ? t.accent : 'rgba(201,169,97,0.35)',
-                    },
-                  ]}
-                />
-              ))}
-            </View>
-            <Text style={styles.heatTitle}>{tr('heat_title')}</Text>
-            <Text style={styles.heatSub}>{tr('heat_sub')}</Text>
-          </View>
-          <Pressable
-            onPress={() => navigation.navigate('Map', {})}
-            style={[styles.mapPill, { backgroundColor: t.accent }]}
-          >
-            <Icon name="map" size={13} color={t.primaryDeep} strokeWidth={2} />
-            <Text style={[styles.mapPillText, { color: t.primaryDeep }]}>{tr('map')}</Text>
-          </Pressable>
-        </View>
+        {/* Dynamic banner slot */}
+        <BannerCarousel banners={banners} navigation={navigation} />
 
         {/* Dynamic sections managed from the admin panel */}
         {sections.map((section) => {
@@ -421,52 +398,6 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingBottom: 4,
     marginBottom: 20,
-  },
-  heatBanner: {
-    marginHorizontal: 20,
-    borderRadius: 18,
-    padding: 16,
-    paddingHorizontal: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  heatLeft: {
-    flex: 1,
-    gap: 4,
-  },
-  barChart: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 3,
-    height: 32,
-    marginBottom: 6,
-  },
-  bar: {
-    width: 6,
-    borderRadius: 3,
-  },
-  heatTitle: {
-    color: COLORS.cream,
-    fontSize: 13,
-    fontFamily: FONTS.semiBold, fontWeight: '600',
-  },
-  heatSub: {
-    color: COLORS.creamAlpha65,
-    fontSize: 11.5,
-  },
-  mapPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    marginLeft: 12,
-  },
-  mapPillText: {
-    fontSize: 12,
-    fontFamily: FONTS.bold, fontWeight: '700',
   },
   loyaltyCard: {
     marginHorizontal: 20,

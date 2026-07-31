@@ -633,6 +633,51 @@ export interface Database {
         };
       };
 
+      banners: {
+        Row: {
+          id:          string;
+          image_url:   string;
+          title:       string | null;
+          subtitle:    string | null;
+          tap_action:  'none' | 'deep_link' | 'external_url';
+          tap_url:     string | null;
+          is_active:   boolean;
+          sort_order:  number;
+          start_date:  string | null;
+          end_date:    string | null;
+          created_at:  string;
+          updated_at:  string;
+        };
+        Insert: {
+          id?:         string;
+          image_url:   string;
+          title?:      string | null;
+          subtitle?:   string | null;
+          tap_action?: 'none' | 'deep_link' | 'external_url';
+          tap_url?:    string | null;
+          is_active?:  boolean;
+          sort_order?: number;
+          start_date?: string | null;
+          end_date?:   string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<{
+          id:          string;
+          image_url:   string;
+          title:       string | null;
+          subtitle:    string | null;
+          tap_action:  'none' | 'deep_link' | 'external_url';
+          tap_url:     string | null;
+          is_active:   boolean;
+          sort_order:  number;
+          start_date:  string | null;
+          end_date:    string | null;
+          created_at:  string;
+          updated_at:  string;
+        }>;
+      };
+
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -656,3 +701,4 @@ export type VenueBlockedDateRow   = Database['public']['Tables']['venue_blocked_
 export type HomeSectionRow        = Database['public']['Tables']['home_sections']['Row'];
 export type HomeSectionItemRow    = Database['public']['Tables']['home_section_items']['Row'];
 export type OccasionRow           = Database['public']['Tables']['occasions']['Row'];
+export type BannerRow             = Database['public']['Tables']['banners']['Row'];

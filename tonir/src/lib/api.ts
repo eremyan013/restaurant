@@ -2,7 +2,7 @@ import { supabase as _supabase } from './supabase';
 import { TIER_NAME_FALLBACKS, TIER_MIN_FALLBACKS } from './constants';
 
 const ADMIN_URL = process.env.EXPO_PUBLIC_CONCIERGE_URL?.replace(/\/$/, '');
-import { VenueRow, ReservationRow, ProfileRow, MenuCategoryRow, MenuItemRow, GuideRow, VenueHoursRow, VenueBlockedDateRow, LocationRow, OccasionRow } from './database.types';
+import { VenueRow, ReservationRow, ProfileRow, MenuCategoryRow, MenuItemRow, GuideRow, VenueHoursRow, VenueBlockedDateRow, LocationRow, OccasionRow, BannerRow } from './database.types';
 
 // Cast to any to escape Supabase TS generic inference issue with this package version.
 // All public functions carry explicit return type annotations for safety.
@@ -497,4 +497,21 @@ export async function fetchMenuByVenue(venueId: string): Promise<{
     categories: (cats.data ?? []) as MenuCategoryRow[],
     items: (items.data ?? []) as MenuItemRow[],
   };
+}
+
+// ─────────────────────────────────────────────
+// BANNERS
+// ─────────────────────────────────────────────
+
+export async function fetchBanners(): Promise<BannerRow[]> {
+  const today = new Date().toISOString().split('T')[0]!;
+  const { data, error } = await sb
+    .from('banners')
+    .select('*')
+    .eq('is_active', true)
+    .or(`start_date.is.null,start_date.lte.${today}`)
+    .or(`end_date.is.null,end_date.gte.${today}`)
+    .order('sort_order', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as BannerRow[];
 }
