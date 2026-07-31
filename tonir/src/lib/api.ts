@@ -509,9 +509,12 @@ export async function fetchBanners(): Promise<BannerRow[]> {
     .from('banners')
     .select('*')
     .eq('is_active', true)
-    .or(`start_date.is.null,start_date.lte.${today}`)
-    .or(`end_date.is.null,end_date.gte.${today}`)
     .order('sort_order', { ascending: true });
   if (error) throw error;
-  return (data ?? []) as BannerRow[];
+  const rows = (data ?? []) as BannerRow[];
+  return rows.filter((b) => {
+    if (b.start_date && b.start_date > today) return false;
+    if (b.end_date && b.end_date < today) return false;
+    return true;
+  });
 }
