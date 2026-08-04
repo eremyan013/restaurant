@@ -105,7 +105,7 @@ export function PrizeDeleteButton({
   return (
     <button
       onClick={handleConfirm}
-      className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
+      className="w-20 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
     >
       Delete
     </button>

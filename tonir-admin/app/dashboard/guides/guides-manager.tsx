@@ -131,7 +131,7 @@ export function GuidesManager({ guides, venues, toggleActive }: Props) {
                             setEditingId(editingId === guide.id ? null : guide.id)
                             setShowCreate(false)
                           }}
-                          className="px-3 py-1.5 rounded-lg bg-[#F0AB0C] hover:bg-[#d99a0b] text-zinc-900 text-xs font-medium transition-colors"
+                          className="w-20 py-1.5 rounded-lg bg-[#F0AB0C] hover:bg-[#d99a0b] text-zinc-900 text-xs font-medium transition-colors"
                         >
                           {editingId === guide.id ? 'Close' : 'Edit'}
                         </button>
@@ -139,9 +139,9 @@ export function GuidesManager({ guides, venues, toggleActive }: Props) {
                           onClick={() => handleDelete(guide.id)}
                           disabled={deletingId === guide.id}
                           aria-label={`Delete guide: ${guide.title}`}
-                          className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium disabled:opacity-40 transition-colors"
+                          className="w-20 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium disabled:opacity-40 transition-colors"
                         >
-                          {deletingId === guide.id ? '…' : '✕'}
+                          {deletingId === guide.id ? '…' : 'Delete'}
                         </button>
                       </div>
                     </td>

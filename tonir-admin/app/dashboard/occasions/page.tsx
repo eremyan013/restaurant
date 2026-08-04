@@ -113,7 +113,7 @@ export default async function OccasionsPage() {
                     <form action={deleteOccasion.bind(null, occ.id)}>
                       <button
                         type="submit"
-                        className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium transition-colors"
+                        className="w-20 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
                       >
                         Delete
                       </button>

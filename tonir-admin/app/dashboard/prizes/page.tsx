@@ -180,7 +180,7 @@ export default async function PrizesPage({ searchParams }: { searchParams: Promi
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <Link href={`/dashboard/prizes/${p.id}`} className="px-3 py-1.5 rounded-lg bg-[#F0AB0C] hover:bg-[#d99a0b] text-zinc-900 text-xs font-medium transition-colors">
+                        <Link href={`/dashboard/prizes/${p.id}`} className="w-20 py-1.5 rounded-lg bg-[#F0AB0C] hover:bg-[#d99a0b] text-zinc-900 text-xs font-medium transition-colors text-center">
                           Edit
                         </Link>
                         <PrizeDeleteButton

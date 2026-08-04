@@ -85,13 +85,13 @@ function SortableRow({
         <div className="flex gap-2">
           <button
             onClick={() => onEdit(banner)}
-            className="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+            className="w-20 py-1.5 rounded-lg bg-[#F0AB0C] hover:bg-[#d99a0b] text-zinc-900 text-xs font-medium transition-colors"
           >
             Edit
           </button>
           <button
             onClick={() => onDelete(banner.id)}
-            className="h-9 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors"
+            className="w-20 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
           >
             Delete
           </button>
