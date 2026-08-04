@@ -35,8 +35,8 @@ function SortableRow({
   onDelete,
 }: {
   banner: BannerRow
-  onToggle: ToggleBannerFn
-  onDelete: DeleteBannerFn
+  onToggle: (id: string, is_active: boolean) => void
+  onDelete: (id: string) => void
 }) {
   const [, startTransition] = useTransition()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: banner.id })
