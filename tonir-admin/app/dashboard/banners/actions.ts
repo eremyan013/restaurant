@@ -2,8 +2,9 @@
 import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
+import type { BannerRow } from '@/lib/database.types'
 
-export async function createBanner(formData: FormData): Promise<{ error?: string }> {
+export async function createBanner(formData: FormData): Promise<{ error?: string; banner?: BannerRow }> {
   const admin = await getCurrentAdmin()
   if (admin?.role !== 'super_admin') return { error: 'Permission denied' }
 
@@ -18,7 +19,7 @@ export async function createBanner(formData: FormData): Promise<{ error?: string
     .limit(1)
     .single()
 
-  const { error } = await supabase.from('banners').insert({
+  const { data, error } = await supabase.from('banners').insert({
     image_url,
     title:      (formData.get('title') as string ?? '').trim() || null,
     subtitle:   (formData.get('subtitle') as string ?? '').trim() || null,
@@ -27,11 +28,11 @@ export async function createBanner(formData: FormData): Promise<{ error?: string
     start_date: (formData.get('start_date') as string ?? '').trim() || null,
     end_date:   (formData.get('end_date') as string ?? '').trim() || null,
     sort_order: (maxRow?.sort_order ?? -1) + 1,
-  })
+  }).select().single()
 
   if (error) return { error: error.message }
   revalidatePath('/dashboard/banners')
-  return {}
+  return { banner: data as BannerRow }
 }
 
 export async function toggleBanner(id: string, is_active: boolean): Promise<void> {

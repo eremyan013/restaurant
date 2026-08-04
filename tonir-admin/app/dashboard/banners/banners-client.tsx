@@ -164,7 +164,8 @@ export function BannersClient({
     fd.set('image_url', imageUrl)
     try {
       const result = await onCreate(fd)
-      if (!result?.error) {
+      if (!result?.error && result?.banner) {
+        setBanners((prev) => [...prev, result.banner!])
         closeModal()
       }
     } finally {
