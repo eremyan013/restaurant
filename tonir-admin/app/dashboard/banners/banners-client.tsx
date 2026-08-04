@@ -159,38 +159,8 @@ export function BannersClient({
 
   return (
     <div>
-      {banners.length === 0 ? (
-        <div className="bg-white rounded-xl border border-zinc-200 py-16 text-center mb-8">
-          <p className="text-zinc-400 text-sm">No banners yet. Add one below.</p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden mb-8">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-zinc-50 text-left border-b border-zinc-100">
-                <th scope="col" className="px-2 py-3 w-8"></th>
-                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Preview</th>
-                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Title</th>
-                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Tap action</th>
-                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Schedule</th>
-                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Active</th>
-                <th scope="col" className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={banners.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-                <tbody>
-                  {banners.map((b) => (
-                    <SortableRow key={b.id} banner={b} onToggle={onToggle} onDelete={onDelete} />
-                  ))}
-                </tbody>
-              </SortableContext>
-            </DndContext>
-          </table>
-        </div>
-      )}
-
-      <div className="bg-white rounded-xl border border-zinc-200 p-5">
+      {/* Add banner form */}
+      <div className="bg-white rounded-xl border border-zinc-200 p-5 mb-8">
         <h2 className="text-sm font-semibold text-zinc-900 mb-4">Add banner</h2>
         <form ref={formRef} onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
 
@@ -269,6 +239,38 @@ export function BannersClient({
           </button>
         </form>
       </div>
+
+      {/* Banner list */}
+      {banners.length === 0 ? (
+        <div className="bg-white rounded-xl border border-zinc-200 py-16 text-center">
+          <p className="text-zinc-400 text-sm">No banners yet.</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-zinc-50 text-left border-b border-zinc-100">
+                <th scope="col" className="px-2 py-3 w-8"></th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Preview</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Title</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Tap action</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Schedule</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Active</th>
+                <th scope="col" className="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={banners.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+                <tbody>
+                  {banners.map((b) => (
+                    <SortableRow key={b.id} banner={b} onToggle={onToggle} onDelete={onDelete} />
+                  ))}
+                </tbody>
+              </SortableContext>
+            </DndContext>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

@@ -10,8 +10,8 @@ export function useBanners() {
     let cancelled = false;
     setLoading(true);
     fetchBanners()
-      .then((data) => { if (!cancelled) { console.log('[banners] fetched', data); setBanners(data); setLoading(false); } })
-      .catch((e) => { if (!cancelled) { console.error('[banners] error', e); setLoading(false); } });
+      .then((data) => { if (!cancelled) { setBanners(data); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
 
