@@ -142,14 +142,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     borderRadius: 18,
     overflow: 'hidden',
-    height: 88,
+    height: 176,
   },
   scroll: {
     flex: 1,
   },
   page: {
     width: PAGE_W,
-    height: 88,
+    height: 176,
   },
   image: {
     width: '100%',
