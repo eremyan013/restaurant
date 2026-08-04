@@ -22,20 +22,12 @@ export default async function BannersPage() {
   const banners: BannerRow[] = data ?? []
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-zinc-900">
-          Banners
-          <span className="ml-2 text-sm font-normal text-zinc-400">{banners.length} total</span>
-        </h1>
-      </div>
-      <BannersClient
-        initialBanners={banners}
-        onCreate={createBanner}
-        onToggle={toggleBanner}
-        onDelete={deleteBanner}
-        onReorder={reorderBanners}
-      />
-    </div>
+    <BannersClient
+      initialBanners={banners}
+      onCreate={createBanner}
+      onToggle={toggleBanner}
+      onDelete={deleteBanner}
+      onReorder={reorderBanners}
+    />
   )
 }

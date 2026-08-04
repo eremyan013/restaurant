@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useTransition } from 'react'
+import { useState, useRef, useEffect, useTransition } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -105,10 +105,27 @@ export function BannersClient({
   const [imageUrl, setImageUrl] = useState('')
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  function closeModal() {
+    setModalOpen(false)
+    setImageUrl('')
+    setImagePreview(null)
+    formRef.current?.reset()
+  }
+
+  useEffect(() => {
+    if (!modalOpen) return
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeModal()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [modalOpen])
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -148,9 +165,7 @@ export function BannersClient({
     try {
       const result = await onCreate(fd)
       if (!result?.error) {
-        formRef.current?.reset()
-        setImageUrl('')
-        setImagePreview(null)
+        closeModal()
       }
     } finally {
       setSubmitting(false)
@@ -159,85 +174,18 @@ export function BannersClient({
 
   return (
     <div>
-      {/* Add banner form */}
-      <div className="bg-white rounded-xl border border-zinc-200 p-5 mb-8">
-        <h2 className="text-sm font-semibold text-zinc-900 mb-4">Add banner</h2>
-        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
-
-          <div className="flex flex-col gap-1 w-full">
-            <label className="text-xs font-medium text-zinc-500">Image *</label>
-            <div className="flex gap-2 items-center flex-wrap">
-              <input
-                value={imageUrl}
-                onChange={(e) => { setImageUrl(e.target.value); setImagePreview(e.target.value || null) }}
-                placeholder="Paste image URL…"
-                className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-80 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <span className="text-zinc-400 text-xs">or</span>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="h-10 px-3 rounded-lg border border-zinc-300 hover:bg-zinc-50 text-sm text-zinc-600 whitespace-nowrap transition-colors disabled:opacity-50"
-              >
-                {uploading ? 'Uploading…' : 'Upload from computer'}
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-              {imagePreview && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={imagePreview} alt="preview" className="h-10 w-16 object-cover rounded-md border border-zinc-200 bg-zinc-100" />
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-500">Title</label>
-            <input name="title" placeholder="Optional overlay title"
-              className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-500">Subtitle</label>
-            <input name="subtitle" placeholder="Optional subtitle"
-              className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-500">Tap action</label>
-            <select name="tap_action"
-              className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="none">None</option>
-              <option value="external_url">External URL</option>
-              <option value="deep_link">Deep link</option>
-            </select>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-500">Tap URL / deep link</label>
-            <input name="tap_url" placeholder="https://… or venue/id or map"
-              className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-500">Start date</label>
-            <input name="start_date" type="date"
-              className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-500">End date</label>
-            <input name="end_date" type="date"
-              className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <button
-            type="submit"
-            disabled={!imageUrl || submitting}
-            className="h-10 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors disabled:opacity-50"
-          >
-            {submitting ? 'Adding…' : 'Add'}
-          </button>
-        </form>
+      {/* Page header */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold text-zinc-900">
+          Banners
+          <span className="ml-2 text-sm font-normal text-zinc-400">{banners.length} total</span>
+        </h1>
+        <button
+          onClick={() => setModalOpen(true)}
+          className="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+        >
+          Add banner
+        </button>
       </div>
 
       {/* Banner list */}
@@ -269,6 +217,105 @@ export function BannersClient({
               </SortableContext>
             </DndContext>
           </table>
+        </div>
+      )}
+
+      {/* Add banner modal */}
+      {modalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={closeModal}
+        >
+          <div
+            className="relative bg-white rounded-xl border border-zinc-200 p-6 w-full max-w-2xl mx-4 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={closeModal}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-700 text-xl leading-none"
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <h2 className="text-sm font-semibold text-zinc-900 mb-4">Add banner</h2>
+            <form ref={formRef} onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
+
+              <div className="flex flex-col gap-1 w-full">
+                <label className="text-xs font-medium text-zinc-500">Image *</label>
+                <div className="flex gap-2 items-center flex-wrap">
+                  <input
+                    value={imageUrl}
+                    onChange={(e) => { setImageUrl(e.target.value); setImagePreview(e.target.value || null) }}
+                    placeholder="Paste image URL…"
+                    className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-80 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="text-zinc-400 text-xs">or</span>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="h-10 px-3 rounded-lg border border-zinc-300 hover:bg-zinc-50 text-sm text-zinc-600 whitespace-nowrap transition-colors disabled:opacity-50"
+                  >
+                    {uploading ? 'Uploading…' : 'Upload from computer'}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                  {imagePreview && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={imagePreview} alt="preview" className="h-10 w-16 object-cover rounded-md border border-zinc-200 bg-zinc-100" />
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-zinc-500">Title</label>
+                <input name="title" placeholder="Optional overlay title"
+                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-zinc-500">Subtitle</label>
+                <input name="subtitle" placeholder="Optional subtitle"
+                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-zinc-500">Tap action</label>
+                <select name="tap_action"
+                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="none">None</option>
+                  <option value="external_url">External URL</option>
+                  <option value="deep_link">Deep link</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-zinc-500">Tap URL / deep link</label>
+                <input name="tap_url" placeholder="https://… or venue/id or map"
+                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-zinc-500">Start date</label>
+                <input name="start_date" type="date"
+                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-zinc-500">End date</label>
+                <input name="end_date" type="date"
+                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <button
+                type="submit"
+                disabled={!imageUrl || submitting}
+                className="h-10 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {submitting ? 'Adding…' : 'Add'}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>
