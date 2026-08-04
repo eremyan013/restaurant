@@ -24,6 +24,11 @@ type ToggleBannerFn   = typeof toggleBanner
 type DeleteBannerFn   = typeof deleteBanner
 type ReorderBannersFn = typeof reorderBanners
 
+type BannerLanguage = 'hy' | 'ru' | 'en'
+
+const LANGUAGE_LABELS: Record<BannerLanguage, string> = { hy: 'Armenian', ru: 'Russian', en: 'English' }
+const LANGUAGES: BannerLanguage[] = ['hy', 'ru', 'en']
+
 function SortableRow({
   banner,
   onToggle,
@@ -100,6 +105,8 @@ export function BannersClient({
   onReorder: ReorderBannersFn
 }) {
   const [banners, setBanners] = useState(initialBanners)
+  const [selectedLanguage, setSelectedLanguage] = useState<BannerLanguage>('hy')
+  const [modalLanguage, setModalLanguage] = useState<BannerLanguage>('hy')
   const [, startTransition] = useTransition()
   const [uploading, setUploading] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
@@ -110,6 +117,13 @@ export function BannersClient({
   const formRef = useRef<HTMLFormElement>(null)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  const visibleBanners = banners.filter((b) => b.language === selectedLanguage)
+
+  function openModal() {
+    setModalLanguage(selectedLanguage)
+    setModalOpen(true)
+  }
 
   function closeModal() {
     setModalOpen(false)
@@ -130,11 +144,12 @@ export function BannersClient({
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over || active.id === over.id) return
-    const oldIndex = banners.findIndex((b) => b.id === active.id)
-    const newIndex = banners.findIndex((b) => b.id === over.id)
-    const reordered = arrayMove(banners, oldIndex, newIndex)
-    setBanners(reordered)
-    startTransition(() => onReorder(reordered.map((b) => b.id)))
+    const oldIndex = visibleBanners.findIndex((b) => b.id === active.id)
+    const newIndex  = visibleBanners.findIndex((b) => b.id === over.id)
+    const reorderedSlice = arrayMove(visibleBanners, oldIndex, newIndex)
+    const otherBanners = banners.filter((b) => b.language !== selectedLanguage)
+    setBanners([...otherBanners, ...reorderedSlice])
+    startTransition(() => onReorder(reorderedSlice.map((b) => b.id)))
   }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -162,6 +177,7 @@ export function BannersClient({
     setSubmitting(true)
     const fd = new FormData(e.currentTarget)
     fd.set('image_url', imageUrl)
+    fd.set('language', modalLanguage)
     try {
       const result = await onCreate(fd)
       if (!result?.error && result?.banner) {
@@ -175,24 +191,33 @@ export function BannersClient({
 
   return (
     <div>
-      {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-zinc-900">
           Banners
-          <span className="ml-2 text-sm font-normal text-zinc-400">{banners.length} total</span>
+          <span className="ml-2 text-sm font-normal text-zinc-400">{visibleBanners.length} shown</span>
         </h1>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
-        >
-          Add banner
-        </button>
+        <div className="flex items-center gap-2">
+          <select
+            value={selectedLanguage}
+            onChange={(e) => setSelectedLanguage(e.target.value as BannerLanguage)}
+            className="h-9 px-3 rounded-lg border border-zinc-300 text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {LANGUAGES.map((l) => (
+              <option key={l} value={l}>{LANGUAGE_LABELS[l]}</option>
+            ))}
+          </select>
+          <button
+            onClick={openModal}
+            className="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+          >
+            Add banner
+          </button>
+        </div>
       </div>
 
-      {/* Banner list */}
-      {banners.length === 0 ? (
+      {visibleBanners.length === 0 ? (
         <div className="bg-white rounded-xl border border-zinc-200 py-16 text-center">
-          <p className="text-zinc-400 text-sm">No banners yet.</p>
+          <p className="text-zinc-400 text-sm">No {LANGUAGE_LABELS[selectedLanguage]} banners yet.</p>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
@@ -209,9 +234,9 @@ export function BannersClient({
               </tr>
             </thead>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={banners.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+              <SortableContext items={visibleBanners.map((b) => b.id)} strategy={verticalListSortingStrategy}>
                 <tbody>
-                  {banners.map((b) => (
+                  {visibleBanners.map((b) => (
                     <SortableRow key={b.id} banner={b} onToggle={onToggle} onDelete={onDelete} />
                   ))}
                 </tbody>
@@ -221,7 +246,6 @@ export function BannersClient({
         </div>
       )}
 
-      {/* Add banner modal */}
       {modalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
@@ -241,6 +265,7 @@ export function BannersClient({
             </button>
             <h2 className="text-sm font-semibold text-zinc-900 mb-4">Add banner</h2>
             <form ref={formRef} onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
+              <input type="hidden" name="language" value={modalLanguage} />
 
               <div className="flex flex-col gap-1 w-full">
                 <label className="text-xs font-medium text-zinc-500">
@@ -277,6 +302,18 @@ export function BannersClient({
                 </div>
               </div>
 
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-zinc-500">Language</label>
+                <select
+                  value={modalLanguage}
+                  onChange={(e) => setModalLanguage(e.target.value as BannerLanguage)}
+                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {LANGUAGES.map((l) => (
+                    <option key={l} value={l}>{LANGUAGE_LABELS[l]}</option>
+                  ))}
+                </select>
+              </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-zinc-500">Title</label>
                 <input name="title" placeholder="Optional overlay title"

@@ -503,12 +503,13 @@ export async function fetchMenuByVenue(venueId: string): Promise<{
 // BANNERS
 // ─────────────────────────────────────────────
 
-export async function fetchBanners(): Promise<BannerRow[]> {
+export async function fetchBanners(language: 'hy' | 'ru' | 'en'): Promise<BannerRow[]> {
   const today = new Date().toISOString().split('T')[0]!;
   const { data, error } = await sb
     .from('banners')
     .select('*')
     .eq('is_active', true)
+    .eq('language', language)
     .order('sort_order', { ascending: true });
   if (error) throw error;
   const rows = (data ?? []) as BannerRow[];
