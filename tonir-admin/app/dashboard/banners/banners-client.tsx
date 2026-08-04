@@ -38,7 +38,6 @@ function SortableRow({
   onToggle: (id: string, is_active: boolean) => void
   onDelete: (id: string) => void
 }) {
-  const [, startTransition] = useTransition()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: banner.id })
 
   return (
@@ -72,7 +71,7 @@ function SortableRow({
       </td>
       <td className="px-4 py-3">
         <button
-          onClick={() => startTransition(() => onToggle(banner.id, !banner.is_active))}
+          onClick={() => onToggle(banner.id, !banner.is_active)}
           className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${banner.is_active ? 'bg-green-500' : 'bg-zinc-300'}`}
           title={banner.is_active ? 'Active — click to deactivate' : 'Inactive — click to activate'}
         >
@@ -81,7 +80,7 @@ function SortableRow({
       </td>
       <td className="px-4 py-3">
         <button
-          onClick={() => startTransition(() => onDelete(banner.id))}
+          onClick={() => onDelete(banner.id)}
           className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium transition-colors"
         >
           Delete
