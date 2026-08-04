@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, Pressable, Image, StyleSheet, Linking,
+  ScrollView, Dimensions, NativeSyntheticEvent, NativeScrollEvent,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
@@ -10,6 +11,7 @@ import type { BannerRow } from '../lib/database.types';
 import type { RootStackParamList, TabParamList } from '../navigation';
 
 const ROTATE_INTERVAL_MS = 4000;
+const PAGE_W = Dimensions.get('window').width - 40; // matches marginHorizontal: 20 * 2
 
 type Nav = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Home'>,
@@ -23,17 +25,38 @@ interface Props {
 
 export function BannerCarousel({ banners, navigation }: Props) {
   const [index, setIndex] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function startTimer() {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (banners.length <= 1) return;
+    timerRef.current = setInterval(() => {
+      setIndex((prev) => {
+        const next = (prev + 1) % banners.length;
+        scrollRef.current?.scrollTo({ x: next * PAGE_W, animated: true });
+        return next;
+      });
+    }, ROTATE_INTERVAL_MS);
+  }
 
   useEffect(() => {
-    if (banners.length <= 1) return;
-    const id = setInterval(
-      () => setIndex((i) => (i + 1) % banners.length),
-      ROTATE_INTERVAL_MS,
-    );
-    return () => clearInterval(id);
+    startTimer();
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [banners.length]);
 
-  useEffect(() => { setIndex(0); }, [banners]);
+  useEffect(() => {
+    setIndex(0);
+    scrollRef.current?.scrollTo({ x: 0, animated: false });
+  }, [banners]);
+
+  const handleScrollEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const newIndex = Math.round(e.nativeEvent.contentOffset.x / PAGE_W);
+    setIndex(newIndex);
+    startTimer();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [banners.length]);
 
   const handleTap = useCallback((banner: BannerRow) => {
     if (banner.tap_action === 'external_url' && banner.tap_url) {
@@ -52,32 +75,46 @@ export function BannerCarousel({ banners, navigation }: Props) {
 
   if (banners.length === 0) return null;
 
-  const banner = banners[index]!;
-  const isTappable = banner.tap_action !== 'none';
-
   return (
     <View style={styles.container}>
-      <Pressable
-        onPress={() => handleTap(banner)}
-        disabled={!isTappable}
-        style={styles.pressable}
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        decelerationRate="fast"
+        scrollEventThrottle={16}
+        onMomentumScrollEnd={handleScrollEnd}
+        style={styles.scroll}
       >
-        <Image
-          source={{ uri: banner.image_url }}
-          style={styles.image}
-          resizeMode="cover"
-        />
-        {(banner.title || banner.subtitle) && (
-          <View style={styles.overlay}>
-            {banner.title && (
-              <Text style={styles.title} numberOfLines={2}>{banner.title}</Text>
-            )}
-            {banner.subtitle && (
-              <Text style={styles.subtitle} numberOfLines={2}>{banner.subtitle}</Text>
-            )}
-          </View>
-        )}
-      </Pressable>
+        {banners.map((banner) => {
+          const isTappable = banner.tap_action !== 'none';
+          return (
+            <Pressable
+              key={banner.id}
+              onPress={() => handleTap(banner)}
+              disabled={!isTappable}
+              style={styles.page}
+            >
+              <Image
+                source={{ uri: banner.image_url }}
+                style={styles.image}
+                resizeMode="cover"
+              />
+              {(banner.title || banner.subtitle) && (
+                <View style={styles.overlay}>
+                  {banner.title && (
+                    <Text style={styles.title} numberOfLines={2}>{banner.title}</Text>
+                  )}
+                  {banner.subtitle && (
+                    <Text style={styles.subtitle} numberOfLines={2}>{banner.subtitle}</Text>
+                  )}
+                </View>
+              )}
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
       {banners.length > 1 && (
         <View style={styles.dots}>
@@ -98,9 +135,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     borderRadius: 18,
     overflow: 'hidden',
+    height: 88,
   },
-  pressable: {
-    width: '100%',
+  scroll: {
+    flex: 1,
+  },
+  page: {
+    width: PAGE_W,
     height: 88,
   },
   image: {
