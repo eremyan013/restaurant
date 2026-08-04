@@ -243,7 +243,10 @@ export function BannersClient({
             <form ref={formRef} onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
 
               <div className="flex flex-col gap-1 w-full">
-                <label className="text-xs font-medium text-zinc-500">Image *</label>
+                <label className="text-xs font-medium text-zinc-500">
+                  Image *
+                  <span className="ml-2 font-normal text-zinc-400">recommended 1050 × 530 px (2:1 ratio)</span>
+                </label>
                 <div className="flex gap-2 items-center flex-wrap">
                   <input
                     value={imageUrl}
