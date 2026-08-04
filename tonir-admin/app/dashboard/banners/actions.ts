@@ -35,6 +35,7 @@ export async function createBanner(formData: FormData): Promise<{ error?: string
     tap_url:    (formData.get('tap_url') as string ?? '').trim() || null,
     start_date: (formData.get('start_date') as string ?? '').trim() || null,
     end_date:   (formData.get('end_date') as string ?? '').trim() || null,
+    slug:       (formData.get('slug') as string ?? '').trim() || null,
     sort_order: (maxRow?.sort_order ?? -1) + 1,
     language,
   }).select().single()
@@ -63,6 +64,7 @@ export async function updateBanner(id: string, formData: FormData): Promise<{ er
     tap_url:    (formData.get('tap_url') as string ?? '').trim() || null,
     start_date: (formData.get('start_date') as string ?? '').trim() || null,
     end_date:   (formData.get('end_date') as string ?? '').trim() || null,
+    slug:       (formData.get('slug') as string ?? '').trim() || null,
     language,
   }).eq('id', id).select().single()
 

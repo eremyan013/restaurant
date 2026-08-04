@@ -125,6 +125,7 @@ export function BannersClient({
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [editingBanner, setEditingBanner] = useState<BannerRow | null>(null)
   const [editModalLanguage, setEditModalLanguage] = useState<BannerLanguage>('hy')
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -133,7 +134,11 @@ export function BannersClient({
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
-  const visibleBanners = banners.filter((b) => b.language === selectedLanguage)
+  const visibleBanners = banners.filter((b) => {
+    if (b.language !== selectedLanguage) return false
+    if (searchQuery && !(b.slug ?? '').toLowerCase().includes(searchQuery.toLowerCase())) return false
+    return true
+  })
 
   function openModal() {
     setModalLanguage(selectedLanguage)
@@ -256,6 +261,12 @@ export function BannersClient({
           <span className="ml-2 text-sm font-normal text-zinc-400">{visibleBanners.length} shown</span>
         </h1>
         <div className="flex items-center gap-2">
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by slug…"
+            className="h-9 px-3 rounded-lg border border-zinc-300 text-sm text-zinc-700 w-44 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
           <select
             value={selectedLanguage}
             onChange={(e) => setSelectedLanguage(e.target.value as BannerLanguage)}
@@ -384,6 +395,11 @@ export function BannersClient({
                   className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-zinc-500">Slug</label>
+                <input name="slug" placeholder="e.g. summer-promo"
+                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-zinc-500">Tap action</label>
                 <select name="tap_action"
                   className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -486,6 +502,11 @@ export function BannersClient({
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-zinc-500">Subtitle</label>
                 <input name="subtitle" placeholder="Optional subtitle" defaultValue={editingBanner.subtitle ?? ''}
+                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-zinc-500">Slug</label>
+                <input name="slug" placeholder="e.g. summer-promo" defaultValue={editingBanner.slug ?? ''}
                   className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div className="flex flex-col gap-1">

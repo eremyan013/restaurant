@@ -646,6 +646,7 @@ export interface Database {
           start_date:  string | null;
           end_date:    string | null;
           language:    'hy' | 'ru' | 'en';
+          slug:        string | null;
           created_at:  string;
           updated_at:  string;
         };
@@ -661,6 +662,7 @@ export interface Database {
           start_date?: string | null;
           end_date?:   string | null;
           language?:   'hy' | 'ru' | 'en';
+          slug?:       string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -676,6 +678,7 @@ export interface Database {
           start_date:  string | null;
           end_date:    string | null;
           language:    'hy' | 'ru' | 'en';
+          slug:        string | null;
           created_at:  string;
           updated_at:  string;
         }>;
