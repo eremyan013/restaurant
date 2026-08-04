@@ -141,6 +141,16 @@ export function BannersClient({
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [modalOpen])
 
+  function handleToggle(id: string, is_active: boolean) {
+    setBanners((prev) => prev.map((b) => b.id === id ? { ...b, is_active } : b))
+    startTransition(() => onToggle(id, is_active))
+  }
+
+  function handleDelete(id: string) {
+    setBanners((prev) => prev.filter((b) => b.id !== id))
+    startTransition(() => onDelete(id))
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over || active.id === over.id) return
@@ -237,7 +247,7 @@ export function BannersClient({
               <SortableContext items={visibleBanners.map((b) => b.id)} strategy={verticalListSortingStrategy}>
                 <tbody>
                   {visibleBanners.map((b) => (
-                    <SortableRow key={b.id} banner={b} onToggle={onToggle} onDelete={onDelete} />
+                    <SortableRow key={b.id} banner={b} onToggle={handleToggle} onDelete={handleDelete} />
                   ))}
                 </tbody>
               </SortableContext>
