@@ -11,7 +11,7 @@ import type { BannerRow } from '../lib/database.types';
 import type { RootStackParamList, TabParamList } from '../navigation';
 
 const ROTATE_INTERVAL_MS = 4000;
-const PAGE_W = Dimensions.get('window').width - 40;
+const PAGE_W = Dimensions.get('window').width - 24;
 
 type Nav = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Home'>,
@@ -139,7 +139,7 @@ export function BannerCarousel({ banners, navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 20,
+    marginHorizontal: 12,
     borderRadius: 18,
     overflow: 'hidden',
     height: 88,
