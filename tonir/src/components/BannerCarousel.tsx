@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, Pressable, Image, StyleSheet, Linking,
   ScrollView, Dimensions, NativeSyntheticEvent, NativeScrollEvent,
@@ -11,7 +11,7 @@ import type { BannerRow } from '../lib/database.types';
 import type { RootStackParamList, TabParamList } from '../navigation';
 
 const ROTATE_INTERVAL_MS = 4000;
-const PAGE_W = Dimensions.get('window').width - 40; // matches marginHorizontal: 20 * 2
+const PAGE_W = Dimensions.get('window').width - 40;
 
 type Nav = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Home'>,
@@ -24,39 +24,64 @@ interface Props {
 }
 
 export function BannerCarousel({ banners, navigation }: Props) {
-  const [index, setIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const offsetRef = useRef(0);
+
+  const n = banners.length;
+  // Infinite-loop list: [last, ...real, first]
+  const items = n > 1 ? [banners[n - 1]!, ...banners, banners[0]!] : banners;
+
+  function jumpTo(x: number, animated = false) {
+    scrollRef.current?.scrollTo({ x, animated });
+    offsetRef.current = x;
+  }
 
   function startTimer() {
     if (timerRef.current) clearInterval(timerRef.current);
-    if (banners.length <= 1) return;
+    if (n <= 1) return;
     timerRef.current = setInterval(() => {
-      setIndex((prev) => {
-        const next = (prev + 1) % banners.length;
-        scrollRef.current?.scrollTo({ x: next * PAGE_W, animated: true });
-        return next;
-      });
+      const next = offsetRef.current + PAGE_W;
+      scrollRef.current?.scrollTo({ x: next, animated: true });
+      offsetRef.current = next;
+      // If we've landed on the cloned first, silently reset to the real first
+      if (next >= (n + 1) * PAGE_W) {
+        setTimeout(() => jumpTo(PAGE_W), 350);
+      }
     }, ROTATE_INTERVAL_MS);
   }
 
+  // Init scroll position and timer when banner count changes
   useEffect(() => {
+    jumpTo(n > 1 ? PAGE_W : 0);
     startTimer();
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [banners.length]);
+  }, [n]);
 
+  // Reset to first item when the banners array itself is replaced
   useEffect(() => {
-    setIndex(0);
-    scrollRef.current?.scrollTo({ x: 0, animated: false });
+    jumpTo(n > 1 ? PAGE_W : 0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [banners]);
 
   const handleScrollEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const newIndex = Math.round(e.nativeEvent.contentOffset.x / PAGE_W);
-    setIndex(newIndex);
+    if (n <= 1) return;
+    const x = e.nativeEvent.contentOffset.x;
+
+    if (x <= 0) {
+      // Swiped back past the cloned last → jump to real last
+      jumpTo(n * PAGE_W);
+    } else if (x >= (n + 1) * PAGE_W) {
+      // Swiped forward past the cloned first → jump to real first
+      jumpTo(PAGE_W);
+    } else {
+      offsetRef.current = x;
+    }
+
     startTimer();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [banners.length]);
+  }, [n]);
 
   const handleTap = useCallback((banner: BannerRow) => {
     if (banner.tap_action === 'external_url' && banner.tap_url) {
@@ -73,7 +98,7 @@ export function BannerCarousel({ banners, navigation }: Props) {
     }
   }, [navigation]);
 
-  if (banners.length === 0) return null;
+  if (n === 0) return null;
 
   return (
     <View style={styles.container}>
@@ -87,45 +112,27 @@ export function BannerCarousel({ banners, navigation }: Props) {
         onMomentumScrollEnd={handleScrollEnd}
         style={styles.scroll}
       >
-        {banners.map((banner) => {
-          const isTappable = banner.tap_action !== 'none';
-          return (
-            <Pressable
-              key={banner.id}
-              onPress={() => handleTap(banner)}
-              disabled={!isTappable}
-              style={styles.page}
-            >
-              <Image
-                source={{ uri: banner.image_url }}
-                style={styles.image}
-                resizeMode="cover"
-              />
-              {(banner.title || banner.subtitle) && (
-                <View style={styles.overlay}>
-                  {banner.title && (
-                    <Text style={styles.title} numberOfLines={2}>{banner.title}</Text>
-                  )}
-                  {banner.subtitle && (
-                    <Text style={styles.subtitle} numberOfLines={2}>{banner.subtitle}</Text>
-                  )}
-                </View>
-              )}
-            </Pressable>
-          );
-        })}
+        {items.map((banner, i) => (
+          <Pressable
+            key={i}
+            onPress={() => handleTap(banner)}
+            disabled={banner.tap_action === 'none'}
+            style={styles.page}
+          >
+            <Image source={{ uri: banner.image_url }} style={styles.image} resizeMode="cover" />
+            {(banner.title || banner.subtitle) && (
+              <View style={styles.overlay}>
+                {banner.title && (
+                  <Text style={styles.title} numberOfLines={2}>{banner.title}</Text>
+                )}
+                {banner.subtitle && (
+                  <Text style={styles.subtitle} numberOfLines={2}>{banner.subtitle}</Text>
+                )}
+              </View>
+            )}
+          </Pressable>
+        ))}
       </ScrollView>
-
-      {banners.length > 1 && (
-        <View style={styles.dots}>
-          {banners.map((_, i) => (
-            <View
-              key={i}
-              style={[styles.dot, i === index && styles.dotActive]}
-            />
-          ))}
-        </View>
-      )}
     </View>
   );
 }
@@ -165,21 +172,5 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     fontFamily: FONTS.regular,
     marginTop: 2,
-  },
-  dots: {
-    position: 'absolute',
-    bottom: 8,
-    right: 12,
-    flexDirection: 'row',
-    gap: 4,
-  },
-  dot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: 'rgba(255,255,255,0.4)',
-  },
-  dotActive: {
-    backgroundColor: '#fff',
   },
 });
