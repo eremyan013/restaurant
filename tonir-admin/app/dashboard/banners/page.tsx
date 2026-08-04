@@ -4,7 +4,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import type { BannerRow } from '@/lib/database.types'
 import { BannersClient } from './banners-client'
-import { createBanner, toggleBanner, deleteBanner, reorderBanners } from './actions'
+import { createBanner, updateBanner, toggleBanner, deleteBanner, reorderBanners } from './actions'
 
 export const metadata: Metadata = { title: 'Banners — Tonir Admin' }
 
@@ -25,6 +25,7 @@ export default async function BannersPage() {
     <BannersClient
       initialBanners={banners}
       onCreate={createBanner}
+      onUpdate={updateBanner}
       onToggle={toggleBanner}
       onDelete={deleteBanner}
       onReorder={reorderBanners}

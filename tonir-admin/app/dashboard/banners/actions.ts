@@ -44,6 +44,33 @@ export async function createBanner(formData: FormData): Promise<{ error?: string
   return { banner: data as BannerRow }
 }
 
+export async function updateBanner(id: string, formData: FormData): Promise<{ error?: string; banner?: BannerRow }> {
+  const admin = await getCurrentAdmin()
+  if (admin?.role !== 'super_admin') return { error: 'Permission denied' }
+
+  const image_url = (formData.get('image_url') as string ?? '').trim()
+  if (!image_url) return { error: 'Image is required' }
+
+  const rawLang = (formData.get('language') as string ?? 'hy').trim() as BannerLanguage
+  const language: BannerLanguage = VALID_LANGUAGES.has(rawLang) ? rawLang : 'hy'
+
+  const supabase = createSupabaseAdminClient()
+  const { data, error } = await supabase.from('banners').update({
+    image_url,
+    title:      (formData.get('title') as string ?? '').trim() || null,
+    subtitle:   (formData.get('subtitle') as string ?? '').trim() || null,
+    tap_action: ((formData.get('tap_action') as string) || 'none') as 'none' | 'deep_link' | 'external_url',
+    tap_url:    (formData.get('tap_url') as string ?? '').trim() || null,
+    start_date: (formData.get('start_date') as string ?? '').trim() || null,
+    end_date:   (formData.get('end_date') as string ?? '').trim() || null,
+    language,
+  }).eq('id', id).select().single()
+
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard/banners')
+  return { banner: data as BannerRow }
+}
+
 export async function toggleBanner(id: string, is_active: boolean): Promise<void> {
   const admin = await getCurrentAdmin()
   if (admin?.role !== 'super_admin') return
