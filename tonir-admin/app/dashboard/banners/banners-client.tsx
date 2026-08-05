@@ -79,9 +79,10 @@ function SortableRow({
       </td>
       <td className="px-4 py-3 text-zinc-600 text-sm">{banner.tap_action}</td>
       <td className="px-4 py-3 text-zinc-500 text-xs whitespace-nowrap">
-        {banner.start_date || banner.end_date
-          ? `${banner.start_date ?? '∞'} → ${banner.end_date ?? '∞'}`
-          : 'Always'}
+        {banner.start_date ?? <span className="text-zinc-300">—</span>}
+      </td>
+      <td className="px-4 py-3 text-zinc-500 text-xs whitespace-nowrap">
+        {banner.end_date ?? <span className="text-zinc-300">—</span>}
       </td>
       <td className="px-4 py-3">
         <button
@@ -310,7 +311,8 @@ export function BannersClient({
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Title</th>
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Slug</th>
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Tap action</th>
-                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Schedule</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Start date</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">End date</th>
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Active</th>
                 <th scope="col" className="px-4 py-3"></th>
               </tr>
