@@ -11,20 +11,23 @@ export const metadata: Metadata = { title: 'Users — Tonir Admin' }
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; tier?: string; sort?: string; page?: string }>
+  searchParams: Promise<{ q?: string; tier?: string; sort?: string; page?: string; reg_from?: string; reg_to?: string }>
 }) {
   const admin = await getCurrentAdmin()
   if (!admin) redirect('/login')
   await requirePagePermission(admin, 'users', 'view')
 
-  const { q: rawQ, tier: rawTier, sort: rawSort, page: rawPage } = await searchParams
+  const { q: rawQ, tier: rawTier, sort: rawSort, page: rawPage, reg_from: rawRegFrom, reg_to: rawRegTo } = await searchParams
 
-  const q    = rawQ?.trim() ?? ''
-  const tier = ['1','2','3','4'].includes(rawTier ?? '') ? rawTier! : ''
-  const sort = ['created_at:desc','created_at:asc','yel_points:desc','total_visits:desc','name:asc','name:desc'].includes(rawSort ?? '')
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+  const q       = rawQ?.trim() ?? ''
+  const tier    = ['1','2','3','4'].includes(rawTier ?? '') ? rawTier! : ''
+  const sort    = ['created_at:desc','created_at:asc','yel_points:desc','total_visits:desc','name:asc','name:desc'].includes(rawSort ?? '')
     ? rawSort!
     : 'created_at:desc'
-  const page = Math.max(1, parseInt(rawPage ?? '1', 10) || 1)
+  const regFrom = DATE_RE.test(rawRegFrom ?? '') ? rawRegFrom! : ''
+  const regTo   = DATE_RE.test(rawRegTo ?? '')   ? rawRegTo!   : ''
+  const page    = Math.max(1, parseInt(rawPage ?? '1', 10) || 1)
   const from = (page - 1) * PAGINATION_SIZE
   const to   = from + PAGINATION_SIZE - 1
 
@@ -39,8 +42,10 @@ export default async function UsersPage({
     .order(sortKey, { ascending: sortDir === 'asc' })
     .range(from, to)
 
-  if (tier) query = query.eq('tier', tier)
-  if (q)    query = query.or(`name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%,player_id::text.ilike.%${q}%`)
+  if (tier)    query = query.eq('tier', tier)
+  if (q)       query = query.or(`name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%,player_id::text.ilike.%${q}%`)
+  if (regFrom) query = query.gte('created_at', regFrom)
+  if (regTo)   query = query.lte('created_at', regTo + 'T23:59:59')
 
   const { data: users, count, error } = await query
 
@@ -50,9 +55,11 @@ export default async function UsersPage({
 
   function pageHref(p: number) {
     const params = new URLSearchParams()
-    if (q)    params.set('q', q)
-    if (tier) params.set('tier', tier)
+    if (q)       params.set('q', q)
+    if (tier)    params.set('tier', tier)
     if (sort !== 'created_at:desc') params.set('sort', sort)
+    if (regFrom) params.set('reg_from', regFrom)
+    if (regTo)   params.set('reg_to', regTo)
     if (p > 1) params.set('page', String(p))
     const qs = params.toString()
     return `/dashboard/users${qs ? '?' + qs : ''}`
@@ -67,6 +74,8 @@ export default async function UsersPage({
         defaultQ={q}
         defaultTier={tier}
         defaultSort={sort}
+        defaultRegFrom={regFrom}
+        defaultRegTo={regTo}
       />
       <Pagination
         page={page}

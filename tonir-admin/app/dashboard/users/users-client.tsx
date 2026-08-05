@@ -23,6 +23,8 @@ type Props = {
   defaultQ: string
   defaultTier: string
   defaultSort: string
+  defaultRegFrom: string
+  defaultRegTo: string
 }
 
 const TIER_COLORS: Record<string, string> = {
@@ -41,6 +43,8 @@ export default function UsersClient({
   defaultQ,
   defaultTier,
   defaultSort,
+  defaultRegFrom,
+  defaultRegTo,
 }: Props) {
   const router = useRouter()
   const [inputValue, setInputValue] = useState(defaultQ)
@@ -50,18 +54,24 @@ export default function UsersClient({
     setInputValue(defaultQ)
   }, [defaultQ])
 
-  const q = defaultQ
-  const tier = defaultTier
-  const sort = defaultSort || 'created_at:desc'
+  const q       = defaultQ
+  const tier    = defaultTier
+  const sort    = defaultSort || 'created_at:desc'
+  const regFrom = defaultRegFrom
+  const regTo   = defaultRegTo
 
-  function navigate(overrides: { q?: string; tier?: string; sort?: string }) {
+  function navigate(overrides: { q?: string; tier?: string; sort?: string; regFrom?: string; regTo?: string }) {
     const params = new URLSearchParams()
-    const newQ    = overrides.q    !== undefined ? overrides.q    : q
-    const newTier = overrides.tier !== undefined ? overrides.tier : tier
-    const newSort = overrides.sort !== undefined ? overrides.sort : sort
-    if (newQ)    params.set('q', newQ)
-    if (newTier) params.set('tier', newTier)
+    const newQ       = overrides.q       !== undefined ? overrides.q       : q
+    const newTier    = overrides.tier    !== undefined ? overrides.tier    : tier
+    const newSort    = overrides.sort    !== undefined ? overrides.sort    : sort
+    const newRegFrom = overrides.regFrom !== undefined ? overrides.regFrom : regFrom
+    const newRegTo   = overrides.regTo   !== undefined ? overrides.regTo   : regTo
+    if (newQ)       params.set('q', newQ)
+    if (newTier)    params.set('tier', newTier)
     if (newSort !== 'created_at:desc') params.set('sort', newSort)
+    if (newRegFrom) params.set('reg_from', newRegFrom)
+    if (newRegTo)   params.set('reg_to', newRegTo)
     router.push(`/dashboard/users${params.toString() ? '?' + params.toString() : ''}`)
   }
 
@@ -73,7 +83,7 @@ export default function UsersClient({
     }, 200)
   }
 
-  const hasActiveFilters = q !== '' || tier !== ''
+  const hasActiveFilters = q !== '' || tier !== '' || regFrom !== '' || regTo !== ''
 
   return (
     <div>
@@ -114,6 +124,23 @@ export default function UsersClient({
           <option value="name:asc">Name A–Z</option>
           <option value="name:desc">Name Z–A</option>
         </select>
+
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-zinc-400 whitespace-nowrap">Registered</span>
+          <input
+            type="date"
+            value={regFrom}
+            onChange={e => navigate({ regFrom: e.target.value })}
+            className="px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-white text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-300"
+          />
+          <span className="text-xs text-zinc-400">–</span>
+          <input
+            type="date"
+            value={regTo}
+            onChange={e => navigate({ regTo: e.target.value })}
+            className="px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-white text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-300"
+          />
+        </div>
 
         {hasActiveFilters && (
           <button
