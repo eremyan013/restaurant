@@ -429,13 +429,13 @@ export function BannersClient({
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-zinc-500">Start date</label>
-                <input name="start_date" type="date"
-                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input name="start_date" type="datetime-local"
+                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-zinc-500">End date</label>
-                <input name="end_date" type="date"
-                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input name="end_date" type="datetime-local"
+                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <button
                 type="submit"
@@ -547,13 +547,13 @@ export function BannersClient({
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-zinc-500">Start date</label>
-                <input name="start_date" type="date" defaultValue={editingBanner.start_date ?? ''}
-                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input name="start_date" type="datetime-local" defaultValue={editingBanner.start_date ?? ''}
+                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-zinc-500">End date</label>
-                <input name="end_date" type="date" defaultValue={editingBanner.end_date ?? ''}
-                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input name="end_date" type="datetime-local" defaultValue={editingBanner.end_date ?? ''}
+                  className="h-10 px-3 rounded-lg border border-zinc-300 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <button
                 type="submit"
