@@ -180,6 +180,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
     { icon: 'pin',     label: tr('prof_settings_address'),  onPress: () => { haptic(); Alert.alert(tr('prof_soon_title'), trf('prof_soon_sub', { section: tr('prof_settings_address') })); } },
     { icon: 'sparkle', label: tr('prof_settings_notifs'),   onPress: () => { haptic(); Alert.alert(tr('prof_soon_title'), trf('prof_soon_sub', { section: tr('prof_settings_notifs') })); } },
     { icon: 'chat',    label: tr('prof_settings_help'),     onPress: () => { haptic(); Alert.alert(tr('prof_soon_title'), trf('prof_soon_sub', { section: tr('prof_settings_help') })); } },
+    { icon: 'sparkle', label: tr('prof_settings_terms'),    onPress: () => { haptic(); (navigation as any).navigate('Terms'); } },
   ];
 
   const tierNames = Array.from({ length: TIER_COUNT }, (_, i) => tierNameMap[i + 1] ?? TIER_NAME_FALLBACKS[i + 1]!);

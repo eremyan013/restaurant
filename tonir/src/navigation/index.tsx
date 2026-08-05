@@ -47,6 +47,7 @@ import { MyPrizesScreen } from '../screens/MyPrizesScreen';
 import { PhoneVerifyScreen } from '../screens/PhoneVerifyScreen';
 import { ReservationActionScreen } from '../screens/ReservationActionScreen';
 import { CategoryScreen } from '../screens/CategoryScreen';
+import { TermsScreen } from '../screens/TermsScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -68,6 +69,7 @@ export type RootStackParamList = {
   MyPrizes: undefined;
   Category: { sectionId: string; sectionName: string };
   ReservationAction: { token: string; action: 'confirm' | 'cancel' };
+  Terms: undefined;
 };
 
 export type TabParamList = {
@@ -274,6 +276,11 @@ export function AppNavigator() {
               name="ReservationAction"
               component={ReservationActionScreen}
               options={{ headerShown: false, animation: 'slide_from_bottom', gestureEnabled: false }}
+            />
+            <Stack.Screen
+              name="Terms"
+              component={TermsScreen}
+              options={{ animation: 'slide_from_right' }}
             />
           </>
         ) : (

@@ -500,6 +500,20 @@ export async function fetchMenuByVenue(venueId: string): Promise<{
 }
 
 // ─────────────────────────────────────────────
+// SETTINGS / TERMS
+// ─────────────────────────────────────────────
+
+export async function fetchTerms(language: 'hy' | 'ru' | 'en'): Promise<string> {
+  const { data, error } = await sb
+    .from('settings')
+    .select('value')
+    .eq('key', `terms_${language}`)
+    .single();
+  if (error) return '';
+  return (data?.value as string) ?? '';
+}
+
+// ─────────────────────────────────────────────
 // BANNERS
 // ─────────────────────────────────────────────
 

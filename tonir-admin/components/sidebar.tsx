@@ -45,6 +45,7 @@ export function Sidebar({
           { href: '/dashboard/admins', label: 'Admins', exact: false },
           { href: '/dashboard/occasions', label: 'Occasions', exact: false },
           { href: '/dashboard/banners', label: 'Banners', exact: false },
+          { href: '/dashboard/terms', label: 'Terms', exact: false },
         ]
       : []),
 
