@@ -66,6 +66,9 @@ function SortableRow({
       <td className="px-4 py-3 font-medium text-zinc-900 max-w-[160px] truncate">
         {banner.title ?? <span className="text-zinc-400 italic">—</span>}
       </td>
+      <td className="px-4 py-3 text-zinc-500 text-xs font-mono">
+        {banner.slug ?? <span className="text-zinc-300 not-italic font-sans">—</span>}
+      </td>
       <td className="px-4 py-3 text-zinc-600 text-sm">{banner.tap_action}</td>
       <td className="px-4 py-3 text-zinc-500 text-xs whitespace-nowrap">
         {banner.start_date || banner.end_date
@@ -297,6 +300,7 @@ export function BannersClient({
                 <th scope="col" className="px-2 py-3 w-8"></th>
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Preview</th>
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Title</th>
+                <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Slug</th>
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Tap action</th>
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Schedule</th>
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Active</th>
