@@ -5,7 +5,6 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
-import TextStyle from '@tiptap/extension-text-style'
 import type { saveTerms } from './actions'
 
 type TermsLanguage = 'hy' | 'ru' | 'en'
@@ -68,7 +67,6 @@ export function TermsClient({ initialTerms, onSave }: Props) {
     extensions: [
       StarterKit,
       Underline,
-      TextStyle,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],
     content: initialTerms[activeTab],
