@@ -3,12 +3,12 @@ import {
   View,
   Text,
   Pressable,
+  ScrollView,
   StyleSheet,
   StatusBar,
   ActivityIndicator,
   Platform,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useStore } from '../store';
@@ -63,6 +63,43 @@ function buildHtml(content: string, isDark: boolean): string {
 </head>
 <body>${content}</body>
 </html>`;
+}
+
+// Web fallback: renders HTML via a native <div> (react-native-web supports this)
+function HtmlContent({ html, isDark }: { html: string; isDark: boolean }) {
+  const insets = useSafeAreaInsets();
+
+  if (Platform.OS === 'web') {
+    const AnyDiv = 'div' as any;
+    return (
+      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
+        <AnyDiv
+          dangerouslySetInnerHTML={{ __html: html }}
+          style={{
+            padding: 20,
+            fontFamily: '-apple-system, Helvetica Neue, Arial, sans-serif',
+            fontSize: 15,
+            lineHeight: 1.65,
+            color: isDark ? '#f0f0f0' : '#1a1a1a',
+          }}
+        />
+      </ScrollView>
+    );
+  }
+
+  // Native: use WebView
+  // Imported lazily so the module is never evaluated on web
+  const { WebView } = require('react-native-webview');
+  return (
+    <WebView
+      source={{ html: buildHtml(html, isDark) }}
+      style={styles.webview}
+      scrollEnabled
+      showsVerticalScrollIndicator={false}
+      originWhitelist={['*']}
+      contentInset={{ bottom: insets.bottom + 20 }}
+    />
+  );
 }
 
 export function TermsScreen({ navigation }: { navigation: Nav }) {
@@ -130,14 +167,7 @@ export function TermsScreen({ navigation }: { navigation: Nav }) {
           <Text style={[styles.hint, { color: t.textMute }]}>{tr('terms_empty')}</Text>
         </View>
       ) : (
-        <WebView
-          source={{ html: buildHtml(html!, t.dark ?? false) }}
-          style={[styles.webview, { backgroundColor: t.bg }]}
-          scrollEnabled
-          showsVerticalScrollIndicator={false}
-          originWhitelist={['*']}
-          contentInset={{ bottom: insets.bottom + 20 }}
-        />
+        <HtmlContent html={html!} isDark={t.dark ?? false} />
       )}
     </View>
   );
@@ -176,7 +206,5 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     textAlign: 'center',
   },
-  webview: {
-    flex: 1,
-  },
+  webview: { flex: 1 },
 });
