@@ -119,7 +119,7 @@ async function getSuperAdminStats() {
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase
         .from('reservations')
-        .select('id, time, people, status, occasion, venues(name), profiles(name)')
+        .select('id, time, people, status, occasion, venues(name), profiles!user_id(name)')
         .eq('date_iso', today)
         .order('time', { ascending: true })
         .limit(20),
@@ -231,7 +231,7 @@ async function getAdminStats(adminId: string, venueIds: string[]) {
       supabase.from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds),
       supabase
         .from('reservations')
-        .select('id, time, people, status, occasion, venues(name), profiles(name)')
+        .select('id, time, people, status, occasion, venues(name), profiles!user_id(name)')
         .in('venue_id', venueIds)
         .eq('date_iso', today)
         .order('time', { ascending: true })
