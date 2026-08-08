@@ -7,7 +7,8 @@ export function SlaCountdown({ deadline }: { deadline: string | null }) {
 
   useEffect(() => {
     if (!deadline) { setMsLeft(null); return }
-    function tick() { setMsLeft(new Date(deadline).getTime() - Date.now()) }
+    const dl = deadline
+    function tick() { setMsLeft(new Date(dl).getTime() - Date.now()) }
     tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
