@@ -47,7 +47,7 @@ async function setStatus(id: string, status: ReservationRow['status']) {
   }
   const { data: res } = await supabase
     .from('reservations')
-    .select('user_id, venue_id, date, time, status, yel_earned, rejection_reason, venues(name), profiles!user_id(push_token)')
+    .select('user_id, venue_id, date, time, status, yel_earned, rejection_reason, venues(name), profiles!reservations_user_id_fkey(push_token)')
     .eq('id', id)
     .single() as unknown as { data: ResRow | null }
 
@@ -227,7 +227,7 @@ export default async function ReservationsPage({
 
   let query = supabase
     .from('reservations')
-    .select('id, date, date_iso, time, people, status, occasion, note, admin_note, sla_deadline, agent_id, rejection_reason, confirmed_at, rejected_at, created_at, updated_at, yel_earned, venue_id, user_id, venues(name), profiles!user_id(name, email)', { count: 'exact' })
+    .select('id, date, date_iso, time, people, status, occasion, note, admin_note, sla_deadline, agent_id, rejection_reason, confirmed_at, rejected_at, created_at, updated_at, yel_earned, venue_id, user_id, venues(name), profiles!reservations_user_id_fkey(name, email)', { count: 'exact' })
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
     .range(from, to)

@@ -196,7 +196,7 @@ export default async function YelPage() {
       .limit(20),
     supabase
       .from('reservations')
-      .select('id, date, yel_earned, profiles!user_id(name, player_id), venues(name)')
+      .select('id, date, yel_earned, profiles!reservations_user_id_fkey(name, player_id), venues(name)')
       .eq('status', 'visited')
       .order('created_at', { ascending: false })
       .limit(30),
