@@ -7,6 +7,7 @@ import { validateAction } from '@/lib/validate-action'
 import {
   zNewReservationSchema, parseNewReservationFormData,
   zEditReservationSchema, parseEditReservationFormData,
+  zRejectReservationSchema, zAssignAgentSchema,
 } from '@/lib/schemas'
 
 export type ActionState = { ok: false; error?: string } | { ok: true }
@@ -90,6 +91,63 @@ export async function createReservationAdmin(
     status,
     yel_earned: yelEarned,
   })
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/dashboard/reservations')
+  return { ok: true }
+}
+
+// ── Reject reservation ────────────────────────────────────────────────────────
+export async function rejectReservation(
+  id: string,
+  reason: string,
+): Promise<ActionState> {
+  const admin = await getCurrentAdmin()
+  if (!admin) return { ok: false, error: 'Unauthorized' }
+
+  const parsed = validateAction(zRejectReservationSchema, { id, rejection_reason: reason })
+  if (!parsed.success) return parsed.state
+
+  const supabase = createSupabaseAdminClient()
+
+  if (admin.role === 'admin') {
+    const { data: res } = await supabase.from('reservations').select('venue_id').eq('id', id).single()
+    if (!admin.managed_venue_ids.includes(res?.venue_id ?? '')) return { ok: false, error: 'Unauthorized' }
+  }
+
+  const { error } = await supabase
+    .from('reservations')
+    .update({
+      status: 'rejected',
+      rejected_at: new Date().toISOString(),
+      rejection_reason: reason,
+    })
+    .eq('id', id)
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/dashboard/reservations')
+  return { ok: true }
+}
+
+// ── Assign agent ──────────────────────────────────────────────────────────────
+export async function assignAgent(
+  reservationId: string,
+  agentId: string,
+): Promise<ActionState> {
+  const admin = await getCurrentAdmin()
+  if (!admin) return { ok: false, error: 'Unauthorized' }
+
+  const parsed = validateAction(zAssignAgentSchema, { reservation_id: reservationId, agent_id: agentId })
+  if (!parsed.success) return parsed.state
+
+  const supabase = createSupabaseAdminClient()
+
+  const { error } = await supabase
+    .from('reservations')
+    .update({ agent_id: agentId })
+    .eq('id', reservationId)
 
   if (error) return { ok: false, error: error.message }
 

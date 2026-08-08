@@ -140,9 +140,14 @@ export interface Database {
           time: string;
           occasion: string | null;
           note: string | null;
-          status: 'pending' | 'confirmed' | 'cancelled' | 'visited';
+          status: ReservationStatus;
           yel_earned: string;
           admin_note: string | null;
+          confirmed_at: string | null;
+          rejected_at: string | null;
+          rejection_reason: string | null;
+          sla_deadline: string | null;
+          agent_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -156,9 +161,14 @@ export interface Database {
           time: string;
           occasion?: string | null;
           note?: string | null;
-          status: 'pending' | 'confirmed' | 'cancelled' | 'visited';
+          status: ReservationStatus;
           yel_earned: string;
           admin_note?: string | null;
+          confirmed_at?: string | null;
+          rejected_at?: string | null;
+          rejection_reason?: string | null;
+          sla_deadline?: string | null;
+          agent_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -172,9 +182,14 @@ export interface Database {
           time?: string;
           occasion?: string | null;
           note?: string | null;
-          status?: 'pending' | 'confirmed' | 'cancelled' | 'visited';
+          status?: ReservationStatus;
           yel_earned?: string;
           admin_note?: string | null;
+          confirmed_at?: string | null;
+          rejected_at?: string | null;
+          rejection_reason?: string | null;
+          sla_deadline?: string | null;
+          agent_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -691,6 +706,17 @@ export interface Database {
     CompositeTypes: Record<string, never>;
   };
 }
+
+// ── Reservation status ────────────────────────────────────────────────────────
+export type ReservationStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'cancelled'
+  | 'visited'
+  | 'completed'
+  | 'pending_confirmation'
+  | 'rejected'
+  | 'alternative_offered';
 
 // ── Convenience row types ─────────────────────────────────────────────────────
 export type LocationRow       = Database['public']['Tables']['locations']['Row'];

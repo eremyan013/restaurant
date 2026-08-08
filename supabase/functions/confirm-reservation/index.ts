@@ -49,7 +49,7 @@ Deno.serve(async (req: Request) => {
 
     const { error: updateError } = await adminClient
       .from('reservations')
-      .update({ status: 'confirmed' })
+      .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
       .eq('id', token)
 
     if (updateError) {

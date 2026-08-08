@@ -757,6 +757,8 @@ export type Database = {
       reservations: {
         Row: {
           admin_note: string | null
+          agent_id: string | null
+          confirmed_at: string | null
           created_at: string
           date: string
           date_iso: string | null
@@ -764,6 +766,9 @@ export type Database = {
           note: string | null
           occasion: string | null
           people: number
+          rejected_at: string | null
+          rejection_reason: string | null
+          sla_deadline: string | null
           status: string
           time: string
           updated_at: string
@@ -773,6 +778,8 @@ export type Database = {
         }
         Insert: {
           admin_note?: string | null
+          agent_id?: string | null
+          confirmed_at?: string | null
           created_at?: string
           date: string
           date_iso?: string | null
@@ -780,6 +787,9 @@ export type Database = {
           note?: string | null
           occasion?: string | null
           people: number
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          sla_deadline?: string | null
           status?: string
           time: string
           updated_at?: string
@@ -789,6 +799,8 @@ export type Database = {
         }
         Update: {
           admin_note?: string | null
+          agent_id?: string | null
+          confirmed_at?: string | null
           created_at?: string
           date?: string
           date_iso?: string | null
@@ -796,6 +808,9 @@ export type Database = {
           note?: string | null
           occasion?: string | null
           people?: number
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          sla_deadline?: string | null
           status?: string
           time?: string
           updated_at?: string
@@ -804,6 +819,13 @@ export type Database = {
           yel_earned?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reservations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reservations_user_id_fkey"
             columns: ["user_id"]
@@ -1311,6 +1333,17 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
+// ── Reservation status ────────────────────────────────────────────────────────
+export type ReservationStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'cancelled'
+  | 'visited'
+  | 'completed'
+  | 'pending_confirmation'
+  | 'rejected'
+  | 'alternative_offered'
 
 // ── Convenience row/update aliases ───────────────────────────────────────────
 type T = Database['public']['Tables']

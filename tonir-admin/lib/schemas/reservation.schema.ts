@@ -9,7 +9,7 @@ export const zNewReservationSchema = z.object({
   date_iso:  z.string().regex(ISO_DATE, 'Date must be YYYY-MM-DD'),
   time:      z.string().regex(HH_MM, 'Time must be HH:MM'),
   people:    z.number().int().min(1, 'At least 1 guest').max(50, 'Maximum 50 guests'),
-  status:    z.enum(['confirmed', 'pending']).default('confirmed'),
+  status:    z.enum(['confirmed', 'pending', 'pending_confirmation', 'rejected', 'alternative_offered']).default('confirmed'),
   occasion:  z.string().max(200).nullable().optional(),
   note:      z.string().max(1000).nullable().optional(),
 })
@@ -28,6 +28,20 @@ export function parseNewReservationFormData(fd: FormData): unknown {
     note:      (fd.get('note')      as string)?.trim() || null,
   }
 }
+
+export const zRejectReservationSchema = z.object({
+  id:               z.string().uuid(),
+  rejection_reason: z.string().min(1).max(500),
+})
+
+export type RejectReservationInput = z.infer<typeof zRejectReservationSchema>
+
+export const zAssignAgentSchema = z.object({
+  reservation_id: z.string().uuid(),
+  agent_id:       z.string().uuid(),
+})
+
+export type AssignAgentInput = z.infer<typeof zAssignAgentSchema>
 
 export const zEditReservationSchema = z.object({
   id:       z.string().uuid(),

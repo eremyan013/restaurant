@@ -15,12 +15,17 @@ import { NewReservationModal } from './new-reservation-modal'
 import { NoteForm } from './note-form'
 import { ReservationStatusButtons } from '@/components/reservation-status-buttons'
 import { requirePagePermission } from '@/lib/permissions'
+import { SlaCountdown } from './sla-countdown'
+import { rejectReservation, assignAgent } from './actions'
 
 const STATUS_CLASSES: Record<string, string> = {
-  pending:   'bg-amber-100 text-amber-800',
-  confirmed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-700',
-  visited:   'bg-blue-100 text-blue-800',
+  pending:              'bg-amber-100 text-amber-800',
+  pending_confirmation: 'bg-amber-100 text-amber-800',
+  confirmed:            'bg-green-100 text-green-800',
+  cancelled:            'bg-red-100 text-red-700',
+  rejected:             'bg-red-100 text-red-700',
+  visited:              'bg-blue-100 text-blue-800',
+  alternative_offered:  'bg-blue-100 text-blue-800',
 }
 
 type ReservationWithJoins = ReservationRow & {
@@ -36,20 +41,23 @@ async function setStatus(id: string, status: ReservationRow['status']) {
   const supabase = createSupabaseAdminClient()
 
   type ResRow = {
-    user_id: string; venue_id: string; date: string; time: string; status: string; yel_earned: string | null
+    user_id: string; venue_id: string; date: string; time: string; status: string; yel_earned: string | null; rejection_reason: string | null
     venues: { name: string } | null
     profiles: { push_token: string | null } | null
   }
   const { data: res } = await supabase
     .from('reservations')
-    .select('user_id, venue_id, date, time, status, yel_earned, venues(name), profiles(push_token)')
+    .select('user_id, venue_id, date, time, status, yel_earned, rejection_reason, venues(name), profiles(push_token)')
     .eq('id', id)
     .single() as unknown as { data: ResRow | null }
 
   if (!res) return
   if (admin.role === 'admin' && !admin.managed_venue_ids.includes(res.venue_id)) return
 
-  await supabase.from('reservations').update({ status }).eq('id', id)
+  const statusUpdate: Record<string, unknown> = { status }
+  if (status === 'confirmed') statusUpdate.confirmed_at = new Date().toISOString()
+  if (status === 'rejected')  statusUpdate.rejected_at  = new Date().toISOString()
+  await supabase.from('reservations').update(statusUpdate).eq('id', id)
   await logActivity(admin, status === 'confirmed' ? 'confirm_reservation' : status === 'cancelled' ? 'cancel_reservation' : status === 'visited' ? 'mark_visited' : 'confirm_reservation',
     'reservation', id, `${res.venues?.name ?? ''} – ${res.date} ${res.time}`)
 
@@ -69,13 +77,20 @@ async function setStatus(id: string, status: ReservationRow['status']) {
     }
   }
 
-  if (res?.profiles?.push_token && (status === 'confirmed' || status === 'cancelled')) {
+  if (res?.profiles?.push_token && ['confirmed', 'cancelled', 'rejected'].includes(status)) {
     const venueName: string = res.venues?.name ?? 'your reservation'
-    const title = status === 'confirmed' ? '✅ Booking Confirmed' : '❌ Booking Cancelled'
-    const body  = status === 'confirmed'
-      ? `Your table at ${venueName} on ${res.date} at ${res.time} is confirmed!`
-      : `Your reservation at ${venueName} on ${res.date} has been cancelled.`
-
+    let title: string
+    let body: string
+    if (status === 'confirmed') {
+      title = '✅ Booking Confirmed'
+      body  = `Your table at ${venueName} on ${res.date} at ${res.time} is confirmed!`
+    } else if (status === 'rejected') {
+      title = '❌ Reservation Unavailable'
+      body  = res.rejection_reason ?? `Unfortunately, ${venueName} is not available at your requested time.`
+    } else {
+      title = '❌ Booking Cancelled'
+      body  = `Your reservation at ${venueName} on ${res.date} has been cancelled.`
+    }
     await fetch('https://exp.host/--/api/v2/push/send', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -99,7 +114,7 @@ export async function saveNote(id: string, formData: FormData) {
   }
 
   const rawStatus = formData.get('status') as string
-  const validStatuses = ['pending', 'confirmed', 'cancelled', 'visited'] as const
+  const validStatuses = ['pending', 'pending_confirmation', 'confirmed', 'cancelled', 'visited', 'rejected', 'alternative_offered'] as const
   if (!validStatuses.includes(rawStatus as typeof validStatuses[number])) return
 
   const adminNote = ((formData.get('admin_note') as string) ?? '').slice(0, 500) || null
@@ -114,19 +129,29 @@ export async function saveNote(id: string, formData: FormData) {
   revalidatePath('/dashboard/reservations')
 }
 
-const TABS = ['all', 'pending', 'confirmed', 'cancelled', 'visited'] as const
+const TABS = ['all', 'pending_confirmation', 'pending', 'confirmed', 'cancelled', 'visited'] as const
 type Tab = typeof TABS[number]
 
+const TAB_LABELS: Record<string, string> = {
+  all:                  'All',
+  pending_confirmation: 'Queue',
+  pending:              'Pending',
+  confirmed:            'Confirmed',
+  cancelled:            'Cancelled',
+  visited:              'Visited',
+}
+
 type FilterParams = {
-  status?:     string
-  from?:       string
-  to?:         string
-  venue?:      string
-  guest?:      string
-  people_min?: string
-  people_max?: string
-  note?:       string
-  page?:       string
+  status?:        string
+  from?:          string
+  to?:            string
+  venue?:         string
+  guest?:         string
+  people_min?:    string
+  people_max?:    string
+  note?:          string
+  page?:          string
+  assigned_to_me?: string
 }
 
 export default async function ReservationsPage({
@@ -188,6 +213,10 @@ export default async function ReservationsPage({
         : q.in('user_id', guestUserIds)
     }
 
+    if (sp.assigned_to_me === '1') {
+      q = q.eq('agent_id', admin!.id)
+    }
+
     return q
   }
 
@@ -197,7 +226,7 @@ export default async function ReservationsPage({
 
   let query = supabase
     .from('reservations')
-    .select('id, date, date_iso, time, people, status, occasion, note, admin_note, created_at, updated_at, yel_earned, venue_id, user_id, venues(name), profiles(name, email)', { count: 'exact' })
+    .select('id, date, date_iso, time, people, status, occasion, note, admin_note, sla_deadline, agent_id, rejection_reason, confirmed_at, rejected_at, created_at, updated_at, yel_earned, venue_id, user_id, venues(name), profiles(name, email)', { count: 'exact' })
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
     .range(from, to)
@@ -211,7 +240,8 @@ export default async function ReservationsPage({
   const totalFiltered = filteredCount ?? 0
 
   // ── Status counts (filtered, without status restriction) ─────────────────────
-  const [pendingRes, confirmedRes, cancelledRes, visitedRes] = await Promise.all([
+  const [pendingConfRes, pendingRes, confirmedRes, cancelledRes, visitedRes] = await Promise.all([
+    applyFilters(supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'pending_confirmation')),
     applyFilters(supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'pending')),
     applyFilters(supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'confirmed')),
     applyFilters(supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'cancelled')),
@@ -219,23 +249,25 @@ export default async function ReservationsPage({
   ])
 
   const countMap: Record<string, number> = {
-    pending:   pendingRes.count   ?? 0,
-    confirmed: confirmedRes.count ?? 0,
-    cancelled: cancelledRes.count ?? 0,
-    visited:   visitedRes.count   ?? 0,
+    pending_confirmation: pendingConfRes.count ?? 0,
+    pending:              pendingRes.count      ?? 0,
+    confirmed:            confirmedRes.count    ?? 0,
+    cancelled:            cancelledRes.count    ?? 0,
+    visited:              visitedRes.count      ?? 0,
   }
   const total = Object.values(countMap).reduce((a, b) => a + b, 0)
 
   // ── URL builders ──────────────────────────────────────────────────────────────
   function baseParams(overrides: Record<string, string | undefined> = {}) {
     const p = new URLSearchParams()
-    if (sp.from)       p.set('from',       sp.from)
-    if (sp.to)         p.set('to',         sp.to)
-    if (sp.venue)      p.set('venue',      sp.venue)
-    if (sp.guest)      p.set('guest',      sp.guest)
-    if (sp.people_min) p.set('people_min', sp.people_min)
-    if (sp.people_max) p.set('people_max', sp.people_max)
-    if (sp.note)       p.set('note',       sp.note)
+    if (sp.from)            p.set('from',            sp.from)
+    if (sp.to)              p.set('to',              sp.to)
+    if (sp.venue)           p.set('venue',           sp.venue)
+    if (sp.guest)           p.set('guest',           sp.guest)
+    if (sp.people_min)      p.set('people_min',      sp.people_min)
+    if (sp.people_max)      p.set('people_max',      sp.people_max)
+    if (sp.note)            p.set('note',            sp.note)
+    if (sp.assigned_to_me)  p.set('assigned_to_me',  sp.assigned_to_me)
     for (const [k, v] of Object.entries(overrides)) {
       if (v !== undefined) p.set(k, v); else p.delete(k)
     }
@@ -275,6 +307,26 @@ export default async function ReservationsPage({
       {/* Filters */}
       <ReservationFilters venues={venuesList} />
 
+      {/* Assigned to me filter */}
+      <div className="flex items-center gap-2 mb-3">
+        {sp.assigned_to_me === '1' ? (
+          <Link
+            href={`/dashboard/reservations?${baseParams({ assigned_to_me: undefined, page: undefined })}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium"
+          >
+            <span>Assigned to me</span>
+            <span className="opacity-70">×</span>
+          </Link>
+        ) : (
+          <Link
+            href={`/dashboard/reservations?${baseParams({ assigned_to_me: '1', page: undefined })}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-600 text-xs font-medium hover:bg-zinc-50 transition-colors"
+          >
+            Assigned to me
+          </Link>
+        )}
+      </div>
+
       {/* Status tabs */}
       <div className="flex gap-1 mb-4 bg-zinc-100 p-1 rounded-xl w-fit overflow-x-auto">
         {TABS.map((tab) => {
@@ -288,7 +340,7 @@ export default async function ReservationsPage({
                 isActive ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {TAB_LABELS[tab] ?? tab}
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-zinc-100 text-zinc-600' : 'bg-zinc-200 text-zinc-500'}`}>
                 {count}
               </span>
@@ -310,6 +362,9 @@ export default async function ReservationsPage({
               <tr className="border-b border-zinc-100 bg-zinc-50 text-left">
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Date / Time</th>
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Created</th>
+                {activeTab === 'pending_confirmation' && (
+                  <th scope="col" className="px-4 py-3 font-medium text-zinc-500">SLA</th>
+                )}
                 {showVenueCol && <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Venue</th>}
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Guest</th>
                 <th scope="col" className="px-4 py-3 font-medium text-zinc-500">Ppl</th>
@@ -335,6 +390,11 @@ export default async function ReservationsPage({
                         </>
                       ) : '—'}
                     </td>
+                    {activeTab === 'pending_confirmation' && (
+                      <td className="px-4 py-3">
+                        <SlaCountdown deadline={r.sla_deadline ?? null} />
+                      </td>
+                    )}
                     {showVenueCol && (
                       <td className="px-4 py-3 text-zinc-700">{r.venues?.name ?? '—'}</td>
                     )}
@@ -366,15 +426,18 @@ export default async function ReservationsPage({
                           }} />
                         </div>
                         <ReservationStatusButtons
-                          status={r.status as 'pending' | 'confirmed' | 'cancelled' | 'visited'}
+                          status={r.status as 'pending' | 'pending_confirmation' | 'confirmed' | 'cancelled' | 'visited'}
+                          agentId={r.agent_id ?? null}
                           onConfirm={setStatus.bind(null, r.id, 'confirmed')}
                           onCancel={setStatus.bind(null, r.id, 'cancelled')}
                           onVisited={setStatus.bind(null, r.id, 'visited')}
                           onReopen={setStatus.bind(null, r.id, 'pending')}
+                          onReject={async (reason: string) => { 'use server'; await rejectReservation(r.id, reason) }}
+                          onAssign={async () => { 'use server'; await assignAgent(r.id, admin.id) }}
                         />
                         <NoteForm
                           id={r.id}
-                          status={r.status as 'pending' | 'confirmed' | 'cancelled' | 'visited'}
+                          status={r.status as 'pending' | 'pending_confirmation' | 'confirmed' | 'cancelled' | 'visited' | 'rejected' | 'alternative_offered'}
                           defaultNote={r.admin_note ?? ''}
                           saveNote={saveNote}
                         />

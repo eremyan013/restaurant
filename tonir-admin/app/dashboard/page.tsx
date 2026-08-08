@@ -115,7 +115,7 @@ async function getSuperAdminStats() {
     ] = await Promise.all([
       supabase.from('venues').select('id, name, is_active'),
       supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('date_iso', today),
-      supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('reservations').select('*', { count: 'exact', head: true }).in('status', ['pending', 'pending_confirmation']),
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase
         .from('reservations')
@@ -227,7 +227,7 @@ async function getAdminStats(adminId: string, venueIds: string[]) {
     const [venues, todayRes, pendingRes, totalRes, todayList, activityRes, resWeek, resMonth, visitsWeek, visitsMonth] = await Promise.all([
       supabase.from('venues').select('name').in('id', venueIds),
       supabase.from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).eq('date_iso', today),
-      supabase.from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).eq('status', 'pending'),
+      supabase.from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds).in('status', ['pending', 'pending_confirmation']),
       supabase.from('reservations').select('*', { count: 'exact', head: true }).in('venue_id', venueIds),
       supabase
         .from('reservations')
@@ -464,7 +464,7 @@ export default async function DashboardPage() {
     const cards = [
       { label: stats.venueLabel.includes('venues') ? 'Venues' : 'Venue', value: stats.venueLabel, sub: 'your restaurant', href: '/dashboard/venues' },
       { label: "Today's Reservations", value: stats.todayReservations, sub: 'bookings today', href: '/dashboard/reservations' },
-      { label: 'Pending Review', value: stats.pendingReservations, sub: 'need confirmation', highlight: stats.pendingReservations > 0, href: '/dashboard/reservations?status=pending' },
+      { label: 'Pending Review', value: stats.pendingReservations, sub: 'need confirmation', highlight: stats.pendingReservations > 0, href: '/dashboard/reservations?status=pending_confirmation' },
       { label: 'Total Reservations', value: stats.totalReservations, sub: 'all time', href: '/dashboard/reservations' },
     ]
 
@@ -529,7 +529,7 @@ export default async function DashboardPage() {
   const cards = [
     { label: 'Active Venues',          value: `${stats.activeVenues} / ${stats.totalVenues}`, sub: 'venues in app',        highlight: false, href: '/dashboard/venues' },
     { label: "Today's Reservations",   value: stats.todayReservations,                        sub: 'bookings today',       highlight: false, href: '/dashboard/reservations' },
-    { label: 'Pending Reservations',   value: stats.pendingReservations,                      sub: 'need confirmation',    highlight: stats.pendingReservations > 0, href: '/dashboard/reservations?status=pending' },
+    { label: 'Pending Reservations',   value: stats.pendingReservations,                      sub: 'need confirmation',    highlight: stats.pendingReservations > 0, href: '/dashboard/reservations?status=pending_confirmation' },
     { label: 'Pending Reviews',        value: stats.pendingReviewsCount,                      sub: 'awaiting moderation',  highlight: stats.pendingReviewsCount > 0, href: '/dashboard/reviews?status=pending' },
     { label: 'Registered Users',       value: stats.totalUsers,                               sub: 'total accounts',       highlight: false, href: '/dashboard/users' },
   ]

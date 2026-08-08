@@ -72,7 +72,8 @@ Deno.serve(async (req: Request) => {
         time,
         occasion: occasion ?? null,
         note: note?.trim() || null,
-        status: 'pending',
+        status: 'pending_confirmation',
+        sla_deadline: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
         yel_earned: String(yel_earned),
         admin_note: null,
       })

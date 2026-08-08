@@ -88,11 +88,14 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
   }
 
   const statusLabels = useMemo(() => ({
-    confirmed:  { label: tr('res_status_confirmed'),  color: COLORS.primary },
-    pending:    { label: tr('res_status_pending'),    color: COLORS.accent },
-    upcoming:   { label: tr('res_status_upcoming'),   color: COLORS.primary },
-    visited:    { label: tr('res_status_visited'),    color: COLORS.textMute },
-    cancelled:  { label: tr('res_status_cancelled'),  color: COLORS.danger },
+    confirmed:             { label: tr('res_status_confirmed'),             color: COLORS.primary },
+    pending:               { label: tr('res_status_pending'),               color: COLORS.accent },
+    upcoming:              { label: tr('res_status_upcoming'),              color: COLORS.primary },
+    visited:               { label: tr('res_status_visited'),               color: COLORS.textMute },
+    cancelled:             { label: tr('res_status_cancelled'),             color: COLORS.danger },
+    pending_confirmation:  { label: tr('res_status_pending_confirmation'),  color: '#F59E0B' },
+    rejected:              { label: tr('res_status_rejected'),              color: COLORS.danger },
+    alternative_offered:   { label: tr('res_status_alternative_offered'),   color: '#3B82F6' },
   }), [language]);
 
   useEffect(() => {
