@@ -54,10 +54,11 @@ async function setStatus(id: string, status: ReservationRow['status']) {
   if (!res) return
   if (admin.role === 'admin' && !admin.managed_venue_ids.includes(res.venue_id)) return
 
-  const statusUpdate: Record<string, unknown> = { status }
-  if (status === 'confirmed') statusUpdate.confirmed_at = new Date().toISOString()
-  if (status === 'rejected')  statusUpdate.rejected_at  = new Date().toISOString()
-  await supabase.from('reservations').update(statusUpdate).eq('id', id)
+  await supabase.from('reservations').update({
+    status,
+    ...(status === 'confirmed' && { confirmed_at: new Date().toISOString() }),
+    ...(status === 'rejected'  && { rejected_at:  new Date().toISOString() }),
+  }).eq('id', id)
   await logActivity(admin, status === 'confirmed' ? 'confirm_reservation' : status === 'cancelled' ? 'cancel_reservation' : status === 'visited' ? 'mark_visited' : 'confirm_reservation',
     'reservation', id, `${res.venues?.name ?? ''} – ${res.date} ${res.time}`)
 
