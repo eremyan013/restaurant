@@ -558,6 +558,24 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['venue_blocked_dates']['Insert']>;
       };
 
+      venue_photos: {
+        Row: {
+          id:         string;
+          venue_id:   string;
+          url:        string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?:         string;
+          venue_id:    string;
+          url:         string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['venue_photos']['Insert']>;
+      };
+
       home_sections: {
         Row: {
           id: string;
@@ -734,3 +752,4 @@ export type HomeSectionRow        = Database['public']['Tables']['home_sections'
 export type HomeSectionItemRow    = Database['public']['Tables']['home_section_items']['Row'];
 export type OccasionRow           = Database['public']['Tables']['occasions']['Row'];
 export type BannerRow             = Database['public']['Tables']['banners']['Row'];
+export type VenuePhotoRow         = Database['public']['Tables']['venue_photos']['Row'];

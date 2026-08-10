@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, ScrollView, Pressable, Image, StyleSheet, StatusBar, Dimensions, ActivityIndicator, Share, Platform,
+  View, Text, ScrollView, Pressable, Image, StyleSheet, StatusBar, Dimensions, ActivityIndicator, Share, Platform, FlatList, Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -13,9 +13,11 @@ import { useStore } from '../store';
 import { useVenues, useVenue } from '../hooks/useVenues';
 import { useVenueAvailability, filterAvailableTimes } from '../hooks/useVenueAvailability';
 import { useMenu } from '../hooks/useMenu';
+import { useVenuePhotos } from '../hooks/useVenuePhotos';
 import { useFavorites } from '../hooks/useFavorites';
 import { useTranslation } from '../hooks/useTranslation';
 import { fetchTodayReservationCount, fetchVenueReviews, VenueReview } from '../lib/api';
+import type { VenuePhotoRow } from '../lib/database.types';
 import { Icon } from '../components/Icon';
 import { Stars } from '../components/Stars';
 import { TimePill } from '../components/TimePill';
@@ -52,6 +54,8 @@ export function DetailScreen({ navigation, route }: Props) {
   const [bookedToday, setBookedToday] = useState<number | null>(null);
   const [reviews, setReviews] = useState<VenueReview[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const { photos, loading: photosLoading } = useVenuePhotos(venueId);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   const TABS = tra('det_tabs');
 
@@ -446,11 +450,36 @@ export function DetailScreen({ navigation, route }: Props) {
             </View>
           )}
           {activeTab === 3 && (
-            <View style={[styles.comingSoonCard, { backgroundColor: t.bgAlt, borderColor: t.border }]}>
-              <Icon name="sparkle" size={32} color={t.textFaint} strokeWidth={1.5} />
-              <Text style={[styles.comingSoonTitle, { color: t.text }]}>{tr('det_photos_soon_title')}</Text>
-              <Text style={[styles.comingSoonSub, { color: t.textMute }]}>{tr('det_photos_soon_sub')}</Text>
-            </View>
+            photosLoading ? (
+              <ActivityIndicator color={t.primary} style={{ marginTop: 32 }} />
+            ) : photos.length === 0 ? (
+              <View style={[styles.comingSoonCard, { backgroundColor: t.bgAlt, borderColor: t.border }]}>
+                <Icon name="camera" size={32} color={t.textFaint} strokeWidth={1.5} />
+                <Text style={[styles.comingSoonSub, { color: t.textMute }]}>{tr('det_photos_empty')}</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={photos}
+                keyExtractor={(item: VenuePhotoRow) => item.id}
+                numColumns={2}
+                scrollEnabled={false}
+                columnWrapperStyle={{ gap: 4 }}
+                contentContainerStyle={{ gap: 4, marginTop: 4 }}
+                renderItem={({ item }: { item: VenuePhotoRow }) => (
+                  <Pressable
+                    onPress={() => setLightboxUrl(item.url)}
+                    style={{ flex: 1, aspectRatio: 1, borderRadius: 10, overflow: 'hidden' }}
+                    accessibilityLabel="Open photo"
+                  >
+                    <Image
+                      source={{ uri: item.url }}
+                      style={{ width: '100%', height: '100%' }}
+                      resizeMode="cover"
+                    />
+                  </Pressable>
+                )}
+              />
+            )
           )}
         </View>
 
@@ -493,6 +522,32 @@ export function DetailScreen({ navigation, route }: Props) {
           </Pressable>
         </View>
       )}
+
+      {/* Fullscreen photo lightbox */}
+      <Modal
+        visible={lightboxUrl !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLightboxUrl(null)}
+        statusBarTranslucent
+      >
+        <View style={{ flex: 1, backgroundColor: '#000' }}>
+          <Pressable
+            onPress={() => setLightboxUrl(null)}
+            style={{ position: 'absolute', top: insets.top + 12, right: 16, zIndex: 10, padding: 8 }}
+            accessibilityLabel={tr('det_back_btn')}
+          >
+            <Icon name="x" size={24} color="#fff" />
+          </Pressable>
+          {lightboxUrl && (
+            <Image
+              source={{ uri: lightboxUrl }}
+              style={{ flex: 1, width: W }}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }

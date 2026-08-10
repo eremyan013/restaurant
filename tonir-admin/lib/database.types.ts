@@ -997,6 +997,24 @@ export type Database = {
           },
         ]
       }
+      venue_photos: {
+        Row: {
+          id:         string;
+          venue_id:   string;
+          url:        string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?:         string;
+          venue_id:    string;
+          url:         string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['venue_photos']['Insert']>;
+        Relationships: []
+      }
       venue_hours: {
         Row: {
           close_time: string | null
@@ -1373,4 +1391,5 @@ export type UserPrizeRow        = T['user_prizes']['Row']
 export type OccasionRow         = T['occasions']['Row']
 export type BannerRow           = T['banners']['Row']
 export type VenueBlockedDateRow = T['venue_blocked_dates']['Row']
+export type VenuePhotoRow       = T['venue_photos']['Row']
 export type VenueRow            = T['venues']['Row']

@@ -12,6 +12,7 @@ import { DeleteButton } from '@/components/delete-button'
 import { VenueFormClient, type VenueFormDefaults } from '@/components/venue-form-client'
 import { VenueHoursClient } from '@/components/venue-hours-client'
 import { VenueBlockedDatesClient } from '@/components/venue-blocked-dates-client'
+import { VenuePhotosClient } from '@/components/venue-photos-client'
 import type { VenueBlockedDateRow } from '@/lib/database.types'
 
 async function saveVenueHours(venueId: string, formData: FormData) {
@@ -55,6 +56,31 @@ async function removeBlockedDate(venueId: string, dateId: string) {
   if (admin.role === 'admin' && !admin.managed_venue_ids.includes(venueId)) return
   const supabase = createSupabaseAdminClient()
   await supabase.from('venue_blocked_dates').delete().eq('id', dateId)
+  revalidatePath(`/dashboard/venues/${venueId}`)
+}
+
+async function addVenuePhoto(venueId: string, url: string) {
+  'use server'
+  const admin = await getCurrentAdmin()
+  if (!admin) return
+  if (admin.role === 'admin' && !admin.managed_venue_ids.includes(venueId)) return
+  const supabase = createSupabaseAdminClient()
+  const { count } = await supabase
+    .from('venue_photos')
+    .select('*', { count: 'exact', head: true })
+    .eq('venue_id', venueId)
+  if ((count ?? 0) >= 20) return
+  await supabase.from('venue_photos').insert({ venue_id: venueId, url, sort_order: 0 })
+  revalidatePath(`/dashboard/venues/${venueId}`)
+}
+
+async function removeVenuePhoto(venueId: string, photoId: string) {
+  'use server'
+  const admin = await getCurrentAdmin()
+  if (!admin) return
+  if (admin.role === 'admin' && !admin.managed_venue_ids.includes(venueId)) return
+  const supabase = createSupabaseAdminClient()
+  await supabase.from('venue_photos').delete().eq('id', photoId)
   revalidatePath(`/dashboard/venues/${venueId}`)
 }
 
@@ -167,7 +193,7 @@ export default async function EditVenuePage({
 
   const todayISO = new Date().toISOString().split('T')[0]
 
-  const [venueRes, hoursRes, blockedRes, bookedTodayRes, locationsRes] = await Promise.all([
+  const [venueRes, hoursRes, blockedRes, bookedTodayRes, locationsRes, photosRes] = await Promise.all([
     supabase.from('venues').select('id, name, name_hy, name_ru, name_en, cuisine, cuisine_hy, cuisine_ru, cuisine_en, area, area_hy, area_ru, area_en, description, description_hy, description_ru, description_en, perk, perk_hy, perk_ru, perk_en, tags, tags_hy, tags_ru, tags_en, price, rating, photo_url, dish_url, distance_km, heat, kind, coord_x, coord_y, times, time_yel_map, is_active, location_id').eq('id', id).single(),
     supabase.from('venue_hours').select('id, venue_id, day_of_week, is_open, open_time, close_time').eq('venue_id', id).order('day_of_week'),
     supabase.from('venue_blocked_dates').select('id, venue_id, date, reason, created_at').eq('venue_id', id).order('date'),
@@ -178,10 +204,12 @@ export default async function EditVenuePage({
       .eq('status', 'confirmed')
       .eq('date_iso', todayISO),
     supabase.from('locations').select('id, name_en').order('sort_order', { ascending: true }),
+    supabase.from('venue_photos').select('id, url, sort_order').eq('venue_id', id).order('sort_order').order('created_at'),
   ])
 
   const bookedToday = bookedTodayRes.count ?? 0
   const locations   = locationsRes.data ?? []
+  const photos = (photosRes.data ?? []) as { id: string; url: string; sort_order: number }[]
 
   if (venueRes.error || !venueRes.data) notFound()
 
@@ -257,6 +285,17 @@ export default async function EditVenuePage({
           blockedDates={blockedDates}
           addBlockedDateAction={addBlockedDate.bind(null, id)}
           removeBlockedDateAction={removeBlockedDate.bind(null, id)}
+        />
+      </div>
+
+      {/* Photos */}
+      <div className="mt-10">
+        <h2 className="text-lg font-semibold text-zinc-900 mb-4">Photos</h2>
+        <VenuePhotosClient
+          venueId={id}
+          initialPhotos={photos}
+          addPhotoAction={addVenuePhoto.bind(null, id)}
+          removePhotoAction={removeVenuePhoto.bind(null, id)}
         />
       </div>
 

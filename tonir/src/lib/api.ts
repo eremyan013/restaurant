@@ -2,7 +2,7 @@ import { supabase as _supabase } from './supabase';
 import { TIER_NAME_FALLBACKS, TIER_MIN_FALLBACKS } from './constants';
 
 const ADMIN_URL = process.env.EXPO_PUBLIC_CONCIERGE_URL?.replace(/\/$/, '');
-import { VenueRow, ReservationRow, ProfileRow, MenuCategoryRow, MenuItemRow, GuideRow, VenueHoursRow, VenueBlockedDateRow, LocationRow, OccasionRow, BannerRow } from './database.types';
+import { VenueRow, ReservationRow, ProfileRow, MenuCategoryRow, MenuItemRow, GuideRow, VenueHoursRow, VenueBlockedDateRow, LocationRow, OccasionRow, BannerRow, VenuePhotoRow } from './database.types';
 
 // Cast to any to escape Supabase TS generic inference issue with this package version.
 // All public functions carry explicit return type annotations for safety.
@@ -532,4 +532,19 @@ export async function fetchBanners(language: 'hy' | 'ru' | 'en'): Promise<Banner
     if (b.end_date && b.end_date < today) return false;
     return true;
   });
+}
+
+// ─────────────────────────────────────────────
+// VENUE PHOTOS
+// ─────────────────────────────────────────────
+
+export async function fetchVenuePhotos(venueId: string): Promise<VenuePhotoRow[]> {
+  const { data, error } = await sb
+    .from('venue_photos')
+    .select('*')
+    .eq('venue_id', venueId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as VenuePhotoRow[];
 }
