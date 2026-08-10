@@ -130,7 +130,7 @@ export async function saveNote(id: string, formData: FormData) {
   revalidatePath('/dashboard/reservations')
 }
 
-const TABS = ['all', 'pending_confirmation', 'pending', 'confirmed', 'cancelled', 'visited'] as const
+const TABS = ['pending_confirmation', 'pending', 'confirmed', 'cancelled', 'visited', 'all'] as const
 type Tab = typeof TABS[number]
 
 const TAB_LABELS: Record<string, string> = {
@@ -165,7 +165,7 @@ export default async function ReservationsPage({
   await requirePagePermission(admin, 'reservations', 'view')
 
   const sp = await searchParams
-  const activeTab: Tab = (TABS.includes(sp.status as Tab) ? sp.status : 'all') as Tab
+  const activeTab: Tab = (TABS.includes(sp.status as Tab) ? sp.status : 'pending_confirmation') as Tab
   const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)
 
   const supabase = createSupabaseAdminClient()
