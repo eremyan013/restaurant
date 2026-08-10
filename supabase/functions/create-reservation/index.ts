@@ -12,6 +12,14 @@ function json(body: unknown, status = 200) {
   })
 }
 
+async function sendPush(token: string, title: string, body: string): Promise<void> {
+  await fetch('https://exp.host/--/api/v2/push/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ to: token, title, body, sound: 'default' }),
+  }).catch((err) => { console.error('Push send failed:', err) })
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -84,6 +92,26 @@ Deno.serve(async (req: Request) => {
       console.error('Reservation insert error:', insertError)
       return json({ error: 'insert_failed' }, 500)
     }
+
+    // fire-and-forget push — not awaited, never blocks the response
+    ;(async () => {
+      try {
+        const [{ data: profile }, { data: venue }] = await Promise.all([
+          adminClient.from('profiles').select('push_token').eq('id', user.id).maybeSingle(),
+          adminClient.from('venues').select('name').eq('id', venue_id).maybeSingle(),
+        ])
+        const token = (profile as { push_token: string | null } | null)?.push_token
+        if (!token) return
+        const venueName = (venue as { name: string } | null)?.name ?? ''
+        await sendPush(
+          token,
+          'Request Received 🎉',
+          `We've received your request${venueName ? ` for ${venueName}` : ''} on ${date} at ${time}. We'll confirm within 30 minutes.`,
+        )
+      } catch (err) {
+        console.error('Fire-and-forget push failed:', err)
+      }
+    })()
 
     return json({ reservation_id: reservation.id })
   } catch (err) {

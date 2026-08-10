@@ -770,6 +770,8 @@ export type Database = {
           rejection_reason: string | null
           sla_deadline: string | null
           sla_alert_sent_at: string | null
+          reminder_day_before_sent: boolean
+          reminder_2h_sent: boolean
           status: string
           time: string
           updated_at: string
@@ -792,6 +794,8 @@ export type Database = {
           rejection_reason?: string | null
           sla_deadline?: string | null
           sla_alert_sent_at?: string | null
+          reminder_day_before_sent?: boolean
+          reminder_2h_sent?: boolean
           status?: string
           time: string
           updated_at?: string
@@ -814,6 +818,8 @@ export type Database = {
           rejection_reason?: string | null
           sla_deadline?: string | null
           sla_alert_sent_at?: string | null
+          reminder_day_before_sent?: boolean
+          reminder_2h_sent?: boolean
           status?: string
           time?: string
           updated_at?: string
