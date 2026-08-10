@@ -166,7 +166,7 @@ Deno.serve(async (_req: Request) => {
       },
       body: JSON.stringify({
         from: 'onboarding@resend.dev',   // temporary until custom domain is verified
-        to: 'yeremyanazat@gmail.com',
+        to: 'robert.a.saroyan@gmail.com',
         subject,
         html,
       }),
