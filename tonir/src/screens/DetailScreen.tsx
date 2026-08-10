@@ -55,7 +55,7 @@ export function DetailScreen({ navigation, route }: Props) {
   const [reviews, setReviews] = useState<VenueReview[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const { photos, loading: photosLoading } = useVenuePhotos(venueId);
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const TABS = tra('det_tabs');
 
@@ -467,7 +467,7 @@ export function DetailScreen({ navigation, route }: Props) {
                 contentContainerStyle={{ gap: 4, marginTop: 4 }}
                 renderItem={({ item }: { item: VenuePhotoRow }) => (
                   <Pressable
-                    onPress={() => setLightboxUrl(item.url)}
+                    onPress={() => setLightboxIndex(photos.indexOf(item))}
                     style={{ flex: 1, aspectRatio: 1, borderRadius: 10, overflow: 'hidden' }}
                     accessibilityLabel="Open photo"
                   >
@@ -525,26 +525,56 @@ export function DetailScreen({ navigation, route }: Props) {
 
       {/* Fullscreen photo lightbox */}
       <Modal
-        visible={lightboxUrl !== null}
+        visible={lightboxIndex !== null}
         transparent
         animationType="fade"
-        onRequestClose={() => setLightboxUrl(null)}
+        onRequestClose={() => setLightboxIndex(null)}
         statusBarTranslucent
       >
         <View style={{ flex: 1, backgroundColor: '#000' }}>
+          {/* Close */}
           <Pressable
-            onPress={() => setLightboxUrl(null)}
+            onPress={() => setLightboxIndex(null)}
             style={{ position: 'absolute', top: insets.top + 12, right: 16, zIndex: 10, padding: 8 }}
             accessibilityLabel={tr('det_back_btn')}
           >
             <Icon name="x" size={24} color="#fff" />
           </Pressable>
-          {lightboxUrl && (
+          {/* Counter */}
+          {lightboxIndex !== null && (
+            <View style={{ position: 'absolute', top: insets.top + 16, left: 0, right: 0, alignItems: 'center', zIndex: 10 }}>
+              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13 }}>
+                {lightboxIndex + 1} / {photos.length}
+              </Text>
+            </View>
+          )}
+          {/* Photo */}
+          {lightboxIndex !== null && (
             <Image
-              source={{ uri: lightboxUrl }}
+              source={{ uri: photos[lightboxIndex]!.url }}
               style={{ flex: 1, width: W }}
               resizeMode="contain"
             />
+          )}
+          {/* Prev arrow */}
+          {lightboxIndex !== null && lightboxIndex > 0 && (
+            <Pressable
+              onPress={() => setLightboxIndex(lightboxIndex - 1)}
+              style={{ position: 'absolute', left: 12, top: '50%', zIndex: 10, padding: 12, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 999 }}
+              accessibilityLabel="Previous photo"
+            >
+              <Icon name="chevL" size={22} color="#fff" />
+            </Pressable>
+          )}
+          {/* Next arrow */}
+          {lightboxIndex !== null && lightboxIndex < photos.length - 1 && (
+            <Pressable
+              onPress={() => setLightboxIndex(lightboxIndex + 1)}
+              style={{ position: 'absolute', right: 12, top: '50%', zIndex: 10, padding: 12, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 999 }}
+              accessibilityLabel="Next photo"
+            >
+              <Icon name="chevR" size={22} color="#fff" />
+            </Pressable>
           )}
         </View>
       </Modal>
