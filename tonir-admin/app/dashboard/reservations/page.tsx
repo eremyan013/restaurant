@@ -78,7 +78,7 @@ async function setStatus(id: string, status: ReservationRow['status']) {
     }
   }
 
-  if (res?.profiles?.push_token && ['confirmed', 'cancelled', 'rejected'].includes(status)) {
+  if (res?.profiles?.push_token && ['confirmed', 'cancelled', 'rejected', 'visited'].includes(status)) {
     const venueName: string = res.venues?.name ?? 'your reservation'
     let title: string
     let body: string
@@ -88,6 +88,9 @@ async function setStatus(id: string, status: ReservationRow['status']) {
     } else if (status === 'rejected') {
       title = '❌ Reservation Unavailable'
       body  = res.rejection_reason ?? `Unfortunately, ${venueName} is not available at your requested time.`
+    } else if (status === 'visited') {
+      title = 'How was your visit? ⭐'
+      body  = `You visited ${venueName}! Share your experience and leave a review.`
     } else {
       title = '❌ Booking Cancelled'
       body  = `Your reservation at ${venueName} on ${res.date} has been cancelled.`
