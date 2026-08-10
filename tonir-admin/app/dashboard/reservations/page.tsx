@@ -227,7 +227,7 @@ export default async function ReservationsPage({
 
   let query = supabase
     .from('reservations')
-    .select('id, date, date_iso, time, people, status, occasion, note, admin_note, sla_deadline, agent_id, rejection_reason, confirmed_at, rejected_at, created_at, updated_at, yel_earned, venue_id, user_id, venues(name), profiles!reservations_user_id_fkey(name, email)', { count: 'exact' })
+    .select('id, date, date_iso, time, people, status, occasion, note, admin_note, sla_deadline, sla_alert_sent_at, agent_id, rejection_reason, confirmed_at, rejected_at, created_at, updated_at, yel_earned, venue_id, user_id, venues(name), profiles!reservations_user_id_fkey(name, email)', { count: 'exact' })
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
     .range(from, to)
@@ -393,7 +393,7 @@ export default async function ReservationsPage({
                     </td>
                     {activeTab === 'pending_confirmation' && (
                       <td className="px-4 py-3">
-                        <SlaCountdown deadline={r.sla_deadline ?? null} />
+                        <SlaCountdown deadline={r.sla_deadline ?? null} alertSentAt={r.sla_alert_sent_at ?? null} />
                       </td>
                     )}
                     {showVenueCol && (
