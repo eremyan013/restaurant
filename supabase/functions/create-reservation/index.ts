@@ -97,17 +97,27 @@ Deno.serve(async (req: Request) => {
     ;(async () => {
       try {
         const [{ data: profile }, { data: venue }] = await Promise.all([
-          adminClient.from('profiles').select('push_token').eq('id', user.id).maybeSingle(),
+          adminClient.from('profiles').select('push_token, language').eq('id', user.id).maybeSingle(),
           adminClient.from('venues').select('name').eq('id', venue_id).maybeSingle(),
         ])
-        const token = (profile as { push_token: string | null } | null)?.push_token
+        const p = profile as { push_token: string | null; language: string | null } | null
+        const token = p?.push_token
         if (!token) return
+        const lang = p?.language ?? 'en'
         const venueName = (venue as { name: string } | null)?.name ?? ''
-        await sendPush(
-          token,
-          'Request Received 🎉',
-          `We've received your request${venueName ? ` for ${venueName}` : ''} on ${date} at ${time}. We'll confirm within 30 minutes.`,
-        )
+        let pushTitle: string
+        let pushBody: string
+        if (lang === 'hy') {
+          pushTitle = 'Հայտն ընդունված է 🎉'
+          pushBody  = `Ձեր հայտն ընդունվեց${venueName ? ` ${venueName}-ի համար` : ''} ${date}-ին ժամը ${time}-ին։ Կհաստատենք 30 րոպեի ընթացքում։`
+        } else if (lang === 'ru') {
+          pushTitle = 'Заявка получена 🎉'
+          pushBody  = `Ваша заявка${venueName ? ` в ${venueName}` : ''} на ${date} в ${time} принята. Подтвердим в течение 30 минут.`
+        } else {
+          pushTitle = 'Request Received 🎉'
+          pushBody  = `We've received your request${venueName ? ` for ${venueName}` : ''} on ${date} at ${time}. We'll confirm within 30 minutes.`
+        }
+        await sendPush(token, pushTitle, pushBody)
       } catch (err) {
         console.error('Fire-and-forget push failed:', err)
       }

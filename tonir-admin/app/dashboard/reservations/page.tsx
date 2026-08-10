@@ -43,11 +43,11 @@ async function setStatus(id: string, status: ReservationRow['status']) {
   type ResRow = {
     user_id: string; venue_id: string; date: string; time: string; status: string; yel_earned: string | null; rejection_reason: string | null
     venues: { name: string } | null
-    profiles: { push_token: string | null } | null
+    profiles: { push_token: string | null; language: string | null } | null
   }
   const { data: res } = await supabase
     .from('reservations')
-    .select('user_id, venue_id, date, time, status, yel_earned, rejection_reason, venues(name), profiles!reservations_user_id_fkey(push_token)')
+    .select('user_id, venue_id, date, time, status, yel_earned, rejection_reason, venues(name), profiles!reservations_user_id_fkey(push_token, language)')
     .eq('id', id)
     .single() as unknown as { data: ResRow | null }
 
@@ -80,20 +80,53 @@ async function setStatus(id: string, status: ReservationRow['status']) {
 
   if (res?.profiles?.push_token && ['confirmed', 'cancelled', 'rejected', 'visited'].includes(status)) {
     const venueName: string = res.venues?.name ?? 'your reservation'
+    const lang = res.profiles.language ?? 'en'
     let title: string
     let body: string
     if (status === 'confirmed') {
-      title = '✅ Booking Confirmed'
-      body  = `Your table at ${venueName} on ${res.date} at ${res.time} is confirmed!`
+      if (lang === 'hy') {
+        title = '✅ Ամրագրումն հաստատված է'
+        body  = `Ձեր սեղանն ամրագրված է ${venueName}-ում, ${res.date}-ին ժամը ${res.time}-ին։`
+      } else if (lang === 'ru') {
+        title = '✅ Бронирование подтверждено'
+        body  = `Ваш столик в ${venueName} ${res.date} в ${res.time} подтверждён!`
+      } else {
+        title = '✅ Booking Confirmed'
+        body  = `Your table at ${venueName} on ${res.date} at ${res.time} is confirmed!`
+      }
     } else if (status === 'rejected') {
-      title = '❌ Reservation Unavailable'
-      body  = res.rejection_reason ?? `Unfortunately, ${venueName} is not available at your requested time.`
+      if (lang === 'hy') {
+        title = '❌ Ամրագրումն անհնար է'
+        body  = res.rejection_reason ?? `Ցավոք, ${venueName}-ը հասանելի չէ ձեր ցանկալի ժամին։`
+      } else if (lang === 'ru') {
+        title = '❌ Бронирование недоступно'
+        body  = res.rejection_reason ?? `К сожалению, ${venueName} недоступен в запрошенное время.`
+      } else {
+        title = '❌ Reservation Unavailable'
+        body  = res.rejection_reason ?? `Unfortunately, ${venueName} is not available at your requested time.`
+      }
     } else if (status === 'visited') {
-      title = 'How was your visit? ⭐'
-      body  = `You visited ${venueName}! Share your experience and leave a review.`
+      if (lang === 'hy') {
+        title = 'Ինչպե՞ս անցավ այցը ⭐'
+        body  = `Դուք այցելեցիք ${venueName}։ Կիսվեք տպավորություններով եւ թողեք կարծիք։`
+      } else if (lang === 'ru') {
+        title = 'Как прошёл визит? ⭐'
+        body  = `Вы посетили ${venueName}! Поделитесь впечатлениями и оставьте отзыв.`
+      } else {
+        title = 'How was your visit? ⭐'
+        body  = `You visited ${venueName}! Share your experience and leave a review.`
+      }
     } else {
-      title = '❌ Booking Cancelled'
-      body  = `Your reservation at ${venueName} on ${res.date} has been cancelled.`
+      if (lang === 'hy') {
+        title = '❌ Ամրագրումն չեղարկված է'
+        body  = `Ձեր ամրագրումն ${venueName}-ում ${res.date}-ին չեղարկված է։`
+      } else if (lang === 'ru') {
+        title = '❌ Бронирование отменено'
+        body  = `Ваше бронирование в ${venueName} ${res.date} отменено.`
+      } else {
+        title = '❌ Booking Cancelled'
+        body  = `Your reservation at ${venueName} on ${res.date} has been cancelled.`
+      }
     }
     await fetch('https://exp.host/--/api/v2/push/send', {
       method:  'POST',

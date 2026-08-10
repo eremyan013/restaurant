@@ -48,7 +48,7 @@ Deno.serve(async (_req: Request) => {
   if (hour >= 18 && hour < 20) {
     const { data: rows, error } = await admin
       .from('reservations')
-      .select(`id, time, profiles!reservations_user_id_fkey(push_token), venues(name)`)
+      .select(`id, time, profiles!reservations_user_id_fkey(push_token, language), venues(name)`)
       .eq('status', 'confirmed')
       .eq('date_iso', tomorrowIso)
       .eq('reminder_day_before_sent', false)
@@ -59,11 +59,24 @@ Deno.serve(async (_req: Request) => {
       for (const row of rows ?? []) {
         const profile   = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
         const venue     = Array.isArray(row.venues)   ? row.venues[0]   : row.venues
-        const token     = (profile as { push_token: string | null } | null)?.push_token
+        const p         = profile as { push_token: string | null; language: string | null } | null
+        const token     = p?.push_token
+        const lang      = p?.language ?? 'en'
         const venueName = (venue as { name: string } | null)?.name ?? 'your venue'
         if (!token) continue
 
-        await sendPush(token, 'Reminder 🍽️', `Your table tomorrow at ${venueName} at ${row.time as string}. See you soon!`)
+        let pushTitle: string, pushBody: string
+        if (lang === 'hy') {
+          pushTitle = 'Հիշեցում 🍽️'
+          pushBody  = `Ձեր սեղանը վաղը ${venueName}-ում ժամը ${row.time as string}-ին։ Շուտով կտեսնվենք!`
+        } else if (lang === 'ru') {
+          pushTitle = 'Напоминание 🍽️'
+          pushBody  = `Ваш столик завтра в ${venueName} в ${row.time as string}. До встречи!`
+        } else {
+          pushTitle = 'Reminder 🍽️'
+          pushBody  = `Your table tomorrow at ${venueName} at ${row.time as string}. See you soon!`
+        }
+        await sendPush(token, pushTitle, pushBody)
 
         const { error: upErr } = await admin.from('reservations').update({ reminder_day_before_sent: true }).eq('id', row.id)
         if (upErr) { console.error(`day_before update failed ${row.id}:`, upErr.message); dayBeforeFailed++ }
@@ -78,7 +91,7 @@ Deno.serve(async (_req: Request) => {
 
   const { data: rows2, error: err2 } = await admin
     .from('reservations')
-    .select(`id, date_iso, time, profiles!reservations_user_id_fkey(push_token), venues(name)`)
+    .select(`id, date_iso, time, profiles!reservations_user_id_fkey(push_token, language), venues(name)`)
     .eq('status', 'confirmed')
     .eq('reminder_2h_sent', false)
     .in('date_iso', [todayIso, tomorrowIso])
@@ -92,11 +105,24 @@ Deno.serve(async (_req: Request) => {
 
       const profile   = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
       const venue     = Array.isArray(row.venues)   ? row.venues[0]   : row.venues
-      const token     = (profile as { push_token: string | null } | null)?.push_token
+      const p         = profile as { push_token: string | null; language: string | null } | null
+      const token     = p?.push_token
+      const lang      = p?.language ?? 'en'
       const venueName = (venue as { name: string } | null)?.name ?? 'your venue'
       if (!token) continue
 
-      await sendPush(token, 'See You Soon 🎉', `Your table at ${venueName} is in 2 hours! See you at ${row.time as string}.`)
+      let pushTitle: string, pushBody: string
+      if (lang === 'hy') {
+        pushTitle = 'Շուտով կտեսնվենք 🎉'
+        pushBody  = `Ձեր սեղանը ${venueName}-ում 2 ժամից է! Կտեսնվենք ժամը ${row.time as string}-ին։`
+      } else if (lang === 'ru') {
+        pushTitle = 'До встречи 🎉'
+        pushBody  = `Ваш столик в ${venueName} через 2 часа! Ждём вас в ${row.time as string}.`
+      } else {
+        pushTitle = 'See You Soon 🎉'
+        pushBody  = `Your table at ${venueName} is in 2 hours! See you at ${row.time as string}.`
+      }
+      await sendPush(token, pushTitle, pushBody)
 
       const { error: upErr } = await admin.from('reservations').update({ reminder_2h_sent: true }).eq('id', row.id)
       if (upErr) { console.error(`2h update failed ${row.id}:`, upErr.message); twoHourFailed++ }
