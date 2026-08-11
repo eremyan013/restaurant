@@ -324,39 +324,39 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                                 <Text style={[styles.altNote, { color: t.textMute }]}>{alt.note}</Text>
                               ) : null}
                             </View>
-                            <TouchableOpacity
-                              onPress={() => handleAcceptAlternative(res.id, alt.id)}
-                              disabled={acceptingAlt !== null}
-                              style={styles.altAcceptBtn}
-                              accessibilityRole="button"
-                              accessibilityLabel={tr('alt_accept')}
-                              accessibilityState={{ disabled: acceptingAlt !== null }}
-                            >
-                              {acceptingAlt === alt.id ? (
-                                <ActivityIndicator size="small" color="#fff" />
-                              ) : (
-                                <Text style={styles.altAcceptText}>{tr('alt_accept')}</Text>
-                              )}
-                            </TouchableOpacity>
+                            <View style={{ flexDirection: 'row', gap: 6 }}>
+                              <TouchableOpacity
+                                onPress={() => handleDeclineAll(res.id)}
+                                disabled={decliningId === res.id || acceptingAlt !== null}
+                                style={styles.altDeclineBtn}
+                                accessibilityRole="button"
+                                accessibilityLabel={tr('alt_decline')}
+                              >
+                                {decliningId === res.id ? (
+                                  <ActivityIndicator size="small" color={COLORS.danger} />
+                                ) : (
+                                  <Text style={[styles.altDeclineText, { color: COLORS.danger }]}>
+                                    {tr('alt_decline')}
+                                  </Text>
+                                )}
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                onPress={() => handleAcceptAlternative(res.id, alt.id)}
+                                disabled={acceptingAlt !== null || decliningId !== null}
+                                style={styles.altAcceptBtn}
+                                accessibilityRole="button"
+                                accessibilityLabel={tr('alt_accept')}
+                              >
+                                {acceptingAlt === alt.id ? (
+                                  <ActivityIndicator size="small" color="#fff" />
+                                ) : (
+                                  <Text style={styles.altAcceptText}>{tr('alt_accept')}</Text>
+                                )}
+                              </TouchableOpacity>
+                            </View>
                           </View>
                         ))
                       )}
-                      <TouchableOpacity
-                        onPress={() => handleDeclineAll(res.id)}
-                        disabled={decliningId === res.id}
-                        style={{ marginTop: 4, alignSelf: 'flex-start' }}
-                        accessibilityRole="button"
-                        accessibilityLabel={tr('alt_decline_all')}
-                        accessibilityState={{ disabled: decliningId === res.id }}
-                      >
-                        {decliningId === res.id ? (
-                          <ActivityIndicator size="small" color={COLORS.danger} />
-                        ) : (
-                          <Text style={[styles.altDeclineText, { color: COLORS.danger }]}>
-                            {tr('alt_decline_all')}
-                          </Text>
-                        )}
-                      </TouchableOpacity>
                     </View>
                   )}
 
@@ -735,6 +735,15 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     fontWeight: '600',
     fontSize: 13,
+  },
+  altDeclineBtn: {
+    borderWidth: 1,
+    borderColor: COLORS.danger,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 6,
+    minWidth: 60,
+    alignItems: 'center',
   },
   altDeclineText: {
     fontSize: 13,
