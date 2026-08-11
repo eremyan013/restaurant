@@ -385,7 +385,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                             </Text>
                           </Pressable>
                         )
-                      ) : tab === 'past' ? null : (() => {
+                      ) : tab === 'past' || res.status === 'alternative_offered' ? null : (() => {
                         const pastModifyDeadline = isPastCancelDeadline(res);
                         return pastModifyDeadline ? (
                           <View style={[styles.actionBtn, styles.cancelDisabledBtn, { borderColor: t.border }]} accessibilityRole="button" accessibilityState={{ disabled: true }}>
@@ -418,7 +418,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                           </Pressable>
                         );
                       })()}
-                      {tab === 'upcoming' && (() => {
+                      {tab === 'upcoming' && res.status !== 'alternative_offered' && (() => {
                         const pastDeadline = isPastCancelDeadline(res);
                         return pastDeadline ? (
                           <View style={[styles.actionBtn, styles.cancelDisabledBtn, { borderColor: t.border }]} accessibilityRole="button" accessibilityState={{ disabled: true }}>
