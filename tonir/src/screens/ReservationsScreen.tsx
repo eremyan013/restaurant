@@ -273,7 +273,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                       <View style={{ height: 14, width: 120, borderRadius: 4, backgroundColor: t.textFaint, opacity: 0.3 }} />
                       <View style={styles.metaRow}>
                         <Icon name="calendar" size={12} color={t.textMute} strokeWidth={2} />
-                        <Text style={[styles.metaText, { color: t.textMute }]}>{res.date}</Text>
+                        <Text style={[styles.metaText, { color: t.textMute }]}>{res.date_iso ? formatAltDate(res.date_iso) : res.date}</Text>
                         <Icon name="clock" size={12} color={t.textMute} strokeWidth={2} />
                         <Text style={[styles.metaText, { color: t.textMute }]}>{res.time}</Text>
                         <Icon name="users" size={12} color={t.textMute} strokeWidth={2} />
@@ -306,7 +306,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                       <Text style={[styles.venueName, { color: t.text }]}>{venue.name}</Text>
                       <View style={styles.metaRow}>
                         <Icon name="calendar" size={12} color={t.textMute} strokeWidth={2} />
-                        <Text style={[styles.metaText, { color: t.textMute }]}>{res.date}</Text>
+                        <Text style={[styles.metaText, { color: t.textMute }]}>{res.date_iso ? formatAltDate(res.date_iso) : res.date}</Text>
                         <TimePill
                           time={res.time}
                           t={t}
