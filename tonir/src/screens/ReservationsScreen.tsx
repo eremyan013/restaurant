@@ -45,6 +45,12 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
   const { tr, trf, language } = useTranslation();
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
 
+  const altLocale = language === 'hy' ? 'hy-AM' : language === 'ru' ? 'ru-RU' : 'en-US';
+  function formatAltDate(dateIso: string): string {
+    const d = new Date(dateIso + 'T12:00:00Z');
+    return d.toLocaleDateString(altLocale, { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
   const { venues } = useVenues();
   const { upcoming, past, loading, error, retry, cancel } = useReservations();
   const { profile, refetch: refetchProfile } = useProfile();
@@ -325,7 +331,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                           <View key={alt.id} style={[styles.altRow, { backgroundColor: t.bg }]}>
                             <View style={{ flex: 1 }}>
                               <Text style={[styles.altDateTime, { color: t.text }]}>
-                                {alt.date} · {alt.time}
+                                {formatAltDate(alt.date_iso)} · {alt.time}
                               </Text>
                               {alt.note ? (
                                 <Text style={[styles.altNote, { color: t.textMute }]}>{alt.note}</Text>
