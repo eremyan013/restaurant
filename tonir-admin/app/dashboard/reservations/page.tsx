@@ -138,6 +138,7 @@ async function setStatus(id: string, status: ReservationRow['status']) {
   revalidatePath('/dashboard/reservations')
 }
 
+
 export async function saveNote(id: string, formData: FormData) {
   'use server'
   const admin = await getCurrentAdmin()
@@ -269,7 +270,11 @@ export default async function ReservationsPage({
     .range(from, to)
 
   query = applyFilters(query)
-  if (activeTab !== 'all') query = query.eq('status', activeTab)
+  if (activeTab === 'pending_confirmation') {
+    query = query.in('status', ['pending_confirmation', 'alternative_offered'])
+  } else if (activeTab !== 'all') {
+    query = query.eq('status', activeTab)
+  }
 
   const { data, error, count: filteredCount } = await query
   if (error) throw error
@@ -278,7 +283,7 @@ export default async function ReservationsPage({
 
   // ── Status counts (filtered, without status restriction) ─────────────────────
   const [pendingConfRes, pendingRes, confirmedRes, cancelledRes, visitedRes] = await Promise.all([
-    applyFilters(supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'pending_confirmation')),
+    applyFilters(supabase.from('reservations').select('*', { count: 'exact', head: true }).in('status', ['pending_confirmation', 'alternative_offered'])),
     applyFilters(supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'pending')),
     applyFilters(supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'confirmed')),
     applyFilters(supabase.from('reservations').select('*', { count: 'exact', head: true }).eq('status', 'cancelled')),
@@ -463,7 +468,7 @@ export default async function ReservationsPage({
                           }} />
                         </div>
                         <ReservationStatusButtons
-                          status={r.status as 'pending' | 'pending_confirmation' | 'confirmed' | 'cancelled' | 'visited'}
+                          status={r.status as 'pending' | 'pending_confirmation' | 'confirmed' | 'cancelled' | 'visited' | 'alternative_offered'}
                           agentId={r.agent_id ?? null}
                           onConfirm={setStatus.bind(null, r.id, 'confirmed')}
                           onCancel={setStatus.bind(null, r.id, 'cancelled')}
@@ -471,6 +476,7 @@ export default async function ReservationsPage({
                           onReopen={setStatus.bind(null, r.id, 'pending')}
                           onReject={async (reason: string) => { 'use server'; await rejectReservation(r.id, reason) }}
                           onAssign={async () => { 'use server'; await assignAgent(r.id, admin.id) }}
+                          onOfferAlternatives={async (alts) => { 'use server'; await offerAlternatives(r.id, alts) }}
                         />
                         <NoteForm
                           id={r.id}
@@ -498,4 +504,77 @@ export default async function ReservationsPage({
       )}
     </div>
   )
+}
+
+export async function offerAlternatives(
+  reservationId: string,
+  alternatives: { date_iso: string; time: string; note?: string }[],
+) {
+  'use server'
+  const admin = await getCurrentAdmin()
+  if (!admin) return
+
+  if (!alternatives?.length || alternatives.length > 3) return
+  if (alternatives.some(a => !a.date_iso || !a.time)) return
+
+  const supabase = createSupabaseAdminClient()
+
+  type ResRow = {
+    user_id: string; venue_id: string; status: string
+    venues: { name: string } | null
+    profiles: { push_token: string | null; language: string | null } | null
+  }
+  const { data: res } = await supabase
+    .from('reservations')
+    .select('user_id, venue_id, status, venues(name), profiles!reservations_user_id_fkey(push_token, language)')
+    .eq('id', reservationId)
+    .single() as unknown as { data: ResRow | null }
+
+  if (!res) return
+  if (admin.role === 'admin' && !admin.managed_venue_ids.includes(res.venue_id)) return
+  if (!['pending_confirmation', 'pending'].includes(res.status)) return
+
+  function isoToDisplay(iso: string): string {
+    const d = new Date(iso + 'T12:00:00Z')
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  }
+
+  const rows = alternatives.map(a => ({
+    reservation_id: reservationId,
+    date: isoToDisplay(a.date_iso),
+    date_iso: a.date_iso,
+    time: a.time,
+    note: a.note ?? null,
+  }))
+
+  const { error: insertErr } = await supabase.from('reservation_alternatives').insert(rows)
+  if (insertErr) { console.error('alternatives insert failed:', insertErr); return }
+
+  await supabase.from('reservations').update({ status: 'alternative_offered' }).eq('id', reservationId)
+
+  await logActivity(admin, 'offer_alternatives', 'reservation', reservationId,
+    `${res.venues?.name ?? ''} – offered ${alternatives.length} alternative(s)`)
+
+  if (res?.profiles?.push_token) {
+    const lang = res.profiles.language ?? 'en'
+    const venueName = res.venues?.name ?? 'the restaurant'
+    let title: string, body: string
+    if (lang === 'hy') {
+      title = 'Հասանելի են այլ ժամեր 🕐'
+      body  = `Չհաջողվեց ամրագրել նախնական ժամը ${venueName}-ում, բայց կան այլ տարբերակներ!`
+    } else if (lang === 'ru') {
+      title = 'Доступны другие варианты 🕐'
+      body  = `Не смогли забронировать исходное время в ${venueName}, но у нас есть варианты!`
+    } else {
+      title = 'New Times Available 🕐'
+      body  = `We couldn't book your original time at ${venueName}, but we have alternatives for you!`
+    }
+    await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ to: res.profiles.push_token, title, body, sound: 'default' }),
+    }).catch(() => {})
+  }
+
+  revalidatePath('/dashboard/reservations')
 }

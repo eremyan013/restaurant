@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  View, Text, ScrollView, Pressable, Image, StyleSheet, StatusBar, ActivityIndicator,
+  View, Text, ScrollView, Pressable, TouchableOpacity, Image, StyleSheet, StatusBar, ActivityIndicator,
   RefreshControl, Alert, Platform, Modal, TextInput, KeyboardAvoidingView,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
@@ -16,6 +16,7 @@ import { useReservations } from '../hooks/useReservations';
 import { useProfile } from '../hooks/useProfile';
 import { useTranslation } from '../hooks/useTranslation';
 import { submitReview, fetchMyReviews } from '../lib/api';
+import { supabase } from '../lib/supabase';
 import { CANCEL_DEADLINE_MS } from '../lib/constants';
 import { ReservationRow } from '../lib/database.types';
 import { Icon } from '../components/Icon';
@@ -49,6 +50,12 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
   const { profile, refetch: refetchProfile } = useProfile();
   const [refreshing, setRefreshing] = useState(false);
 
+  // Alternatives state
+  const [alternativesMap, setAlternativesMap] = useState<Record<string, any[]>>({})
+  const [loadingAlts, setLoadingAlts] = useState<Record<string, boolean>>({})
+  const [acceptingAlt, setAcceptingAlt] = useState<string | null>(null)
+  const [decliningId, setDecliningId] = useState<string | null>(null)
+
   // Rating modal state
   const [ratingRes, setRatingRes] = useState<ReservationRow | null>(null);
   const [stars, setStars] = useState(0);
@@ -60,6 +67,70 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
   useEffect(() => {
     if (userId) fetchMyReviews(userId).then((ids) => setRatedIds(new Set(ids)));
   }, [userId]);
+
+  // Fetch alternatives for reservations with status 'alternative_offered'
+  useEffect(() => {
+    const altReservations = (upcoming ?? []).filter(
+      (r) => r.status === 'alternative_offered' && !alternativesMap[r.id]
+    );
+    for (const res of altReservations) {
+      setLoadingAlts((prev) => ({ ...prev, [res.id]: true }));
+      supabase
+        .from('reservation_alternatives')
+        .select('id, date, date_iso, time, note')
+        .eq('reservation_id', res.id)
+        .order('date_iso', { ascending: true })
+        .order('time', { ascending: true })
+        .then(({ data }) => {
+          setAlternativesMap((prev) => ({ ...prev, [res.id]: data ?? [] }));
+          setLoadingAlts((prev) => ({ ...prev, [res.id]: false }));
+        });
+    }
+  }, [upcoming]);
+
+  async function handleAcceptAlternative(reservationId: string, altId: string) {
+    setAcceptingAlt(altId);
+    try {
+      const { error } = await supabase.functions.invoke('accept-alternative', {
+        body: { reservation_id: reservationId, alternative_id: altId },
+      });
+      if (error) throw error;
+      retry();
+    } catch {
+      Alert.alert(tr('alt_err_title'), tr('alt_err_accept'));
+    } finally {
+      setAcceptingAlt(null);
+    }
+  }
+
+  function handleDeclineAll(reservationId: string) {
+    Alert.alert(
+      tr('alt_decline_title'),
+      tr('alt_decline_sub'),
+      [
+        { text: tr('res_cancel_back'), style: 'cancel' },
+        {
+          text: tr('alt_decline_confirm'),
+          style: 'destructive',
+          onPress: async () => {
+            setDecliningId(reservationId);
+            try {
+              const { error } = await supabase
+                .from('reservations')
+                .update({ status: 'cancelled' })
+                .eq('id', reservationId);
+              if (error) throw error;
+              retry();
+            } catch {
+              Alert.alert(tr('alt_err_title'), tr('alt_err_decline'));
+            } finally {
+              setDecliningId(null);
+            }
+          },
+        },
+      ]
+    );
+  }
 
   useFocusEffect(useCallback(() => { refetchProfile(); }, [refetchProfile]));
 
@@ -234,6 +305,60 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                       </View>
                     </View>
                   </View>
+
+                  {res.status === 'alternative_offered' && (
+                    <View style={[styles.altPanel, { borderTopColor: t.border }]}>
+                      <Text style={[styles.altHeader, { color: t.text }]}>
+                        {tr('alt_header')}
+                      </Text>
+                      {loadingAlts[res.id] ? (
+                        <ActivityIndicator size="small" color={t.primary} />
+                      ) : (
+                        (alternativesMap[res.id] ?? []).map((alt) => (
+                          <View key={alt.id} style={[styles.altRow, { backgroundColor: t.bg }]}>
+                            <View style={{ flex: 1 }}>
+                              <Text style={[styles.altDateTime, { color: t.text }]}>
+                                {alt.date} · {alt.time}
+                              </Text>
+                              {alt.note ? (
+                                <Text style={[styles.altNote, { color: t.textMute }]}>{alt.note}</Text>
+                              ) : null}
+                            </View>
+                            <TouchableOpacity
+                              onPress={() => handleAcceptAlternative(res.id, alt.id)}
+                              disabled={acceptingAlt !== null}
+                              style={styles.altAcceptBtn}
+                              accessibilityRole="button"
+                              accessibilityLabel={tr('alt_accept')}
+                              accessibilityState={{ disabled: acceptingAlt !== null }}
+                            >
+                              {acceptingAlt === alt.id ? (
+                                <ActivityIndicator size="small" color="#fff" />
+                              ) : (
+                                <Text style={styles.altAcceptText}>{tr('alt_accept')}</Text>
+                              )}
+                            </TouchableOpacity>
+                          </View>
+                        ))
+                      )}
+                      <TouchableOpacity
+                        onPress={() => handleDeclineAll(res.id)}
+                        disabled={decliningId === res.id}
+                        style={{ marginTop: 4, alignSelf: 'flex-start' }}
+                        accessibilityRole="button"
+                        accessibilityLabel={tr('alt_decline_all')}
+                        accessibilityState={{ disabled: decliningId === res.id }}
+                      >
+                        {decliningId === res.id ? (
+                          <ActivityIndicator size="small" color={COLORS.danger} />
+                        ) : (
+                          <Text style={[styles.altDeclineText, { color: COLORS.danger }]}>
+                            {tr('alt_decline_all')}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  )}
 
                   <View style={[styles.cardDivider, { borderColor: t.border }]} />
 
@@ -566,5 +691,54 @@ const styles = StyleSheet.create({
   },
   anonLabel: {
     fontSize: 14,
+  },
+  // Alternatives panel
+  altPanel: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginHorizontal: 14,
+    marginBottom: 14,
+    paddingTop: 12,
+  },
+  altHeader: {
+    fontSize: 13,
+    fontFamily: FONTS.semiBold,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  altRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    padding: 10,
+    borderRadius: 8,
+  },
+  altDateTime: {
+    fontSize: 13,
+    fontFamily: FONTS.semiBold,
+    fontWeight: '500',
+  },
+  altNote: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  altAcceptBtn: {
+    backgroundColor: '#16a34a',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 6,
+    minWidth: 60,
+    alignItems: 'center',
+  },
+  altAcceptText: {
+    color: '#fff',
+    fontFamily: FONTS.semiBold,
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  altDeclineText: {
+    fontSize: 13,
+    fontFamily: FONTS.medium,
+    fontWeight: '500',
   },
 });

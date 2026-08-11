@@ -2,7 +2,7 @@ import { createSupabaseAdminClient } from './supabase-admin'
 import type { AdminRole } from './current-admin'
 
 export type ActivityAction =
-  | 'confirm_reservation' | 'cancel_reservation' | 'mark_visited' | 'update_reservation_note'
+  | 'confirm_reservation' | 'cancel_reservation' | 'mark_visited' | 'update_reservation_note' | 'offer_alternatives'
   | 'approve_review'      | 'hide_review'         | 'delete_review'
   | 'adjust_yel'          | 'bulk_adjust_yel'
   | 'update_venue'        | 'delete_venue'        | 'create_venue'

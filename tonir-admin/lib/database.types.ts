@@ -754,6 +754,44 @@ export type Database = {
         }
         Relationships: []
       }
+      reservation_alternatives: {
+        Row: {
+          id: string
+          reservation_id: string
+          date: string
+          date_iso: string
+          time: string
+          note: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          reservation_id: string
+          date: string
+          date_iso: string
+          time: string
+          note?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          reservation_id?: string
+          date?: string
+          date_iso?: string
+          time?: string
+          note?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_alternatives_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservations: {
         Row: {
           admin_note: string | null
@@ -1392,4 +1430,5 @@ export type OccasionRow         = T['occasions']['Row']
 export type BannerRow           = T['banners']['Row']
 export type VenueBlockedDateRow = T['venue_blocked_dates']['Row']
 export type VenuePhotoRow       = T['venue_photos']['Row']
-export type VenueRow            = T['venues']['Row']
+export type VenueRow                = T['venues']['Row']
+export type ReservationAlternativeRow = T['reservation_alternatives']['Row']

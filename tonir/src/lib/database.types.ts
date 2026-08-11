@@ -717,6 +717,36 @@ export interface Database {
         }>;
       };
 
+      reservation_alternatives: {
+        Row: {
+          id: string;
+          reservation_id: string;
+          date: string;
+          date_iso: string;
+          time: string;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          reservation_id: string;
+          date: string;
+          date_iso: string;
+          time: string;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          reservation_id?: string;
+          date?: string;
+          date_iso?: string;
+          time?: string;
+          note?: string | null;
+          created_at?: string;
+        };
+      };
+
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -753,3 +783,4 @@ export type HomeSectionItemRow    = Database['public']['Tables']['home_section_i
 export type OccasionRow           = Database['public']['Tables']['occasions']['Row'];
 export type BannerRow             = Database['public']['Tables']['banners']['Row'];
 export type VenuePhotoRow         = Database['public']['Tables']['venue_photos']['Row'];
+export type ReservationAlternativeRow = Database['public']['Tables']['reservation_alternatives']['Row'];

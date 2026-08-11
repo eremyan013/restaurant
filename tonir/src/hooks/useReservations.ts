@@ -72,12 +72,12 @@ export function useReservations() {
   }
 
   const upcoming = reservations.filter(
-    (r) => (r.status === 'confirmed' || r.status === 'pending' || r.status === 'pending_confirmation') && !isDatetimePast(r)
+    (r) => (r.status === 'confirmed' || r.status === 'pending' || r.status === 'pending_confirmation' || r.status === 'alternative_offered') && !isDatetimePast(r)
   );
   const past = reservations.filter(
     (r) => r.status === 'visited' || r.status === 'cancelled' || r.status === 'completed'
-      || r.status === 'rejected' || r.status === 'alternative_offered'
-      || ((r.status === 'confirmed' || r.status === 'pending' || r.status === 'pending_confirmation') && isDatetimePast(r))
+      || r.status === 'rejected'
+      || ((r.status === 'confirmed' || r.status === 'pending' || r.status === 'pending_confirmation' || r.status === 'alternative_offered') && isDatetimePast(r))
   );
 
   // Keep the global badge count in sync
