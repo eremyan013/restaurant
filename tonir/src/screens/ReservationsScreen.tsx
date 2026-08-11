@@ -128,12 +128,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
           onPress: async () => {
             setDecliningId(reservationId);
             try {
-              const { error } = await supabase
-                .from('reservations')
-                .update({ status: 'cancelled' })
-                .eq('id', reservationId);
-              if (error) throw error;
-              retry();
+              await cancel(reservationId);
             } catch {
               Alert.alert(tr('alt_err_title'), tr('alt_err_decline'));
             } finally {
