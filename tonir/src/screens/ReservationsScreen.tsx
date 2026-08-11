@@ -319,7 +319,12 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                   </View>
 
                   {res.status === 'alternative_offered' && (
-                    <View style={[styles.altPanel, { borderTopColor: t.border }]}>
+                    <View
+                      style={[styles.altPanel, { borderTopColor: t.border }]}
+                      // Stop click from bubbling to outer card Pressable on web
+                      // @ts-ignore
+                      onClick={(e: any) => e.stopPropagation()}
+                    >
                       <Text style={[styles.altHeader, { color: t.text }]}>
                         {tr('alt_header')}
                       </Text>
