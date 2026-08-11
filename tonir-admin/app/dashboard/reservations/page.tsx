@@ -17,6 +17,7 @@ import { ReservationStatusButtons } from '@/components/reservation-status-button
 import { requirePagePermission } from '@/lib/permissions'
 import { SlaCountdown } from './sla-countdown'
 import { rejectReservation, assignAgent } from './actions'
+import { ReservationsRealtimeRefresher } from './realtime-refresher'
 
 const STATUS_CLASSES: Record<string, string> = {
   pending:              'bg-amber-100 text-amber-800',
@@ -335,6 +336,7 @@ export default async function ReservationsPage({
 
   return (
     <div>
+      <ReservationsRealtimeRefresher />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-zinc-900">Reservations</h1>
         <div className="flex items-center gap-3">
