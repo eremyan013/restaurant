@@ -68,8 +68,14 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
     if (userId) fetchMyReviews(userId).then((ids) => setRatedIds(new Set(ids)));
   }, [userId]);
 
-  // Fetch alternatives for reservations with status 'alternative_offered'
+  // Stable string of alternative_offered IDs — avoids infinite loop from new array refs
+  const altOfferedIds = useMemo(
+    () => (upcoming ?? []).filter((r) => r.status === 'alternative_offered').map((r) => r.id).join(','),
+    [upcoming]
+  );
+
   useEffect(() => {
+    if (!altOfferedIds) return;
     const altReservations = (upcoming ?? []).filter(
       (r) => r.status === 'alternative_offered' && !alternativesMap[r.id]
     );
@@ -86,7 +92,8 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
           setLoadingAlts((prev) => ({ ...prev, [res.id]: false }));
         });
     }
-  }, [upcoming]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [altOfferedIds]);
 
   async function handleAcceptAlternative(reservationId: string, altId: string) {
     setAcceptingAlt(altId);
