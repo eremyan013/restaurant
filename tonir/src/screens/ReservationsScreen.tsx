@@ -60,6 +60,7 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
   const [alternativesMap, setAlternativesMap] = useState<Record<string, any[]>>({})
   const [loadingAlts, setLoadingAlts] = useState<Record<string, boolean>>({})
   const [acceptingAlt, setAcceptingAlt] = useState<string | null>(null)
+  const [confirmingDecline, setConfirmingDecline] = useState<string | null>(null)
   const [decliningId, setDecliningId] = useState<string | null>(null)
 
   // Rating modal state
@@ -116,32 +117,20 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
     }
   }
 
-  function handleDeclineAll(reservationId: string) {
-    Alert.alert(
-      tr('alt_decline_title'),
-      tr('alt_decline_sub'),
-      [
-        { text: tr('res_cancel_back'), style: 'cancel' },
-        {
-          text: tr('alt_decline_confirm'),
-          style: 'destructive',
-          onPress: async () => {
-            setDecliningId(reservationId);
-            try {
-              const { error } = await supabase.functions.invoke('decline-alternatives', {
-                body: { reservation_id: reservationId },
-              });
-              if (error) throw error;
-              retry();
-            } catch {
-              Alert.alert(tr('alt_err_title'), tr('alt_err_decline'));
-            } finally {
-              setDecliningId(null);
-            }
-          },
-        },
-      ]
-    );
+  async function confirmDecline(reservationId: string) {
+    setConfirmingDecline(null);
+    setDecliningId(reservationId);
+    try {
+      const { error } = await supabase.functions.invoke('decline-alternatives', {
+        body: { reservation_id: reservationId },
+      });
+      if (error) throw error;
+      retry();
+    } catch {
+      Alert.alert(tr('alt_err_title'), tr('alt_err_decline'));
+    } finally {
+      setDecliningId(null);
+    }
   }
 
   useFocusEffect(useCallback(() => { refetchProfile(); }, [refetchProfile]));
@@ -341,36 +330,50 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                                 <Text style={[styles.altNote, { color: t.textMute }]}>{alt.note}</Text>
                               ) : null}
                             </View>
-                            <View style={{ flexDirection: 'row', gap: 6 }}>
-                              <TouchableOpacity
-                                onPress={() => handleDeclineAll(res.id)}
-                                disabled={decliningId === res.id || acceptingAlt !== null}
-                                style={styles.altDeclineBtn}
-                                accessibilityRole="button"
-                                accessibilityLabel={tr('alt_decline')}
-                              >
-                                {decliningId === res.id ? (
-                                  <ActivityIndicator size="small" color={COLORS.danger} />
-                                ) : (
-                                  <Text style={[styles.altDeclineText, { color: COLORS.danger }]}>
-                                    {tr('alt_decline')}
-                                  </Text>
-                                )}
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                onPress={() => handleAcceptAlternative(res.id, alt.id)}
-                                disabled={acceptingAlt !== null || decliningId !== null}
-                                style={styles.altAcceptBtn}
-                                accessibilityRole="button"
-                                accessibilityLabel={tr('alt_accept')}
-                              >
-                                {acceptingAlt === alt.id ? (
-                                  <ActivityIndicator size="small" color="#fff" />
-                                ) : (
-                                  <Text style={styles.altAcceptText}>{tr('alt_accept')}</Text>
-                                )}
-                              </TouchableOpacity>
-                            </View>
+                            {confirmingDecline === res.id ? (
+                              <View style={{ flexDirection: 'row', gap: 6 }}>
+                                <TouchableOpacity
+                                  onPress={() => setConfirmingDecline(null)}
+                                  style={styles.altDeclineBtn}
+                                >
+                                  <Text style={[styles.altDeclineText, { color: t.textMute }]}>{tr('res_cancel_back')}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  onPress={() => confirmDecline(res.id)}
+                                  disabled={decliningId === res.id}
+                                  style={[styles.altDeclineBtn, { backgroundColor: COLORS.danger, borderColor: COLORS.danger }]}
+                                >
+                                  {decliningId === res.id
+                                    ? <ActivityIndicator size="small" color="#fff" />
+                                    : <Text style={[styles.altDeclineText, { color: '#fff' }]}>{tr('alt_decline_confirm')}</Text>
+                                  }
+                                </TouchableOpacity>
+                              </View>
+                            ) : (
+                              <View style={{ flexDirection: 'row', gap: 6 }}>
+                                <TouchableOpacity
+                                  onPress={() => setConfirmingDecline(res.id)}
+                                  disabled={decliningId !== null || acceptingAlt !== null}
+                                  style={styles.altDeclineBtn}
+                                  accessibilityRole="button"
+                                  accessibilityLabel={tr('alt_decline')}
+                                >
+                                  <Text style={[styles.altDeclineText, { color: COLORS.danger }]}>{tr('alt_decline')}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  onPress={() => handleAcceptAlternative(res.id, alt.id)}
+                                  disabled={acceptingAlt !== null || decliningId !== null}
+                                  style={styles.altAcceptBtn}
+                                  accessibilityRole="button"
+                                  accessibilityLabel={tr('alt_accept')}
+                                >
+                                  {acceptingAlt === alt.id
+                                    ? <ActivityIndicator size="small" color="#fff" />
+                                    : <Text style={styles.altAcceptText}>{tr('alt_accept')}</Text>
+                                  }
+                                </TouchableOpacity>
+                              </View>
+                            )}
                           </View>
                         ))
                       )}
