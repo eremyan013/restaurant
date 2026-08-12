@@ -234,6 +234,9 @@ export interface Database {
           language: string;
           created_at: string;
           updated_at: string;
+          notif_booking_updates: boolean;
+          notif_reminders: boolean;
+          notif_review_prompt: boolean;
         };
         Insert: {
           id: string;
@@ -252,6 +255,9 @@ export interface Database {
           language?: string;
           created_at?: string;
           updated_at?: string;
+          notif_booking_updates?: boolean;
+          notif_reminders?: boolean;
+          notif_review_prompt?: boolean;
         };
         Update: {
           id?: string;
@@ -270,6 +276,9 @@ export interface Database {
           language?: string;
           created_at?: string;
           updated_at?: string;
+          notif_booking_updates?: boolean;
+          notif_reminders?: boolean;
+          notif_review_prompt?: boolean;
         };
       };
 

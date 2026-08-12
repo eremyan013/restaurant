@@ -44,11 +44,11 @@ async function setStatus(id: string, status: ReservationRow['status']) {
   type ResRow = {
     user_id: string; venue_id: string; date: string; time: string; status: string; yel_earned: string | null; rejection_reason: string | null
     venues: { name: string } | null
-    profiles: { push_token: string | null; language: string | null } | null
+    profiles: { push_token: string | null; language: string | null; notif_booking_updates: boolean | null; notif_reminders: boolean | null; notif_review_prompt: boolean | null } | null
   }
   const { data: res } = await supabase
     .from('reservations')
-    .select('user_id, venue_id, date, time, status, yel_earned, rejection_reason, venues(name), profiles!reservations_user_id_fkey(push_token, language)')
+    .select('user_id, venue_id, date, time, status, yel_earned, rejection_reason, venues(name), profiles!reservations_user_id_fkey(push_token, language, notif_booking_updates, notif_reminders, notif_review_prompt)')
     .eq('id', id)
     .single() as unknown as { data: ResRow | null }
 
@@ -85,55 +85,79 @@ async function setStatus(id: string, status: ReservationRow['status']) {
     let title: string
     let body: string
     if (status === 'confirmed') {
-      if (lang === 'hy') {
-        title = '✅ Ամրագրումն հաստատված է'
-        body  = `Ձեր սեղանն ամրագրված է ${venueName}-ում, ${res.date}-ին ժամը ${res.time}-ին։`
-      } else if (lang === 'ru') {
-        title = '✅ Бронирование подтверждено'
-        body  = `Ваш столик в ${venueName} ${res.date} в ${res.time} подтверждён!`
-      } else {
-        title = '✅ Booking Confirmed'
-        body  = `Your table at ${venueName} on ${res.date} at ${res.time} is confirmed!`
+      if (res.profiles.notif_booking_updates !== false) {
+        if (lang === 'hy') {
+          title = '✅ Ամրագրումն հաստատված է'
+          body  = `Ձեր սեղանն ամրագրված է ${venueName}-ում, ${res.date}-ին ժամը ${res.time}-ին։`
+        } else if (lang === 'ru') {
+          title = '✅ Бронирование подтверждено'
+          body  = `Ваш столик в ${venueName} ${res.date} в ${res.time} подтверждён!`
+        } else {
+          title = '✅ Booking Confirmed'
+          body  = `Your table at ${venueName} on ${res.date} at ${res.time} is confirmed!`
+        }
+        await fetch('https://exp.host/--/api/v2/push/send', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ to: res.profiles.push_token, title, body, sound: 'default' }),
+        }).catch(() => {})
       }
     } else if (status === 'rejected') {
-      if (lang === 'hy') {
-        title = '❌ Ամրագրումն անհնար է'
-        body  = res.rejection_reason ?? `Ցավոք, ${venueName}-ը հասանելի չէ ձեր ցանկալի ժամին։`
-      } else if (lang === 'ru') {
-        title = '❌ Бронирование недоступно'
-        body  = res.rejection_reason ?? `К сожалению, ${venueName} недоступен в запрошенное время.`
-      } else {
-        title = '❌ Reservation Unavailable'
-        body  = res.rejection_reason ?? `Unfortunately, ${venueName} is not available at your requested time.`
+      if (res.profiles.notif_booking_updates !== false) {
+        if (lang === 'hy') {
+          title = '❌ Ամրագրումն անհնար է'
+          body  = res.rejection_reason ?? `Ցավոք, ${venueName}-ը հասանելի չէ ձեր ցանկալի ժամին։`
+        } else if (lang === 'ru') {
+          title = '❌ Бронирование недоступно'
+          body  = res.rejection_reason ?? `К сожалению, ${venueName} недоступен в запрошенное время.`
+        } else {
+          title = '❌ Reservation Unavailable'
+          body  = res.rejection_reason ?? `Unfortunately, ${venueName} is not available at your requested time.`
+        }
+        await fetch('https://exp.host/--/api/v2/push/send', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ to: res.profiles.push_token, title, body, sound: 'default' }),
+        }).catch(() => {})
       }
     } else if (status === 'visited') {
-      if (lang === 'hy') {
-        title = 'Ինչպե՞ս անցավ այցը ⭐'
-        body  = `Դուք այցելեցիք ${venueName}։ Կիսվեք տպավորություններով եւ թողեք կարծիք։`
-      } else if (lang === 'ru') {
-        title = 'Как прошёл визит? ⭐'
-        body  = `Вы посетили ${venueName}! Поделитесь впечатлениями и оставьте отзыв.`
-      } else {
-        title = 'How was your visit? ⭐'
-        body  = `You visited ${venueName}! Share your experience and leave a review.`
+      if (res.profiles.notif_review_prompt !== false) {
+        if (lang === 'hy') {
+          title = 'Ինչպե՞ս անցավ այցը ⭐'
+          body  = `Դուք այցելեցիք ${venueName}։ Կիսվեք տպավորություններով եւ թողեք կարծիք։`
+        } else if (lang === 'ru') {
+          title = 'Как прошёл визит? ⭐'
+          body  = `Вы посетили ${venueName}! Поделитесь впечатлениями и оставьте отзыв.`
+        } else {
+          title = 'How was your visit? ⭐'
+          body  = `You visited ${venueName}! Share your experience and leave a review.`
+        }
+        await fetch('https://exp.host/--/api/v2/push/send', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ to: res.profiles.push_token, title, body, sound: 'default' }),
+        }).catch(() => {})
       }
     } else {
-      if (lang === 'hy') {
-        title = '❌ Ամրագրումն չեղարկված է'
-        body  = `Ձեր ամրագրումն ${venueName}-ում ${res.date}-ին չեղարկված է։`
-      } else if (lang === 'ru') {
-        title = '❌ Бронирование отменено'
-        body  = `Ваше бронирование в ${venueName} ${res.date} отменено.`
-      } else {
-        title = '❌ Booking Cancelled'
-        body  = `Your reservation at ${venueName} on ${res.date} has been cancelled.`
+      // cancelled
+      if (res.profiles.notif_booking_updates !== false) {
+        if (lang === 'hy') {
+          title = '❌ Ամրագրումն չեղարկված է'
+          body  = `Ձեր ամրագրումն ${venueName}-ում ${res.date}-ին չեղարկված է։`
+        } else if (lang === 'ru') {
+          title = '❌ Бронирование отменено'
+          body  = `Ваше бронирование в ${venueName} ${res.date} отменено.`
+        } else {
+          title = '❌ Booking Cancelled'
+          body  = `Your reservation at ${venueName} on ${res.date} has been cancelled.`
+        }
+        await fetch('https://exp.host/--/api/v2/push/send', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ to: res.profiles.push_token, title, body, sound: 'default' }),
+        }).catch(() => {})
       }
     }
-    await fetch('https://exp.host/--/api/v2/push/send', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ to: res.profiles.push_token, title, body, sound: 'default' }),
-    }).catch(() => {})
   }
 
   revalidatePath('/dashboard/reservations')
@@ -524,11 +548,11 @@ export async function offerAlternatives(
   type ResRow = {
     user_id: string; venue_id: string; status: string
     venues: { name: string } | null
-    profiles: { push_token: string | null; language: string | null } | null
+    profiles: { push_token: string | null; language: string | null; notif_booking_updates: boolean | null } | null
   }
   const { data: res } = await supabase
     .from('reservations')
-    .select('user_id, venue_id, status, venues(name), profiles!reservations_user_id_fkey(push_token, language)')
+    .select('user_id, venue_id, status, venues(name), profiles!reservations_user_id_fkey(push_token, language, notif_booking_updates)')
     .eq('id', reservationId)
     .single() as unknown as { data: ResRow | null }
 
@@ -557,7 +581,7 @@ export async function offerAlternatives(
   await logActivity(admin, 'offer_alternatives', 'reservation', reservationId,
     `${res.venues?.name ?? ''} – offered ${alternatives.length} alternative(s)`)
 
-  if (res?.profiles?.push_token) {
+  if (res?.profiles?.push_token && res.profiles.notif_booking_updates !== false) {
     const lang = res.profiles.language ?? 'en'
     const venueName = res.venues?.name ?? 'the restaurant'
     let title: string, body: string

@@ -97,12 +97,13 @@ Deno.serve(async (req: Request) => {
     ;(async () => {
       try {
         const [{ data: profile }, { data: venue }] = await Promise.all([
-          adminClient.from('profiles').select('push_token, language').eq('id', user.id).maybeSingle(),
+          adminClient.from('profiles').select('push_token, language, notif_booking_updates').eq('id', user.id).maybeSingle(),
           adminClient.from('venues').select('name').eq('id', venue_id).maybeSingle(),
         ])
-        const p = profile as { push_token: string | null; language: string | null } | null
+        const p = profile as { push_token: string | null; language: string | null; notif_booking_updates: boolean | null } | null
         const token = p?.push_token
         if (!token) return
+        if (p?.notif_booking_updates === false) return
         const lang = p?.language ?? 'en'
         const venueName = (venue as { name: string } | null)?.name ?? ''
         let pushTitle: string

@@ -178,7 +178,7 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
   const SETTINGS: Array<{ icon: IconName; label: string; onPress: () => void }> = [
     { icon: 'user',    label: tr('prof_settings_personal'), onPress: openEdit },
     { icon: 'pin',     label: tr('prof_settings_address'),  onPress: () => { haptic(); Alert.alert(tr('prof_soon_title'), trf('prof_soon_sub', { section: tr('prof_settings_address') })); } },
-    { icon: 'sparkle', label: tr('prof_settings_notifs'),   onPress: () => { haptic(); Alert.alert(tr('prof_soon_title'), trf('prof_soon_sub', { section: tr('prof_settings_notifs') })); } },
+    { icon: 'sparkle', label: tr('prof_settings_notifs'),   onPress: () => { haptic(); (navigation as any).navigate('NotificationSettings'); } },
     { icon: 'chat',    label: tr('prof_settings_help'),     onPress: () => { haptic(); Alert.alert(tr('prof_soon_title'), trf('prof_soon_sub', { section: tr('prof_settings_help') })); } },
     { icon: 'sparkle', label: tr('prof_settings_terms'),    onPress: () => { haptic(); (navigation as any).navigate('Terms'); } },
   ];

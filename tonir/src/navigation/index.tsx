@@ -48,6 +48,7 @@ import { PhoneVerifyScreen } from '../screens/PhoneVerifyScreen';
 import { ReservationActionScreen } from '../screens/ReservationActionScreen';
 import { CategoryScreen } from '../screens/CategoryScreen';
 import { TermsScreen } from '../screens/TermsScreen';
+import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -70,6 +71,7 @@ export type RootStackParamList = {
   Category: { sectionId: string; sectionName: string };
   ReservationAction: { token: string; action: 'confirm' | 'cancel' };
   Terms: undefined;
+  NotificationSettings: undefined;
 };
 
 export type TabParamList = {
@@ -280,6 +282,11 @@ export function AppNavigator() {
             <Stack.Screen
               name="Terms"
               component={TermsScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="NotificationSettings"
+              component={NotificationSettingsScreen}
               options={{ animation: 'slide_from_right' }}
             />
           </>
