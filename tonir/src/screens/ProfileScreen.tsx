@@ -11,6 +11,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { useStore } from '../store';
 import { useProfile } from '../hooks/useProfile';
+import { useFriends } from '../hooks/useFriends';
 import { useTranslation } from '../hooks/useTranslation';
 import { PALETTES, Palette, FONTS, COLORS } from '../theme';
 import { supabase } from '../lib/supabase';
@@ -34,7 +35,9 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
   const insets = useSafeAreaInsets();
   const { profile, loading, refetch } = useProfile();
   const { tr, tra, trf } = useTranslation();
+  const { friendCount } = useFriends();
   const [refreshing, setRefreshing] = useState(false);
+  const [profileVisible, setProfileVisible] = useState(false);
 
   const [tierUpVisible, setTierUpVisible] = useState(false);
   const [tierUpName, setTierUpName] = useState('');
@@ -65,6 +68,19 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
   }, [profile?.tier_level]);
 
   useFocusEffect(useCallback(() => { refetch(); }, [refetch]));
+
+  useEffect(() => {
+    if (!userId) return;
+    supabase.from('profiles').select('profile_visible').eq('id', userId).single()
+      .then(({ data }) => { if (data) setProfileVisible((data as any).profile_visible); });
+  }, [userId]);
+
+  async function toggleVisibility() {
+    haptic();
+    const newVal = !profileVisible;
+    setProfileVisible(newVal);
+    await supabase.from('profiles').update({ profile_visible: newVal } as any).eq('id', userId);
+  }
 
   const [editVisible, setEditVisible] = useState(false);
   const [editName, setEditName] = useState('');
@@ -175,9 +191,11 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
     { icon: 'calendar', label: tr('prof_qa_calendar'), sub: tr('prof_qa_calendar_sub'), route: 'Reservations' },
   ];
 
-  const SETTINGS: Array<{ icon: IconName; label: string; onPress: () => void }> = [
+  const SETTINGS: Array<{ icon: IconName; label: string; right?: string; onPress: () => void }> = [
     { icon: 'user',    label: tr('prof_settings_personal'), onPress: openEdit },
     { icon: 'pin',     label: tr('prof_settings_address'),  onPress: () => { haptic(); Alert.alert(tr('prof_soon_title'), trf('prof_soon_sub', { section: tr('prof_settings_address') })); } },
+    { icon: 'users',   label: tr('prof_settings_friends'),  onPress: () => { haptic(); (navigation as any).navigate('Friends'); } },
+    { icon: 'eye',     label: tr('prof_visibility_label'),  right: profileVisible ? tr('prof_visibility_public') : tr('prof_visibility_private'), onPress: toggleVisibility },
     { icon: 'sparkle', label: tr('prof_settings_notifs'),   onPress: () => { haptic(); (navigation as any).navigate('NotificationSettings'); } },
     { icon: 'chat',    label: tr('prof_settings_help'),     onPress: () => { haptic(); Alert.alert(tr('prof_soon_title'), trf('prof_soon_sub', { section: tr('prof_settings_help') })); } },
     { icon: 'sparkle', label: tr('prof_settings_terms'),    onPress: () => { haptic(); (navigation as any).navigate('Terms'); } },
@@ -242,6 +260,11 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
           <View style={{ flex: 1 }}>
             <Text style={[styles.userName, { color: t.text }]}>{user.name}</Text>
             {!!user.email && <Text style={[styles.userEmail, { color: t.textMute }]}>{user.email}</Text>}
+            {friendCount > 0 && (
+              <Text style={[styles.userEmail, { color: t.textMute }]}>
+                {trf('prof_friends_count', { n: String(friendCount) })}
+              </Text>
+            )}
             {!!(user as any).phone && (
               <Text style={[styles.userEmail, { color: t.textMute }]}>
                 {tr('prof_phone')}: <Text style={{ fontFamily: FONTS.semiBold, fontWeight: '600' }}>{(user as any).phone}</Text>
@@ -345,7 +368,10 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
                 <Icon name={s.icon} size={17} color={t.primary} strokeWidth={1.75} />
               </View>
               <Text style={[styles.settingsLabel, { color: t.text }]}>{s.label}</Text>
-              <Icon name="chevR" size={16} color={t.textFaint} />
+              {s.right
+                ? <Text style={[styles.settingsRight, { color: t.textMute }]}>{s.right}</Text>
+                : <Icon name="chevR" size={16} color={t.textFaint} />
+              }
             </Pressable>
           ))}
         </View>
@@ -726,6 +752,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   settingsLabel: { flex: 1, fontSize: 14, fontFamily: FONTS.medium, fontWeight: '500' },
+  settingsRight: { fontSize: 13, fontFamily: FONTS.regular },
   appearanceCard: {
     borderRadius: 18,
     borderWidth: 1,

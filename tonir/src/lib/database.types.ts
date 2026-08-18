@@ -237,6 +237,9 @@ export interface Database {
           notif_booking_updates: boolean;
           notif_reminders: boolean;
           notif_review_prompt: boolean;
+          push_token: string | null;
+          profile_visible: boolean;
+          notif_friend_activity: boolean;
         };
         Insert: {
           id: string;
@@ -258,6 +261,9 @@ export interface Database {
           notif_booking_updates?: boolean;
           notif_reminders?: boolean;
           notif_review_prompt?: boolean;
+          push_token?: string | null;
+          profile_visible?: boolean;
+          notif_friend_activity?: boolean;
         };
         Update: {
           id?: string;
@@ -279,6 +285,9 @@ export interface Database {
           notif_booking_updates?: boolean;
           notif_reminders?: boolean;
           notif_review_prompt?: boolean;
+          push_token?: string | null;
+          profile_visible?: boolean;
+          notif_friend_activity?: boolean;
         };
       };
 
@@ -726,6 +735,57 @@ export interface Database {
         }>;
       };
 
+      friendships: {
+        Row: {
+          id:           string;
+          requester_id: string;
+          addressee_id: string;
+          status:       'pending' | 'accepted' | 'declined';
+          created_at:   string;
+          updated_at:   string;
+        };
+        Insert: {
+          id?:           string;
+          requester_id:  string;
+          addressee_id:  string;
+          status?:       'pending' | 'accepted' | 'declined';
+          created_at?:   string;
+          updated_at?:   string;
+        };
+        Update: {
+          status?:     'pending' | 'accepted' | 'declined';
+          updated_at?: string;
+        };
+      };
+
+      friend_activity_feed: {
+        Row: {
+          id:          string;
+          actor_id:    string;
+          event_type:  'review' | 'visited';
+          venue_id:    string | null;
+          venue_name:  string | null;
+          rating:      number | null;
+          review_text: string | null;
+          visited_at:  string | null;
+          source_id:   string;
+          created_at:  string;
+        };
+        Insert: {
+          id?:          string;
+          actor_id:     string;
+          event_type:   'review' | 'visited';
+          venue_id?:    string | null;
+          venue_name?:  string | null;
+          rating?:      number | null;
+          review_text?: string | null;
+          visited_at?:  string | null;
+          source_id:    string;
+          created_at?:  string;
+        };
+        Update: Record<string, never>;
+      };
+
       reservation_alternatives: {
         Row: {
           id: string;
@@ -793,3 +853,5 @@ export type OccasionRow           = Database['public']['Tables']['occasions']['R
 export type BannerRow             = Database['public']['Tables']['banners']['Row'];
 export type VenuePhotoRow         = Database['public']['Tables']['venue_photos']['Row'];
 export type ReservationAlternativeRow = Database['public']['Tables']['reservation_alternatives']['Row'];
+export type FriendshipRow         = Database['public']['Tables']['friendships']['Row'];
+export type FriendActivityFeedRow = Database['public']['Tables']['friend_activity_feed']['Row'];

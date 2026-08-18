@@ -16,6 +16,7 @@ type Prefs = {
   notif_booking_updates: boolean
   notif_reminders: boolean
   notif_review_prompt: boolean
+  notif_friend_activity: boolean
 }
 
 export function NotificationSettingsScreen({ navigation }: { navigation: Nav }) {
@@ -29,7 +30,7 @@ export function NotificationSettingsScreen({ navigation }: { navigation: Nav }) 
     if (!userId) return
     supabase
       .from('profiles')
-      .select('notif_booking_updates, notif_reminders, notif_review_prompt')
+      .select('notif_booking_updates, notif_reminders, notif_review_prompt, notif_friend_activity')
       .eq('id', userId)
       .single()
       .then(({ data }) => {
@@ -54,6 +55,7 @@ export function NotificationSettingsScreen({ navigation }: { navigation: Nav }) 
     { col: 'notif_booking_updates', labelKey: 'notif_settings_bookings',  subKey: 'notif_settings_bookings_sub'  },
     { col: 'notif_reminders',       labelKey: 'notif_settings_reminders', subKey: 'notif_settings_reminders_sub' },
     { col: 'notif_review_prompt',   labelKey: 'notif_settings_reviews',   subKey: 'notif_settings_reviews_sub'   },
+    { col: 'notif_friend_activity', labelKey: 'notif_settings_friends',   subKey: 'notif_settings_friends_sub'   },
   ]
 
   return (

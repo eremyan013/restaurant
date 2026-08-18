@@ -49,6 +49,9 @@ import { ReservationActionScreen } from '../screens/ReservationActionScreen';
 import { CategoryScreen } from '../screens/CategoryScreen';
 import { TermsScreen } from '../screens/TermsScreen';
 import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
+import { FriendsScreen } from '../screens/FriendsScreen';
+import { ActivityFeedScreen } from '../screens/ActivityFeedScreen';
+import { PublicProfileScreen } from '../screens/PublicProfileScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -72,6 +75,9 @@ export type RootStackParamList = {
   ReservationAction: { token: string; action: 'confirm' | 'cancel' };
   Terms: undefined;
   NotificationSettings: undefined;
+  Friends: undefined;
+  ActivityFeed: undefined;
+  PublicProfile: { userId: string };
 };
 
 export type TabParamList = {
@@ -289,6 +295,9 @@ export function AppNavigator() {
               component={NotificationSettingsScreen}
               options={{ animation: 'slide_from_right' }}
             />
+            <Stack.Screen name="Friends" component={FriendsScreen} options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="ActivityFeed" component={ActivityFeedScreen} options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="PublicProfile" component={PublicProfileScreen} options={{ animation: 'slide_from_right' }} />
           </>
         ) : (
           // ── Not authenticated / pending phone verification ──

@@ -24,6 +24,10 @@ interface AppState {
   upcomingCount: number;
   setUpcomingCount: (n: number) => void;
 
+  // Friend request badge count (not persisted)
+  friendRequestCount: number;
+  setFriendRequestCount: (n: number) => void;
+
   // Language
   language: Lang;
   setLanguage: (l: Lang) => void;
@@ -84,6 +88,9 @@ export const useStore = create<AppState>()(
 
       upcomingCount: 0,
       setUpcomingCount: (upcomingCount) => set({ upcomingCount }),
+
+      friendRequestCount: 0,
+      setFriendRequestCount: (friendRequestCount) => set({ friendRequestCount }),
 
       language: 'hy' as Lang,
       setLanguage: (language) => set({ language }),
