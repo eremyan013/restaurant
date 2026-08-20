@@ -199,7 +199,7 @@ async function saveTierPerks(formData: FormData): Promise<{ ok: boolean; error?:
     if (rows.length > 0) await supabase.from('tier_perks').insert(rows)
   }
 
-  await logActivity(actor, 'update_tier_perks', 'tier_perks', null, null, { levels_updated: levels })
+  await logActivity(actor, 'update_tier_perks', 'tier_perks', '', '', { levels_updated: levels })
   revalidatePath('/dashboard/yel')
   return { ok: true }
 }
