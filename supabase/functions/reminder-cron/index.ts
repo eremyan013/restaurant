@@ -18,16 +18,26 @@ function yerevanTomorrow(): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
 }
 
+function yerevanYesterday(): string {
+  const d = new Date(Date.now() + YEREVAN_OFFSET_MS - 24 * 60 * 60 * 1000)
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+}
+
 function yerevanToUtcMs(dateIso: string, time: string): number {
   const [h, m] = time.split(':').map(Number)
   return Date.parse(`${dateIso}T00:00:00Z`) - YEREVAN_OFFSET_MS + (h * 60 + m) * 60 * 1000
 }
 
-async function sendPush(token: string, title: string, body: string): Promise<void> {
+async function sendPush(
+  token: string,
+  title: string,
+  body: string,
+  data?: Record<string, string>,
+): Promise<void> {
   await fetch('https://exp.host/--/api/v2/push/send', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({ to: token, title, body, sound: 'default' }),
+    body: JSON.stringify({ to: token, title, body, sound: 'default', ...(data ? { data } : {}) }),
   }).catch((err) => { console.error('Push send failed:', err) })
 }
 
@@ -38,11 +48,13 @@ Deno.serve(async (_req: Request) => {
   )
 
   const { hour, dateIso: todayIso } = yerevanNow()
-  const tomorrowIso = yerevanTomorrow()
+  const tomorrowIso  = yerevanTomorrow()
+  const yesterdayIso = yerevanYesterday()
   const nowMs = Date.now()
 
   let dayBeforeSent = 0, dayBeforeFailed = 0
   let twoHourSent   = 0, twoHourFailed   = 0
+  let bookAgainSent = 0, bookAgainFailed = 0
 
   // --- Block 1: Day-before reminder (18:00–19:59 Yerevan) ---
   if (hour >= 18 && hour < 20) {
@@ -134,7 +146,51 @@ Deno.serve(async (_req: Request) => {
     }
   }
 
-  const summary = { day_before: { sent: dayBeforeSent, failed: dayBeforeFailed }, two_hour: { sent: twoHourSent, failed: twoHourFailed } }
+  // --- Block 3: Book-again nudge (09:00–09:59 Yerevan) ---
+  if (hour >= 9 && hour < 10) {
+    const { data: rows3, error: err3 } = await admin
+      .from('reservations')
+      .select(`id, venue_id, profiles!reservations_user_id_fkey(push_token, language, notif_reminders), venues(name)`)
+      .eq('status', 'visited')
+      .eq('date_iso', yesterdayIso)
+      .eq('book_again_nudge_sent', false)
+
+    if (err3) {
+      console.error('book_again query failed:', err3.message)
+    } else {
+      for (const row of rows3 ?? []) {
+        const profile   = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
+        const venue     = Array.isArray(row.venues)   ? row.venues[0]   : row.venues
+        const p         = profile as { push_token: string | null; language: string | null; notif_reminders: boolean | null } | null
+        const token     = p?.push_token
+        const lang      = p?.language ?? 'en'
+        const venueId   = row.venue_id as string
+        const venueName = (venue as { name: string } | null)?.name ?? 'the restaurant'
+        if (!token) continue
+
+        if (p?.notif_reminders !== false) {
+          let pushTitle: string, pushBody: string
+          if (lang === 'hy') {
+            pushTitle = 'Կրկի՞ն այցելեք ☕'
+            pushBody  = `Հուսով ենք, որ հավանեցիք ${venueName}-ը։ Ամրագրե՛ք հաջորդ այցը։`
+          } else if (lang === 'ru') {
+            pushTitle = 'Вернитесь снова ☕'
+            pushBody  = `Надеемся, вам понравилось в ${venueName}! Забронируйте следующий визит.`
+          } else {
+            pushTitle = 'Come back again ☕'
+            pushBody  = `Hope you loved ${venueName}! Book your next visit.`
+          }
+          await sendPush(token, pushTitle, pushBody, { type: 'book_again', venue_id: venueId })
+        }
+
+        const { error: upErr } = await admin.from('reservations').update({ book_again_nudge_sent: true }).eq('id', row.id)
+        if (upErr) { console.error(`book_again update failed ${row.id}:`, upErr.message); bookAgainFailed++ }
+        else bookAgainSent++
+      }
+    }
+  }
+
+  const summary = { day_before: { sent: dayBeforeSent, failed: dayBeforeFailed }, two_hour: { sent: twoHourSent, failed: twoHourFailed }, book_again: { sent: bookAgainSent, failed: bookAgainFailed } }
   console.log('Reminder cron finished:', JSON.stringify(summary))
   return new Response(JSON.stringify(summary), { status: 200, headers: { 'Content-Type': 'application/json' } })
 })

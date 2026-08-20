@@ -148,6 +148,10 @@ export interface Database {
           rejection_reason: string | null;
           sla_deadline: string | null;
           agent_id: string | null;
+          reminder_day_before_sent: boolean;
+          reminder_2h_sent: boolean;
+          sla_alert_sent_at: string | null;
+          book_again_nudge_sent: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -169,6 +173,10 @@ export interface Database {
           rejection_reason?: string | null;
           sla_deadline?: string | null;
           agent_id?: string | null;
+          reminder_day_before_sent?: boolean;
+          reminder_2h_sent?: boolean;
+          sla_alert_sent_at?: string | null;
+          book_again_nudge_sent?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -190,6 +198,10 @@ export interface Database {
           rejection_reason?: string | null;
           sla_deadline?: string | null;
           agent_id?: string | null;
+          reminder_day_before_sent?: boolean;
+          reminder_2h_sent?: boolean;
+          sla_alert_sent_at?: string | null;
+          book_again_nudge_sent?: boolean;
           created_at?: string;
           updated_at?: string;
         };

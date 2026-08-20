@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator, Platform } from 'react-native';
@@ -190,6 +190,7 @@ const linking = {
 export function AppNavigator() {
   const { theme: t, pendingPhoneVerification, userId, sessionChecked, language } = useStore();
   const [seenOnboarding, setSeenOnboarding] = useState<boolean | null>(null);
+  const navigationRef = React.useRef<NavigationContainerRef<RootStackParamList>>(null);
 
   useEffect(() => {
     // Check existing session and remember-me flag on mount
@@ -224,6 +225,19 @@ export function AppNavigator() {
     registerPushToken(userId)
   }, [userId, language])
 
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as Record<string, string> | undefined
+      if (!data) return
+      if (data.type === 'book_again' && data.venue_id) {
+        setTimeout(() => {
+          navigationRef.current?.navigate('Booking', { venueId: data.venue_id })
+        }, 100)
+      }
+    })
+    return () => sub.remove()
+  }, [])
+
   // Splash/loading while checking auth or onboarding flag
   if (!sessionChecked || seenOnboarding === null) {
     return (
@@ -234,7 +248,7 @@ export function AppNavigator() {
   }
 
   return (
-    <NavigationContainer linking={linking}>
+    <NavigationContainer ref={navigationRef} linking={linking}>
       <Stack.Navigator key={userId ? 'auth' : 'unauth'} screenOptions={{ headerShown: false }}>
         {userId && !pendingPhoneVerification ? (
           // ── Authenticated ──────────────────────────────
