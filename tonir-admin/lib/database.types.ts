@@ -1088,6 +1088,37 @@ export type Database = {
           },
         ]
       }
+      tier_perks: {
+        Row: {
+          id:         string
+          tier_level: number
+          label_hy:   string
+          label_ru:   string
+          label_en:   string
+          icon_name:  string | null
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?:         string
+          tier_level:  number
+          label_hy?:   string
+          label_ru?:   string
+          label_en?:   string
+          icon_name?:  string | null
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          tier_level?:  number
+          label_hy?:    string
+          label_ru?:    string
+          label_en?:    string
+          icon_name?:   string | null
+          sort_order?:  number
+        }
+        Relationships: []
+      }
       locations: {
         Row: {
           id: string
@@ -1425,6 +1456,7 @@ export type ProfileRow          = T['profiles']['Row']
 export type ReservationRow      = T['reservations']['Row']
 export type ReviewRow           = T['reviews']['Row']
 export type SettingRow          = T['settings']['Row']
+export type TierPerkRow         = T['tier_perks']['Row']
 export type UserPrizeRow        = T['user_prizes']['Row']
 export type OccasionRow         = T['occasions']['Row']
 export type BannerRow           = T['banners']['Row']
