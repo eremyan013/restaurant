@@ -9,6 +9,7 @@ export type ActivityAction =
   | 'toggle_prize'        | 'delete_prize'        | 'create_prize'
   | 'mark_prize_used'
   | 'resolve_concierge'   | 'escalate_concierge'
+  | 'update_tier_perks'
 
 export async function logActivity(
   admin: { id: string; name: string; role: AdminRole } | null,

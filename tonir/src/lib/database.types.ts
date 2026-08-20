@@ -816,6 +816,37 @@ export interface Database {
         };
       };
 
+      tier_perks: {
+        Row: {
+          id:         string;
+          tier_level: number;
+          label_hy:   string;
+          label_ru:   string;
+          label_en:   string;
+          icon_name:  string | null;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?:         string;
+          tier_level:  number;
+          label_hy?:   string;
+          label_ru?:   string;
+          label_en?:   string;
+          icon_name?:  string | null;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          tier_level?:  number;
+          label_hy?:    string;
+          label_ru?:    string;
+          label_en?:    string;
+          icon_name?:   string | null;
+          sort_order?:  number;
+        };
+      };
+
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -855,3 +886,4 @@ export type VenuePhotoRow         = Database['public']['Tables']['venue_photos']
 export type ReservationAlternativeRow = Database['public']['Tables']['reservation_alternatives']['Row'];
 export type FriendshipRow         = Database['public']['Tables']['friendships']['Row'];
 export type FriendActivityFeedRow = Database['public']['Tables']['friend_activity_feed']['Row'];
+export type TierPerkRow           = Database['public']['Tables']['tier_perks']['Row'];

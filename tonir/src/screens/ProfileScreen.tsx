@@ -16,6 +16,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { PALETTES, Palette, FONTS, COLORS } from '../theme';
 import { supabase } from '../lib/supabase';
 import { updateProfile, uploadAvatar, fetchTierSettings } from '../lib/api';
+import { TierPerksCard } from '../components/TierPerksCard';
 import { TIER_COUNT, TIER_NAME_FALLBACKS, TIER_MIN_FALLBACKS, PROFILE_NAME_MAX_LENGTH } from '../lib/constants';
 import { Icon, IconName } from '../components/Icon';
 import { CompositeNavigationProp, useFocusEffect } from '@react-navigation/native';
@@ -330,6 +331,11 @@ export function ProfileScreen({ navigation }: { navigation: Nav }) {
             <Text style={[styles.redeemText, { color: t.primaryDeep }]}>{tr('prof_redeem')}</Text>
           </Pressable>
         </LinearGradient>
+
+        <TierPerksCard
+          currentTierLevel={user.tier_level ?? 1}
+          theme={t}
+        />
 
         {/* Quick actions */}
         <View style={styles.quickGrid}>

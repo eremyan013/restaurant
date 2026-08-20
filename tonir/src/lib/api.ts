@@ -2,7 +2,7 @@ import { supabase as _supabase } from './supabase';
 import { TIER_NAME_FALLBACKS, TIER_MIN_FALLBACKS } from './constants';
 
 const ADMIN_URL = process.env.EXPO_PUBLIC_CONCIERGE_URL?.replace(/\/$/, '');
-import { VenueRow, ReservationRow, ProfileRow, MenuCategoryRow, MenuItemRow, GuideRow, VenueHoursRow, VenueBlockedDateRow, LocationRow, OccasionRow, BannerRow, VenuePhotoRow } from './database.types';
+import { VenueRow, ReservationRow, ProfileRow, MenuCategoryRow, MenuItemRow, GuideRow, VenueHoursRow, VenueBlockedDateRow, LocationRow, OccasionRow, BannerRow, VenuePhotoRow, TierPerkRow } from './database.types';
 
 // Cast to any to escape Supabase TS generic inference issue with this package version.
 // All public functions carry explicit return type annotations for safety.
@@ -547,4 +547,18 @@ export async function fetchVenuePhotos(venueId: string): Promise<VenuePhotoRow[]
     .order('created_at', { ascending: true });
   if (error) throw error;
   return (data ?? []) as VenuePhotoRow[];
+}
+
+// ─────────────────────────────────────────────
+// TIER PERKS
+// ─────────────────────────────────────────────
+
+export async function fetchTierPerks(): Promise<TierPerkRow[]> {
+  const { data, error } = await sb
+    .from('tier_perks')
+    .select('id, tier_level, label_hy, label_ru, label_en, icon_name, sort_order')
+    .order('tier_level', { ascending: true })
+    .order('sort_order', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as TierPerkRow[];
 }

@@ -9,6 +9,7 @@ import { requirePagePermission, assertPermission } from '@/lib/permissions'
 export const metadata: Metadata = { title: 'YEL Points — Tonir Admin' }
 import { YelAdjustForm } from '@/components/yel-adjust-form'
 import { TierSettingsForm } from '@/components/tier-settings-form'
+import { TierPerksSection } from '@/components/tier-perks-section'
 import { logActivity } from '@/lib/log-activity'
 import { calcTierLevel, genYelCode } from '@/lib/yel-logic'
 
@@ -172,6 +173,37 @@ async function saveTierSettings(formData: FormData): Promise<{ ok: boolean; erro
   return { ok: true }
 }
 
+async function saveTierPerks(formData: FormData): Promise<{ ok: boolean; error?: string }> {
+  'use server'
+  const actor = await getCurrentAdmin()
+  if (actor?.role !== 'super_admin') return { ok: false, error: 'unauthorized' }
+
+  const supabase = createSupabaseAdminClient()
+  const levels = [1, 2, 3, 4] as const
+
+  for (const level of levels) {
+    const rows: { tier_level: number; label_hy: string; label_ru: string; label_en: string; icon_name: string | null; sort_order: number }[] = []
+    let i = 0
+    while (formData.has(`perks_${level}_${i}_label_en`)) {
+      rows.push({
+        tier_level: level,
+        label_hy:   (formData.get(`perks_${level}_${i}_label_hy`) as string) ?? '',
+        label_ru:   (formData.get(`perks_${level}_${i}_label_ru`) as string) ?? '',
+        label_en:   (formData.get(`perks_${level}_${i}_label_en`) as string) ?? '',
+        icon_name:  (formData.get(`perks_${level}_${i}_icon_name`) as string) || null,
+        sort_order: i,
+      })
+      i++
+    }
+    await supabase.from('tier_perks').delete().eq('tier_level', level)
+    if (rows.length > 0) await supabase.from('tier_perks').insert(rows)
+  }
+
+  await logActivity(actor, 'update_tier_perks', 'tier_perks', null, null, { levels_updated: levels })
+  revalidatePath('/dashboard/yel')
+  return { ok: true }
+}
+
 export default async function YelPage() {
   const admin = await getCurrentAdmin()
   if (!admin) redirect('/login')
@@ -183,7 +215,7 @@ export default async function YelPage() {
   type EarnerRow = { id: string; player_id: number; name: string; email: string; yel_points: number; tier: string; tier_level: number; total_visits: number }
   type RecentRow = { id: string; date: string; yel_earned: string; profiles: { name: string; player_id: number } | null; venues: { name: string } | null }
 
-  const [statsRes, earnersRes, recentRes, { names: tierNames, mins: tierMins }] = await Promise.all([
+  const [statsRes, earnersRes, recentRes, { names: tierNames, mins: tierMins }, tierPerksRes] = await Promise.all([
     supabase
       .from('profiles')
       .select('yel_points, total_visits, tier_level')
@@ -201,11 +233,13 @@ export default async function YelPage() {
       .order('created_at', { ascending: false })
       .limit(30),
     loadTierSettings(),
+    supabase.from('tier_perks').select('*').order('tier_level').order('sort_order'),
   ])
 
   const statsUsers: StatsRow[]  = statsRes.data  ?? []
   const earners:    EarnerRow[] = earnersRes.data ?? []
   const recent:     RecentRow[] = recentRes.data  ?? []
+  const tierPerks                = tierPerksRes.data ?? []
 
   const totalPoints     = statsUsers.reduce((s, u) => s + (u.yel_points ?? 0), 0)
   const usersWithPoints = statsUsers.filter(u => u.yel_points > 0).length
@@ -280,6 +314,13 @@ export default async function YelPage() {
 
       {/* Tier settings */}
       <TierSettingsForm tierNames={tierNames} tierMins={tierMins} saveTierSettings={saveTierSettings} />
+
+      {/* Tier perks */}
+      <TierPerksSection
+        initialPerks={tierPerks as any}
+        tierNames={tierNames}
+        saveTierPerks={saveTierPerks}
+      />
 
       {/* Top earners */}
       <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
