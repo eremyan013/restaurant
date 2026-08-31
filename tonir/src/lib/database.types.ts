@@ -798,6 +798,48 @@ export interface Database {
         Update: Record<string, never>;
       };
 
+      bill_splits: {
+        Row: {
+          id:                string;
+          reservation_id:    string;
+          initiator_id:      string;
+          total_amount:      number;
+          participant_count: number;
+          share_amount:      number;
+          currency:          string;
+          created_at:        string;
+        };
+        Insert: {
+          id?:               string;
+          reservation_id:    string;
+          initiator_id:      string;
+          total_amount:      number;
+          participant_count: number;
+          share_amount:      number;
+          currency?:         string;
+          created_at?:       string;
+        };
+        Update: Record<string, never>;
+      };
+
+      bill_split_participants: {
+        Row: {
+          id:           string;
+          split_id:     string;
+          user_id:      string;
+          is_initiator: boolean;
+          created_at:   string;
+        };
+        Insert: {
+          id?:           string;
+          split_id:      string;
+          user_id:       string;
+          is_initiator?: boolean;
+          created_at?:   string;
+        };
+        Update: Record<string, never>;
+      };
+
       reservation_alternatives: {
         Row: {
           id: string;
@@ -899,3 +941,5 @@ export type ReservationAlternativeRow = Database['public']['Tables']['reservatio
 export type FriendshipRow         = Database['public']['Tables']['friendships']['Row'];
 export type FriendActivityFeedRow = Database['public']['Tables']['friend_activity_feed']['Row'];
 export type TierPerkRow           = Database['public']['Tables']['tier_perks']['Row'];
+export type BillSplitRow            = Database['public']['Tables']['bill_splits']['Row'];
+export type BillSplitParticipantRow = Database['public']['Tables']['bill_split_participants']['Row'];

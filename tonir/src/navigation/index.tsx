@@ -52,6 +52,8 @@ import { NotificationSettingsScreen } from '../screens/NotificationSettingsScree
 import { FriendsScreen } from '../screens/FriendsScreen';
 import { ActivityFeedScreen } from '../screens/ActivityFeedScreen';
 import { PublicProfileScreen } from '../screens/PublicProfileScreen';
+import BillSplitCreateScreen from '../screens/BillSplitCreateScreen';
+import BillSplitDetailScreen from '../screens/BillSplitDetailScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -78,6 +80,8 @@ export type RootStackParamList = {
   Friends: undefined;
   ActivityFeed: undefined;
   PublicProfile: { userId: string };
+  BillSplitCreate: { reservationId: string; venueName: string };
+  BillSplitDetail: { splitId: string };
 };
 
 export type TabParamList = {
@@ -234,6 +238,11 @@ export function AppNavigator() {
           navigationRef.current?.navigate('Booking', { venueId: data.venue_id })
         }, 100)
       }
+      if (data.type === 'bill_split' && data.split_id) {
+        setTimeout(() => {
+          navigationRef.current?.navigate('BillSplitDetail', { splitId: data.split_id })
+        }, 100)
+      }
     })
     return () => sub.remove()
   }, [])
@@ -312,6 +321,8 @@ export function AppNavigator() {
             <Stack.Screen name="Friends" component={FriendsScreen} options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="ActivityFeed" component={ActivityFeedScreen} options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="PublicProfile" component={PublicProfileScreen} options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="BillSplitCreate" component={BillSplitCreateScreen} options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="BillSplitDetail" component={BillSplitDetailScreen} options={{ animation: 'slide_from_right' }} />
           </>
         ) : (
           // ── Not authenticated / pending phone verification ──

@@ -387,24 +387,39 @@ export function ReservationsScreen({ navigation }: { navigation: Nav }) {
                     {yelAmount ? <Text style={[styles.perkText, { color: t.accent }]}>+{yelAmount} Yel</Text> : null}
                     <View style={styles.actions}>
                       {tab === 'past' && (res.status === 'visited' || res.status === 'completed') ? (
-                        ratedIds.has(res.id) ? (
-                          <View style={[styles.actionBtn, { borderColor: t.border, opacity: 0.5 }]} accessibilityRole="button" accessibilityState={{ disabled: true }}>
-                            <Text style={[styles.actionText, { color: t.textMute }]}>
-                              ⭐ {tr('rate_done')}
-                            </Text>
-                          </View>
-                        ) : (
-                          <Pressable
-                            onPress={() => openRating(res)}
-                            style={[styles.actionBtn, { borderColor: t.border }]}
-                            accessibilityRole="button"
-                            accessibilityLabel={tr('res_action_rate')}
-                          >
-                            <Text style={[styles.actionText, { color: t.text }]}>
-                              {tr('res_action_rate')}
-                            </Text>
-                          </Pressable>
-                        )
+                        <>
+                          {ratedIds.has(res.id) ? (
+                            <View style={[styles.actionBtn, { borderColor: t.border, opacity: 0.5 }]} accessibilityRole="button" accessibilityState={{ disabled: true }}>
+                              <Text style={[styles.actionText, { color: t.textMute }]}>
+                                ⭐ {tr('rate_done')}
+                              </Text>
+                            </View>
+                          ) : (
+                            <Pressable
+                              onPress={() => openRating(res)}
+                              style={[styles.actionBtn, { borderColor: t.border }]}
+                              accessibilityRole="button"
+                              accessibilityLabel={tr('res_action_rate')}
+                            >
+                              <Text style={[styles.actionText, { color: t.text }]}>
+                                {tr('res_action_rate')}
+                              </Text>
+                            </Pressable>
+                          )}
+                          {res.status === 'visited' && (
+                            <Pressable
+                              onPress={() => {
+                                if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                navigation.navigate('BillSplitCreate', { reservationId: res.id, venueName: venue.name ?? '' });
+                              }}
+                              style={[styles.actionBtn, { borderColor: t.border }]}
+                              accessibilityRole="button"
+                              accessibilityLabel={tr('split_bill_btn')}
+                            >
+                              <Text style={[styles.actionText, { color: t.text }]}>{tr('split_bill_btn')}</Text>
+                            </Pressable>
+                          )}
+                        </>
                       ) : tab === 'past' || res.status === 'alternative_offered' ? null : (() => {
                         const pastModifyDeadline = isPastCancelDeadline(res);
                         return pastModifyDeadline ? (
