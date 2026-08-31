@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { getCurrentAdmin } from '@/lib/current-admin'
 import { requirePagePermission } from '@/lib/permissions'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
-import { notifyWaitlist } from './actions'
+import { notifyWaitlistAction } from './actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,9 +59,6 @@ export default async function WaitlistPage() {
       )}
 
       {[...groups.entries()].map(([venueId, { waiting, notified }]) => {
-        // Bind the venue id so the server action receives it without inline async
-        const notifyAction = notifyWaitlist.bind(null, venueId)
-
         return (
           <div
             key={venueId}
@@ -99,7 +96,8 @@ export default async function WaitlistPage() {
                     </li>
                   ))}
                 </ul>
-                <form action={notifyAction}>
+                <form action={notifyWaitlistAction}>
+                  <input type="hidden" name="venue_id" value={venueId} />
                   <button
                     type="submit"
                     className="mt-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"

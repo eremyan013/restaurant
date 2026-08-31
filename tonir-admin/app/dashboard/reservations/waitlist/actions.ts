@@ -5,6 +5,12 @@ import { getCurrentAdmin } from '@/lib/current-admin'
 import { assertPermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/log-activity'
 
+export async function notifyWaitlistAction(formData: FormData): Promise<void> {
+  const venueId = formData.get('venue_id') as string
+  if (!venueId) return
+  await notifyWaitlist(venueId)
+}
+
 export async function notifyWaitlist(
   venueId: string,
 ): Promise<{ ok: boolean; error?: string; notified?: number }> {
