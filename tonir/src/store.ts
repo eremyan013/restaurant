@@ -36,6 +36,10 @@ interface AppState {
   favs: Set<string>;
   setFavs: (favs: Set<string>) => void;
 
+  // Waitlist venue IDs (not persisted)
+  waitlistVenueIds: Set<string>;
+  setWaitlistVenueIds: (ids: Set<string>) => void;
+
   // Selected location (persisted)
   selectedLocationId: string | null;
   setSelectedLocationId: (id: string | null) => void;
@@ -97,6 +101,9 @@ export const useStore = create<AppState>()(
 
       favs: new Set<string>(),
       setFavs: (favs) => set({ favs }),
+
+      waitlistVenueIds: new Set<string>(),
+      setWaitlistVenueIds: (waitlistVenueIds) => set({ waitlistVenueIds }),
 
       selectedLocationId: null,
       setSelectedLocationId: (selectedLocationId) => set({ selectedLocationId }),

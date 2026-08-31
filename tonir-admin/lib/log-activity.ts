@@ -10,6 +10,7 @@ export type ActivityAction =
   | 'mark_prize_used'
   | 'resolve_concierge'   | 'escalate_concierge'
   | 'update_tier_perks'
+  | 'notify_waitlist'
 
 export async function logActivity(
   admin: { id: string; name: string; role: AdminRole } | null,

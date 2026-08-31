@@ -15,6 +15,7 @@ import { useVenueAvailability, filterAvailableTimes } from '../hooks/useVenueAva
 import { useMenu } from '../hooks/useMenu';
 import { useVenuePhotos } from '../hooks/useVenuePhotos';
 import { useFavorites } from '../hooks/useFavorites';
+import { useWaitlist } from '../hooks/useWaitlist';
 import { useTranslation } from '../hooks/useTranslation';
 import { fetchTodayReservationCount, fetchVenueReviews, VenueReview } from '../lib/api';
 import type { VenuePhotoRow } from '../lib/database.types';
@@ -41,9 +42,11 @@ const PHOTO_H = 320;
 
 export function DetailScreen({ navigation, route }: Props) {
   const { venueId } = route.params;
-  const { theme: t } = useStore();
+  const { theme: t, userId } = useStore();
   const { tr, tra, trf } = useTranslation();
   const { favs, toggleFav } = useFavorites();
+  const { waitlist, toggleWaitlist } = useWaitlist();
+  const isOnWaitlist = waitlist.has(venue?.id ?? '');
   const insets = useSafeAreaInsets();
   const userLocation = useLocation();
   const [activeTab, setActiveTab] = useState(0);
@@ -284,6 +287,32 @@ export function DetailScreen({ navigation, route }: Props) {
             </Pressable>
           )}
         </View>
+
+        {/* Notify me / Waitlist button */}
+        <Pressable
+          onPress={() => {
+            if (!userId) {
+              Alert.alert(tr('err_title'), tr('err_sub'));
+              return;
+            }
+            if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            toggleWaitlist(venue.id);
+          }}
+          style={[
+            styles.waitlistBtn,
+            {
+              borderColor: isOnWaitlist ? t.primary : t.border,
+              backgroundColor: isOnWaitlist ? t.primary + '1A' : 'transparent',
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={isOnWaitlist ? tr('waitlist_on_list') : tr('waitlist_notify')}
+          accessibilityState={{ selected: isOnWaitlist }}
+        >
+          <Text style={[styles.waitlistBtnText, { color: isOnWaitlist ? t.primary : t.textMute }]}>
+            {isOnWaitlist ? tr('waitlist_on_list') : tr('waitlist_notify')}
+          </Text>
+        </Pressable>
 
         {/* Sticky tabs */}
         <View style={[styles.tabsBar, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
@@ -876,6 +905,23 @@ const styles = StyleSheet.create({
   },
   openBadgeText: {
     fontSize: 12,
+    fontFamily: FONTS.semiBold,
+    fontWeight: '600',
+  },
+  waitlistBtn: {
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    marginHorizontal: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  waitlistBtnText: {
+    fontSize: 13,
     fontFamily: FONTS.semiBold,
     fontWeight: '600',
   },

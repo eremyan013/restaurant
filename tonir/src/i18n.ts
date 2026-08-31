@@ -498,6 +498,12 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     split_detail_initiator:     'Հաշվի տեր',
     split_detail_loading_err:   'Չhаjogvec berner',
     split_currency:             '֏',
+    // Waitlist
+    waitlist_notify:            'Ծանուցել ինձ',
+    waitlist_on_list:           'Ցուցակում եմ',
+    waitlist_cancel:            'Հեռացնել ծանուցումը',
+    waitlist_err_add:           'Չհաջողվեց ավելացնել ցուցակ։ Կրկին փորձեք։',
+    waitlist_err_remove:        'Չհաջողվեց հեռացնել ցուցակից։ Կրկին փորձեք։',
   },
 
   // ─── Russian ──────────────────────────────────────────────────────────────────
@@ -984,6 +990,12 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     split_detail_initiator:     'Инициатор',
     split_detail_loading_err:   'Не удалось загрузить',
     split_currency:             '֏',
+    // Waitlist
+    waitlist_notify:            'Уведомить меня',
+    waitlist_on_list:           'Я в списке',
+    waitlist_cancel:            'Отменить уведомление',
+    waitlist_err_add:           'Не удалось добавить в список',
+    waitlist_err_remove:        'Не удалось выйти из списка',
   },
 
   // ─── English ─────────────────────────────────────────────────────────────────
@@ -1470,5 +1482,11 @@ export const I18N: Record<Lang, Record<string, I18NValue>> = {
     split_detail_initiator:     'Initiated by',
     split_detail_loading_err:   'Failed to load',
     split_currency:             'AMD',
+    // Waitlist
+    waitlist_notify:            'Notify me',
+    waitlist_on_list:           'On waitlist',
+    waitlist_cancel:            'Cancel notification',
+    waitlist_err_add:           'Failed to join waitlist',
+    waitlist_err_remove:        'Failed to leave waitlist',
   },
 };

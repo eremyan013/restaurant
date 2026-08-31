@@ -901,6 +901,33 @@ export interface Database {
         };
       };
 
+      waitlist_entries: {
+        Row: {
+          id:           string;
+          user_id:      string;
+          venue_id:     string;
+          desired_date: string | null;
+          notified_at:  string | null;
+          created_at:   string;
+        };
+        Insert: {
+          id?:           string;
+          user_id:       string;
+          venue_id:      string;
+          desired_date?: string | null;
+          notified_at?:  string | null;
+          created_at?:   string;
+        };
+        Update: {
+          id?:           string;
+          user_id?:      string;
+          venue_id?:     string;
+          desired_date?: string | null;
+          notified_at?:  string | null;
+          created_at?:   string;
+        };
+      };
+
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -943,3 +970,4 @@ export type FriendActivityFeedRow = Database['public']['Tables']['friend_activit
 export type TierPerkRow           = Database['public']['Tables']['tier_perks']['Row'];
 export type BillSplitRow            = Database['public']['Tables']['bill_splits']['Row'];
 export type BillSplitParticipantRow = Database['public']['Tables']['bill_split_participants']['Row'];
+export type WaitlistEntryRow        = Database['public']['Tables']['waitlist_entries']['Row'];
