@@ -40,6 +40,7 @@ export function Sidebar({
     ...(isSuperAdmin
       ? [
           { href: '/dashboard/analytics', label: 'Analytics', exact: false },
+          { href: '/dashboard/agents', label: 'Agents', exact: false },
           { href: '/dashboard/home-sections', label: 'Home Sections', exact: false },
           { href: '/dashboard/notifications', label: 'Notifications', exact: false },
           { href: '/dashboard/admins', label: 'Admins', exact: false },
