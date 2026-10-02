@@ -46,7 +46,7 @@ export function DetailScreen({ navigation, route }: Props) {
   const { tr, tra, trf } = useTranslation();
   const { favs, toggleFav } = useFavorites();
   const { waitlist, toggleWaitlist } = useWaitlist();
-  const isOnWaitlist = waitlist.has(venue?.id ?? '');
+  const isOnWaitlist = waitlist.has(venueId);
   const insets = useSafeAreaInsets();
   const userLocation = useLocation();
   const [activeTab, setActiveTab] = useState(0);
